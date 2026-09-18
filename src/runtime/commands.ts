@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 const subcommands: Record<string, string[]> = {
+    advancement: ['setup','eligible','status','open','close','approve','deny','ballots'],
     trailmark: ["panel", "leave", "list", "sessions", "create", "edit", "deactivate", "set-atlas", "clear-atlas", "report"],
     atlas: ["link", "unlink", "status"], roster: ["info", "assignments", "audit", "inactive-review", "sync-member", "sync-all", "status", "retire-left", "note"],
     recruit: ["invite", "welcome"], funds: ["deposit", "spend", "set-balance", "refresh-summary", "balance", "history", "undo-last", "monthly"],
@@ -14,6 +15,7 @@ export function commandDefinitions(namespace?: string): unknown[] {
     const commands: any[] = [new SlashCommandBuilder().setName("ping").setDescription("Check Codex availability")];
     commands.push(new SlashCommandBuilder().setName("server").setDescription("Configure this Codex server").setDefaultMemberPermissions("8").addSubcommand((s: any) => s.setName("setup").setDescription("Start or resume the setup wizard")));
     for (const [name, subs] of Object.entries(subcommands)) {
+        if(name==='advancement'||name==='trailmark'){commands.push(fieldCommand(name));continue;}
         if (name === "funds") {
             commands.push(fundsCommand());
             continue;
@@ -45,6 +47,11 @@ export function commandDefinitions(namespace?: string): unknown[] {
         commands.push(memberCommand(namespace));
     }
     return commands.map(command => command.toJSON());
+}
+function fieldCommand(name:string):any {
+ const c=new SlashCommandBuilder().setName(name).setDescription(name==='advancement'?'Advancement cases and ballots':'Trailmark access and field information');
+ const names=name==='advancement'?['setup','eligible','status','open','close','approve','deny','ballots']:['panel','leave','list','sessions','create','edit','deactivate','set-atlas','clear-atlas','report','hq','repair','configure'];
+ for(const action of names)c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(name==='advancement'&&['open','eligible'].includes(action))s.addUserOption((o:any)=>o.setName('member').setDescription('Candidate').setRequired(true));if(name==='advancement'&&action==='setup'){s.addStringOption((o:any)=>o.setName('voter-tier').setDescription('Minimum voter permission tier').setRequired(true).addChoices(...['BASELINE','LEVEL_1','LEVEL_2','LEVEL_3','LEVEL_4'].map(v=>({name:v,value:v}))));s.addIntegerOption((o:any)=>o.setName('minimum-yes').setDescription('Minimum affirmative votes; majority is also required').setRequired(true).setMinValue(1).setMaxValue(10000));}return s;});return c;
 }
 function memberCommand(name: string): any {
     const command = new SlashCommandBuilder().setName(name).setDescription('Persisted organization member administration');

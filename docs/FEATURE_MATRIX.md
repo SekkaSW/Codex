@@ -19,8 +19,8 @@ This matrix distinguishes an executable path from schema or architecture alone.
 | Rank-role synchronization | Complete | Non-cumulative role deltas preserve unrelated roles; rank history and audit commit with state; confirmed failures compensate, uncertain outcomes request reconciliation. |
 | Direct advancement/member promotion | Complete | Authorized ACTIVE-member promotion via explicit edges, paginated target selection, independent administrator rank initialization/correction. |
 | Roster output/export | Complete | Ephemeral persisted roster summary and full escaped CSV with rank, branch, duties and configured assignment columns. |
-| Advancement/promotion | Partially complete (later phase) | Direct promotion is complete; advancement ballots and their lifecycle remain deferred. |
-| Trailmarks and expiry | Partially complete | Persistent Trailmark/session schema, single-active-session service, expiration, and multi-guild job exist; full panels and channel lifecycle handlers remain. |
+| Advancement/promotion | Complete | Durable cases, snapshotted requirements, authorized duplicate-safe ballots, close/approve/deny, atomic rank/history/decision/audit, restart recovery. |
+| Trailmarks and expiry | Complete | Production lifecycle, ID-based channels/repair, HQ, access selectors, durable grant/revocation/expiry recovery, reports and Atlas linkage. Local report publication is tracked under Intel. |
 | Intel and structured reports | Partially complete | Capture, classification, state transitions, metadata, persistence, and local confidential processing exist; Discord capture/backfill/reporter-repair handlers remain. |
 | Contacts and HQ forwarding | Partially complete | HQ gating, source-message requirement, duplicate prevention, publisher boundary, and persistence exist; forum-thread CRUD interactions remain. |
 | Confidentiality | Complete | Case-insensitive detection is local-pipeline-neutral and bridge transfer is denied at the transport boundary. |

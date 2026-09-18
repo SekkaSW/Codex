@@ -35,3 +35,9 @@ Discord and PostgreSQL cannot share an atomic transaction. The supported deploym
 Rank permission tiers remain metadata independent of permission-role mappings. Advancement traverses graph edges, rejects cycles/self/dangling edges, and does not include appointed roles unless explicitly configured as ranks. Duty and assignment roles are independent. Required group membership is enforced for ACTIVE members, while INACTIVE staging allows onboarding across several required groups.
 
 The roster and the configured organization namespace share executable member handlers. Assignment board operations remain separate and deferred; only member assignment administration is part of Phase 4. Existing Funds, Trailmark, Intel, Contact, bridge and Atlas boundaries are retained.
+
+## Phase 5 durable workflows
+
+`field.ts` owns advancement orchestration and Trailmark access reconciliation. `persistence/field.ts` extends the existing administration repository; migration 005 provides guild-scoped service-role-only RPCs. Advancement approval supplies a transactional commit callback to the existing member transition service, allowing rank history and the case decision to commit together. Ballot snapshots preserve historical configuration even if live ranks change.
+
+Trailmark access is persisted desired state (PENDING, ACTIVE, REVOKING, CLOSED). The Discord adapter manipulates only Trailmark channel/member overwrites and stable managed resource identities. The runtime starts recovery on ready and serializes background work with foreground guild mutations.

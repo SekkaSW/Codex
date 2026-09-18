@@ -80,7 +80,7 @@ export function desiredMemberRoles(m: MemberState, c: OrganizationConfig): Set<s
 }
 export class AdministrationService {
     constructor(private readonly store: AdministrationStore) { }
-    async change(before: MemberState | undefined, after: MemberState, c: OrganizationConfig, actorId: string, action: string, reason: string, discord?: RoleMember): Promise<void> {
+    async change(before: MemberState | undefined, after: MemberState, c: OrganizationConfig, actorId: string, action: string, reason: string, discord?: RoleMember, commit?:()=>Promise<void>): Promise<void> {
         if (before && (before.guildId !== after.guildId || before.memberId !== after.memberId))
             throw new Error('Member identity cannot change');
         if (after.rankId && !c.ranks.some(r => r.id === after.rankId))
@@ -112,7 +112,7 @@ export class AdministrationService {
                         changed.push({ id, added: false });
                     }
             }
-            await this.store.commitMember(before, after, actorId, action, reason);
+            if(commit)await commit();else await this.store.commitMember(before, after, actorId, action, reason);
         }
         catch (error) {
             if (error instanceof PersistenceUncertainError)

@@ -1,5 +1,5 @@
 import type { DutyRole, PermissionRole, ServerConfig } from "../domain.js";
-import { AdministrationRepository } from './administration.js';
+import { FieldRepository } from './field.js';
 import type { StoredSetupDraft } from "../setup.js";
 import type { ManagedResource, Registry } from "../resources.js";
 import type { AtlasDrop, AtlasGateway, AtlasRequest, IntelStore, LedgerEntry, LedgerStore, StoredReport, StrongboxStore, StrongboxSubmission, TrailmarkSession, TrailmarkStore } from "../services.js";
@@ -46,7 +46,7 @@ function dataOrThrow<T>(result: {
     } | null;
 }): T { if (result.error)
     throw new Error(result.error.message); return result.data as T; }
-export class SupabaseRepositories extends AdministrationRepository implements Registry, TrailmarkStore, IntelStore, LedgerStore, StrongboxStore, AtlasGateway {
+export class SupabaseRepositories extends FieldRepository implements Registry, TrailmarkStore, IntelStore, LedgerStore, StrongboxStore, AtlasGateway {
     async server(guildId: string): Promise<ServerConfig | undefined> {
         const rows = dataOrThrow(await this.client.from("server_config").select("*,server_modules(*)").eq("guild_id", guildId).limit(1) as unknown as {
             data: Record<string, unknown>[] | null;

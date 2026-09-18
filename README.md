@@ -43,3 +43,7 @@ Run `npm test`, `npm run typecheck`, and `npm run lint`. Build with `npm run bui
 ## Production implementation
 
 The runtime uses Discord.js interactions, a Supabase service-role repository, ID-based resource repair, and multi-guild background-job boundaries. Apply all four migrations in order, including `004_phase4_administration.sql` before running this version. Run one active writer for each guild; see [deployment and recovery](docs/DEPLOYMENT.md). The test suite exercises the production handlers with Discord fakes and applies the real migrations to a local PostgreSQL engine. Retained service behavior and known implementation limits are tracked in [the feature matrix](docs/FEATURE_MATRIX.md); Atlas and the unchanged Skyrim bridge boundary are documented separately in [Atlas compatibility](docs/ATLAS_COMPATIBILITY.md).
+
+## Advancement and field access
+
+Apply migration `005_advancement_trailmarks.sql` for `/advancement` ballots and the full `/trailmark` lifecycle. Reviewers configure/open/close/approve/deny advancement cases; members vote through selectors. Trailmark panels grant timed, durable access, `leave` revokes it, and restart-safe background reconciliation expires sessions. Reports retain local confidentiality and distinguish HQ origin from pending delivery. See deployment documentation for permissions and recovery.
