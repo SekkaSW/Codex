@@ -16,10 +16,18 @@ export function commandDefinitions(namespace?: string): unknown[] {
   commands.push(new SlashCommandBuilder().setName("server").setDescription("Configure this Codex server").setDefaultMemberPermissions("8").addSubcommand((s:any)=>s.setName("setup").setDescription("Start or resume the setup wizard")));
   for(const [name,subs] of Object.entries(subcommands)){
     if(name==="funds"){commands.push(fundsCommand());continue;}
+    if(name==="duty"){commands.push(dutyCommand());continue;}
     const command=new SlashCommandBuilder().setName(name).setDescription(`${name[0]!.toUpperCase()}${name.slice(1)} operations`);for(const sub of subs)command.addSubcommand((s:any)=>s.setName(sub).setDescription(`${sub.replaceAll("-"," ")} operation`));commands.push(command);
   }
   if(namespace){const command=new SlashCommandBuilder().setName(namespace).setDescription("Organization member management");for(const sub of ["info","assignments","audit","inactive-review","sync-member","sync-all","sync-join-history","status","retire-left","note","promote"])command.addSubcommand((s:any)=>s.setName(sub).setDescription(`${sub.replaceAll("-"," ")} member operation`));commands.push(command);}
   return commands.map(command=>command.toJSON());
+}
+
+function dutyCommand():any{
+  const command=new SlashCommandBuilder().setName("duty").setDescription("Manage configured organization duties");
+  for(const name of ["assign","remove"] as const)command.addSubcommand((sub:any)=>sub.setName(name).setDescription(`${name} a configured duty`).addUserOption((o:any)=>o.setName("member").setDescription("Server member").setRequired(true)).addRoleOption((o:any)=>o.setName("role").setDescription("Configured duty role").setRequired(true)));
+  command.addSubcommand((sub:any)=>sub.setName("list").setDescription("List a member's duties").addUserOption((o:any)=>o.setName("member").setDescription("Member; defaults to you")));
+  return command;
 }
 
 function fundsCommand(): any {
