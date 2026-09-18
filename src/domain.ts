@@ -16,6 +16,9 @@ export interface RankEdge { guildId: string; fromRankId: string; toRankId: strin
 export interface AssignmentGroup { id: string; guildId: string; name: string; multiple: boolean; required: boolean }
 export interface AssignmentEntry { id: string; groupId: string; name: string; roleId?: string }
 export interface MemberAssignment { guildId: string; memberId: string; entryId: string }
+export type MemberStatus = "ACTIVE" | "INACTIVE" | "RETIRED" | "LEFT";
+export interface MemberRecord { guildId: string; memberId: string; displayName: string; rankId?: string; status: MemberStatus; joinedAt?: string; lastActiveAt?: string; notes: string[] }
+export interface DutyRole { guildId: string; roleId: string; displayName: string }
 
 export function highestTier(roleIds: Iterable<string>, mappings: PermissionRole[]): PermissionTier | undefined {
   const roles = new Set(roleIds);
@@ -33,6 +36,12 @@ export function advancementOptions(currentRankId: string, edges: RankEdge[], ran
   const rankById = new Map(ranks.map(rank => [rank.id, rank]));
   return edges.filter(edge => edge.fromRankId === currentRankId)
     .map(edge => rankById.get(edge.toRankId)).filter((rank): rank is Rank => rank !== undefined);
+}
+
+export function rolesForRank(currentRankId: string | undefined, ranks: Rank[]): string[] {
+  if (!currentRankId) return [];
+  const rank = ranks.find(item => item.id === currentRankId);
+  return rank?.roleId ? [rank.roleId] : [];
 }
 
 export function assignMember(existing: MemberAssignment[], next: MemberAssignment, entries: AssignmentEntry[], group: AssignmentGroup): MemberAssignment[] {
