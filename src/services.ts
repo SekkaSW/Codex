@@ -79,6 +79,23 @@ export class FundsService {
     const target = [...rows].reverse().find(row => !row.reversedEntryId && !reversed.has(row.id)); if (!target) throw new Error("No transaction to undo");
     const linked: LedgerEntry = { id: crypto.randomUUID(), guildId, amount: -target.amount, kind:"ADJUSTMENT", actorId, note:`Undo: ${target.note}`, createdAt:this.clock.now().toISOString(), reversedEntryId:target.id }; await this.store.append(linked); return linked;
   }
+  async setBalance(guildId: string, balance: number, actorId: string, note: string): Promise<LedgerEntry | undefined> {
+    if (!Number.isFinite(balance)) throw new Error("Balance must be a finite number");
+    const adjustment = balance - await this.balance(guildId);
+    if (adjustment === 0) return undefined;
+    return this.record(guildId, adjustment, actorId, note, "ADJUSTMENT");
+  }
+  async monthly(guildId: string, year: number, month: number): Promise<{ deposits: number; spending: number; adjustments: number; net: number; count: number }> {
+    if (!Number.isInteger(year) || year < 1970 || !Number.isInteger(month) || month < 1 || month > 12) throw new Error("A valid year and month are required");
+    const rows = (await this.store.history(guildId)).filter(row => {
+      const date = new Date(row.createdAt);
+      return date.getUTCFullYear() === year && date.getUTCMonth() + 1 === month;
+    });
+    const deposits = rows.filter(row => row.kind === "DEPOSIT").reduce((sum, row) => sum + row.amount, 0);
+    const spending = -rows.filter(row => row.kind === "SPEND").reduce((sum, row) => sum + row.amount, 0);
+    const adjustments = rows.filter(row => row.kind === "ADJUSTMENT").reduce((sum, row) => sum + row.amount, 0);
+    return { deposits, spending, adjustments, net: deposits - spending + adjustments, count: rows.length };
+  }
 }
 
 export interface StrongboxSubmission { id: string; guildId: string; memberId: string; contents: string; sourceMessageId: string; status: "SUBMITTED" | "PROCESSED"; createdAt: string }
