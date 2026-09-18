@@ -1,0 +1,17 @@
+create type permission_tier as enum ('BASELINE','LEVEL_1','LEVEL_2','LEVEL_3','LEVEL_4');
+create table server_config (guild_id text primary key, organization_name text not null, command_namespace text not null check (command_namespace ~ '^[a-z0-9_-]{1,32}$'), confidentiality_marker text not null default '[CONFIDENTIAL]', created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table server_modules (guild_id text references server_config on delete cascade, module_key text not null check (module_key in ('briefings','patrols','supply','atlas')), enabled boolean not null default false, primary key(guild_id,module_key));
+create table permission_roles (guild_id text references server_config on delete cascade, discord_role_id text not null, tier permission_tier not null, primary key(guild_id,discord_role_id));
+create table rank_branches (id uuid primary key default gen_random_uuid(), guild_id text references server_config on delete cascade, name text not null, unique(guild_id,name));
+create table ranks (id uuid primary key default gen_random_uuid(), guild_id text references server_config on delete cascade, name text not null, discord_role_id text, tier permission_tier not null, unique(guild_id,name));
+create table rank_progression (guild_id text references server_config on delete cascade, branch_id uuid references rank_branches on delete cascade, from_rank_id uuid references ranks on delete cascade, to_rank_id uuid references ranks on delete cascade, primary key(branch_id,from_rank_id,to_rank_id));
+create table duty_roles (guild_id text references server_config on delete cascade, discord_role_id text not null, display_name text not null, primary key(guild_id,discord_role_id));
+create table assignment_groups (id uuid primary key default gen_random_uuid(), guild_id text references server_config on delete cascade, name text not null, allow_multiple boolean not null default false, required boolean not null default false, unique(guild_id,name));
+create table assignment_entries (id uuid primary key default gen_random_uuid(), group_id uuid references assignment_groups on delete cascade, name text not null, discord_role_id text, unique(group_id,name));
+create table member_assignments (guild_id text references server_config on delete cascade, discord_member_id text not null, entry_id uuid references assignment_entries on delete cascade, created_at timestamptz not null default now(), primary key(guild_id,discord_member_id,entry_id));
+create table managed_resources (guild_id text references server_config on delete cascade, resource_key text not null, discord_id text not null, resource_kind text not null check(resource_kind in ('CATEGORY','CHANNEL','FORUM')), owner_id text, primary key(guild_id,resource_key), unique(guild_id,discord_id));
+create index member_assignments_member_idx on member_assignments(guild_id,discord_member_id);
+create index ranks_guild_idx on ranks(guild_id);
+create table report_topics (id uuid primary key default gen_random_uuid(), guild_id text references server_config on delete cascade, name text not null, keywords text[] not null default '{}', channel_resource_key text, unique(guild_id,name));
+create table bridge_settings (guild_id text primary key references server_config on delete cascade, enabled boolean not null default false, protocol text not null default 'codex-v1', endpoint text, secret_ciphertext text);
+
