@@ -1,5 +1,5 @@
 import type { ServerConfig } from "./domain.js";
-export type SetupStage = "identity" | "permissions" | "ranks" | "duties" | "assignments" | "modules" | "resources" | "integration" | "preview";
+export type SetupStage = "identity" | "namespace" | "permissions" | "ranks" | "duties" | "assignments" | "modules" | "resources" | "destinations" | "integration" | "preview" | "confirmation" | "provisioning";
 export interface SetupDraft { config: Partial<ServerConfig>; stage: SetupStage; revision: number }
 export function beginSetup(existing?: ServerConfig): SetupDraft { return { config: existing ? structuredClone(existing) : {}, stage:"identity", revision:0 }; }
 export function updateDraft(draft: SetupDraft, patch: Partial<ServerConfig>, next: SetupStage): SetupDraft { return { config:{...draft.config, ...patch}, stage:next, revision:draft.revision + 1 }; }

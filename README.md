@@ -4,7 +4,7 @@ Codex is a configuration-driven Discord framework for ESO roleplay organizations
 
 ## Installation
 
-Use Node 22+, run `npm install`, apply SQL files in `migrations/` to PostgreSQL/Supabase, and configure deployment secrets (`DISCORD_TOKEN`, `DATABASE_URL`, and optionally an encryption key for bridge credentials). Discord IDs belonging to a server are database configuration, not environment variables.
+Use Node 22+, run `npm install`, apply SQL files in `migrations/` to PostgreSQL/Supabase, and configure `DISCORD_TOKEN`, `DISCORD_APPLICATION_ID`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`. Discord IDs belonging to a server are database configuration, not environment variables. See [deployment](docs/DEPLOYMENT.md) for command synchronization and security requirements.
 
 ## Server setup
 
@@ -30,3 +30,6 @@ Duty roles, assignment groups/entries, topics, and module switches are independe
 
 Run `npm test`, `npm run typecheck`, and `npm run lint`. Build with `npm run build`; deploy `dist/` with global secrets only. Setup requires Manage Channels/Roles and application-command scopes.
 
+## Production implementation
+
+The runtime uses Discord.js interactions, a Supabase service-role repository, ID-based resource repair, and multi-guild background-job boundaries. Production tables are added non-destructively by `002_production_features.sql`. Retained service behavior and known implementation limits are tracked in [the feature matrix](docs/FEATURE_MATRIX.md); Atlas and the unchanged Skyrim bridge boundary are documented separately in [Atlas compatibility](docs/ATLAS_COMPATIBILITY.md).
