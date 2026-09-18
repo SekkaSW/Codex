@@ -18,10 +18,12 @@ import {handleWorkflows,workflowDestination,type WorkflowRepositories} from './h
 import {DurableSummary} from '../workflows.js';
 import {DiscordDurablePublisher} from './intelligenceDiscord.js';
 import {FundsService} from '../services.js';
-export interface RuntimeRepositories extends Registry, SetupStore, FundsRepositories, DutyRepositories, MemberRepositories,FieldRepositories,IntelligenceRepositories,BridgeRepositories,WorkflowRepositories {
+import {handleOptional,type OptionalRepositories} from './handlers/optional.js';
+import {AtlasRuntime,handleAtlas,type AtlasRepositories} from './atlas.js';
+export interface RuntimeRepositories extends Registry, SetupStore, FundsRepositories, DutyRepositories, MemberRepositories,FieldRepositories,IntelligenceRepositories,BridgeRepositories,WorkflowRepositories,OptionalRepositories,AtlasRepositories {
 }
 export function createBot(repositories: RuntimeRepositories): Client {
-    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent,...(process.env.CODEX_DISCORD_PRESENCE==='true'?[GatewayIntentBits.GuildPresences]:[])] });
     const wizard = new SetupWizard(repositories, async (config: ServerConfig, actorId: string) => {
         const guild = await client.guilds.fetch(config.guildId), organization = await repositories.organization(config.guildId);
         const specs = [...desiredResources(config.modules), ...organization.additionalResources].map(s => s.key === 'ORGANIZATION_CATEGORY' ? { ...s, name: config.organizationName } : s);
@@ -41,6 +43,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
     // Serialize guild writes in this process, including configuration and member role mutations.
     const pending = new Map<string, Promise<void>>();
     const intelligencePages=new Map<string,number>();
+    const atlasRuntime=new AtlasRuntime(repositories);
     client.on(Events.MessageCreate,message=>{
         if(!message.guildId||!message.guild||!message.author.bot||message.author.id===client.user?.id)return;
         const key=message.guildId;
@@ -48,13 +51,13 @@ export function createBot(repositories: RuntimeRepositories): Client {
         pending.set(key,work);void work.finally(()=>{if(pending.get(key)===work)pending.delete(key);});
     });
     client.once(Events.ClientReady,()=>{
-        let running=false;
-        const tick=async()=>{if(running)return;running=true;try{for(const guild of client.guilds.cache.values()){
+        let running=false,ticks=0;
+        const tick=async()=>{if(running)return;running=true;ticks++;try{for(const guild of client.guilds.cache.values()){
             if(pending.has(guild.id))continue;
-            const work=(async()=>{if(!await repositories.load(guild.id))return;const result=await new TrailmarkLifecycle(repositories,new DiscordTrailmarkAccess(guild,repositories)).reconcile(guild.id,client.user!.id);if(result.failures.length)console.error('Trailmark reconciliation requires retry',guild.id,result.failures);const page=intelligencePages.get(guild.id)??0;const intel=await new DiscordIntelligence(guild,repositories).pipeline.batch(guild.id,page);intelligencePages.set(guild.id,intel.processed+intel.failures.length===0?0:page+1);if(intel.failures.length)console.error('Intelligence recovery requires retry',guild.id,intel.failures);const config=await repositories.load(guild.id);if(config)await new BridgeCoordinator(repositories).drain(guild.id,config.confidentialityMarker);})().catch(error=>console.error('Field recovery failed',guild.id,error));
+            const work=(async()=>{if(!await repositories.load(guild.id))return;try{await atlasRuntime.poll(guild);}catch(error){console.error('Atlas recovery requires retry',guild.id,error instanceof Error?error.message:'Atlas failed');}if(ticks%6!==1)return;const result=await new TrailmarkLifecycle(repositories,new DiscordTrailmarkAccess(guild,repositories)).reconcile(guild.id,client.user!.id);if(result.failures.length)console.error('Trailmark reconciliation requires retry',guild.id,result.failures);const page=intelligencePages.get(guild.id)??0;const intel=await new DiscordIntelligence(guild,repositories).pipeline.batch(guild.id,page);intelligencePages.set(guild.id,intel.processed+intel.failures.length===0?0:page+1);if(intel.failures.length)console.error('Intelligence recovery requires retry',guild.id,intel.failures);const config=await repositories.load(guild.id);if(config)await new BridgeCoordinator(repositories).drain(guild.id,config.confidentialityMarker);})().catch(error=>console.error('Field recovery failed',guild.id,error));
             pending.set(guild.id,work);await work;if(pending.get(guild.id)===work)pending.delete(guild.id);
         }}finally{running=false;}};
-        const timer=setInterval(()=>void tick(),30_000);timer.unref();void tick();
+        const timer=setInterval(()=>void tick(),5_000);timer.unref();void tick();
     });
     client.on(Events.InteractionCreate, i => {
         const key = i.guildId ?? i.id;
@@ -107,6 +110,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
 export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRepositories): Promise<void> {
     if (!i.guildId)
         throw new Error('Use Codex inside a server');
+    if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('optional:')){await handleOptional(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('flow:')){await handleWorkflows(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('bridge:')){await handleBridge(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('intel:')){await handleIntelligence(i,repositories);return;}
@@ -155,6 +159,8 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
     if(i.commandName==='advancement'||i.commandName==='trailmark'){await handleField(i,repositories);return;}
     if(i.commandName==='intel'||i.commandName==='contact'){await handleIntelligence(i,repositories);return;}
     if(i.commandName==='alliance'){await handleBridge(i,repositories);return;}
+    if(['supply','briefing','patrol','reference'].includes(i.commandName)){await handleOptional(i,repositories);return;}
+    if(i.commandName==='atlas'){await handleAtlas(i,repositories);return;}
     if(['strongbox','recruit','application','mentorship','vote'].includes(i.commandName)||(i.commandName==='assignment'&&!['set-member','clear-member','sync-roles'].includes(i.options.getSubcommand()))){await handleWorkflows(i,repositories);return;}
     if (i.commandName === 'roster' || i.commandName === config.commandNamespace || (i.commandName === 'assignment' && ['set-member', 'clear-member', 'sync-roles'].includes(i.options.getSubcommand()))) {
         await handleMembers(i, repositories);

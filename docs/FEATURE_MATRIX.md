@@ -28,9 +28,9 @@ This matrix distinguishes an executable path from schema or architecture alone.
 | Funds | Complete | Existing ledger behavior preserved; durable public summary IDs, in-place edits, confirmed-deletion recovery and operation receipts. |
 | Strongbox | Complete | Modal submissions, private LEVEL_3 HQ delivery, public receipt, persisted staff review/process/reject and history. |
 | Recruitment, applications, mentorship, voting, assignment board | Complete | Real Discord forms/selectors and durable RPCs, review metadata, membership/duplicate/cycle checks, eligible ballots, board claims, idempotent welcome/invite behavior and audit. |
-| Reference | Partial (Phase 9) | Persistence exists; production commands remain. |
-| Supply, briefings, patrol | Partially complete | Module gating and relevant resource suppression work; full legacy workflows remain. |
-| Atlas | Partially complete | Eligibility/link expiry, compatibility RPC repository, per-guild module-gated poll service/job, and schema exist; full profile/presence and visit/heartbeat RPC implementations remain. |
+| Reference | Complete | Staff stable-key editor, persisted entries, authorized get/list selectors and bounded output. |
+| Supply, briefings, patrol | Complete | Current-config module gating at interaction and SQL boundaries; durable stock/contribution/allocation lifecycle, dispatch-desk delivery receipts, and configured-Trailmark suggestions. |
+| Atlas | Bot-side complete; companion compatibility partial | Ten-minute hashed links, service-only RPCs, leased multi-guild five-second polling, access/drop orchestration, profile/presence sync, visits/heartbeats and live-position boundary. Browser authentication, deployed overloads, calibration/settlement/share contracts require companion verification. |
 | Medals, Field Names, Runecloak | Not implemented (intentional) | No commands or runtime services are registered for removed systems. |
 
 Obscure Wayfinder wire fields and exact Atlas RPC signatures not stated in the migration specification remain isolated behind adapters. They must be confirmed against deployed contracts rather than invented.

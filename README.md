@@ -59,3 +59,7 @@ Native bridges connect configured Discord guilds on the same Codex installation.
 ## Organization workflows
 
 Apply migration 008 for Strongbox, duty applications, mentorship, general voting, recruitment and the assignment board. /strongbox setup verifies private HQ review access. /application setup enables a configurable question for configured duties. /mentorship manages persisted requests and relationships. /vote opens durable polls with permission snapshots; /assignment open creates board items distinct from member assignment groups. Funds mutations and /funds refresh-summary maintain the stored public summary message.
+
+## Optional systems and Atlas
+
+Apply migrations 009 and 010. Enable Supply, Briefings, Patrol or Atlas using /server setup. Supply records contributions, undo and allocations on the assignments resource. Briefings use dispatch-desk; Patrol suggests configured active Trailmarks without provisioning another channel. Reference entries support /reference edit/get/list. Atlas links expire in ten minutes and guild-scoped workers run approximately every five seconds. See ATLAS_COMPATIBILITY.md for exact bot RPCs, service-role security, browser limitations and unchanged Skyrim protocol.

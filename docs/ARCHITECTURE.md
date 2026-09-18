@@ -53,3 +53,7 @@ BridgeCoordinator extends the existing protocol-independent BridgeService. Nativ
 ## Phase 8 organization workflows
 
 The service-only codex_workflow RPC extends existing domain tables with durable review metadata, configurable forms, voter snapshots, uniqueness/cycle checks and audit. It does not replace the Funds ledger. DurableSummary stores message IDs in bot_message_state, edits surviving bot-owned messages and uses delivery receipts for replacement after confirmed deletion. Strongbox, welcome and application sends use the same receipts. Setup no longer shadows StrongboxStore.save: configuration uses its atomic organization save path.
+
+## Phase 9 optional systems and Atlas
+
+Optional commands and component submissions check current module configuration; their SQL boundary also enforces gating. Supply has immutable contribution/allocation/undo events, stock checks and durable campaign lifecycle. Briefings use delivery receipts; Reference edits are keyed upserts. Patrol rotates suggestions among configured active Trailmarks. AtlasRuntime uses the retained AtlasService/AtlasGateway boundary. Queue claims are bounded to 25 with 30-second leases and five attempts, and all polling is guild-scoped. An access request atomically references its durable Trailmark session before Discord reconciliation, so reclaims do not renew the request. Drops reuse queue UUIDs as report IDs. Profile synchronization batches ten linked members per poll; visits follow durable active sessions. Atlas failure does not suppress Trailmark expiration or local report processing.
