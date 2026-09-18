@@ -5,7 +5,6 @@ import { desiredResources } from '../resources.js';
 import { beginSetup, preview, validateForConfirmation, type StoredSetupDraft } from '../setup.js';
 export interface SetupStore extends AdministrationStore {
     load(guildId: string): Promise<ServerConfig | undefined>;
-    save(config: ServerConfig): Promise<void>;
     loadSetupDraft(guildId: string): Promise<StoredSetupDraft | undefined>;
     saveSetupDraft(draft: StoredSetupDraft): Promise<void>;
     deleteSetupDraft(guildId: string, ownerId?: string): Promise<void>;

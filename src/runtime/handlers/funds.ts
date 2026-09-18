@@ -5,7 +5,7 @@ export interface FundsRepositories extends LedgerStore {
     permissionRoles(guildId: string): Promise<PermissionRole[]>;
 }
 const money = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-export async function handleFunds(interaction: ChatInputCommandInteraction, repositories: FundsRepositories): Promise<void> {
+export async function handleFunds(interaction: ChatInputCommandInteraction, repositories: FundsRepositories,refreshSummary?:()=>Promise<void>): Promise<void> {
     if (!interaction.guildId)
         throw new Error("Funds commands can only be used in a server.");
     await interaction.deferReply({ ephemeral: true });
@@ -16,6 +16,7 @@ export async function handleFunds(interaction: ChatInputCommandInteraction, repo
     const funds = new FundsService(repositories);
     const guildId = interaction.guildId;
     const actorId = interaction.user.id;
+    const summary=async()=>{if(refreshSummary)try{await refreshSummary();}catch{throw new Error('The ledger operation completed, but the public summary needs recovery. Use /funds refresh-summary after checking the configured Funds destination.');}};
     if (subcommand === "deposit" || subcommand === "spend") {
         const amount = interaction.options.getNumber("amount", true);
         const note = interaction.options.getString("note", true).trim();
@@ -25,6 +26,7 @@ export async function handleFunds(interaction: ChatInputCommandInteraction, repo
             throw new Error("A transaction note is required.");
         const entry = await funds.record(guildId, amount, actorId, note, subcommand === "deposit" ? "DEPOSIT" : "SPEND");
         const balance = await funds.balance(guildId);
+        await summary();
         await interaction.editReply({ content: `${subcommand === "deposit" ? "Deposited" : "Spent"} **${money.format(Math.abs(entry.amount))}**. New balance: **${money.format(balance)}**.\nReference: \`${entry.id}\`` });
         return;
     }
@@ -32,15 +34,18 @@ export async function handleFunds(interaction: ChatInputCommandInteraction, repo
         const target = interaction.options.getNumber("amount", true);
         const note = interaction.options.getString("note", true).trim();
         const entry = await funds.setBalance(guildId, target, actorId, note);
+        await summary();
         await interaction.editReply({ content: entry ? `Balance adjusted to **${money.format(target)}**.\nReference: \`${entry.id}\`` : `Balance is already **${money.format(target)}**; no ledger entry was created.` });
         return;
     }
     if (subcommand === "undo-last") {
         const entry = await funds.undoLast(guildId, actorId);
+        await summary();
         await interaction.editReply({ content: `Reversed the last unreversed transaction by **${money.format(entry.amount)}**. New balance: **${money.format(await funds.balance(guildId))}**.\nReference: \`${entry.id}\`` });
         return;
     }
     if (subcommand === "balance" || subcommand === "refresh-summary") {
+        if(subcommand==='refresh-summary')await summary();
         const content = `Current organization balance: **${money.format(await funds.balance(guildId))}**.`;
         await interaction.editReply({ content: subcommand === "refresh-summary" ? `${content}\nThe summary was refreshed from the persisted ledger.` : content });
         return;
@@ -49,7 +54,7 @@ export async function handleFunds(interaction: ChatInputCommandInteraction, repo
         const limit = interaction.options.getInteger("limit") ?? 10;
         const rows = (await repositories.history(guildId)).slice(-limit).reverse();
         const content = rows.length ? rows.map(row => `• <t:${Math.floor(Date.parse(row.createdAt) / 1000)}:d> **${signed(row.amount)}** — ${row.note} (<@${row.actorId}>)`).join("\n") : "No fund transactions have been recorded.";
-        await interaction.editReply({ content });
+        await interaction.editReply(content.length>1900?{content:"Fund history is attached.",files:[{attachment:Buffer.from(content),name:"fund-history.txt"}],allowedMentions:{parse:[]}}:{content,allowedMentions:{parse:[]}});
         return;
     }
     if (subcommand === "monthly") {

@@ -1,0 +1,65 @@
+import type {WorkflowStore} from '../../workflows.js';import {DurableSummary} from '../../workflows.js';
+import {DurableDelivery} from '../../intelligence.js';
+import {DiscordDurablePublisher} from '../intelligenceDiscord.js';import {DiscordProvisioner} from '../discordProvisioner.js';
+import {choices,interactionUuid,replyText,requireTier,textModal} from '../interactions.js';import type {BridgeRepositories} from './bridge.js';
+export type WorkflowRepositories=BridgeRepositories&WorkflowStore;
+export async function workflowDestination(i:any,store:WorkflowRepositories,key:string,restricted=false):Promise<string>{const r=(await store.list(i.guildId)).find(r=>r.key===key);if(!r)throw new Error(`Configure ${key} through /server setup first`);const channel=await i.guild.channels.fetch(r.discordId);if(!channel)throw new Error(`${key} is missing; run /server setup Repair`);if(restricted)await new DiscordProvisioner(i.guild,await store.permissionRoles(i.guildId)).restorePermissions(r,{key:r.key,name:channel.name,kind:'CHANNEL',minimumTier:'LEVEL_3'});return r.discordId;}
+export async function handleWorkflows(i:any,store:WorkflowRepositories):Promise<void>{
+ const component=!!i.customId,p=component?i.customId.split(':'):[],actor=i.user.id,guild=i.guildId;
+ if(component&&p[1]!==actor)throw new Error('This workflow panel belongs to another user');
+ const system=component?p[2]:i.commandName==='apprenticeship'?'mentorship':i.commandName,action=component?p[3]:i.options.getSubcommand(),context=p[4],selected=i.values?.[0]??context;
+ const staff=system==='recruit'||['setup','setup-save','review','process','reject','approve','deny','assign','close','cancel','audit','open','open-save'].includes(action);
+ await requireTier(i,store,staff?'LEVEL_3':'BASELINE');
+ const base=`flow:${actor}:${system}`,page=p.includes('page')?Number(p.at(-1)):0,call=(action:string,id?:string,data:Record<string,unknown>={})=>store.workflow(guild,system,action,actor,id,data);
+ const form=(name:string,title:string,fields:any[],ctx='new')=>textModal(`${base}:${name}:${ctx}`,title,fields);
+ if(!component&&system==='strongbox'&&['submit','drop'].includes(action)){await i.showModal(form('submit-save','Strongbox submission',[{id:'body',label:'Contents and source details',max:3500,paragraph:true}]));return;}
+ if(!component&&system==='application'&&action==='setup'){await i.showModal(form('setup-save','Application settings',[{id:'question',label:'Question to ask applicants',max:45,value:'Why are you applying for this duty?'}]));return;}
+ if(!component&&['vote','assignment'].includes(system)&&action==='open'){await i.showModal(form('open-save',system==='vote'?'Open poll':'Open assignment',[{id:'title',label:'Title',max:200},{id:'body',label:system==='vote'?'Choices, one per line':'Assignment details',max:3500,paragraph:true}],system==='vote'?i.options.getString('voter-tier')??'BASELINE':'new'));return;}
+ if(component&&system==='application'&&action==='apply-form'){const settings=await call('settings');if(!settings.enabled)throw new Error('Applications are disabled');await i.showModal(form('apply-save','Duty application',[{id:'answers',label:settings.question??'Why are you applying?',max:3500,paragraph:true}],context));return;}
+ await i.deferReply({ephemeral:true});const publisher=new DiscordDurablePublisher(i.guild),delivery=new DurableDelivery(store,publisher),summary=new DurableSummary(store,publisher);
+ const publish=async(record:any)=>{
+  if(system==='strongbox'){const hq=await workflowDestination(i,store,'HQ_STRONGBOX',true),drop=await workflowDestination(i,store,'STRONGBOX_DROP');await delivery.deliver(guild,`strongbox:${record.id}`,hq,`Submission ${record.id}\nMember: ${record.discord_member_id}\n${record.contents}`);await summary.refresh(guild,`strongbox-status:${record.id}`,hq,`Submission ${record.id}: ${record.status}`);await delivery.deliver(guild,`strongbox-drop:${record.id}`,drop,`Strongbox submission ${record.id} received for private review.`);}
+  if(system==='assignment'){await summary.refresh(guild,`board:${record.id}`,await workflowDestination(i,store,'ASSIGNMENTS'),`${record.title}\n${record.status}\n${record.payload.description??''}\nParticipants: ${(record.payload.claimed??[]).join(', ')||'none'}`);}
+  if(system==='application'){await delivery.deliver(guild,`application:${record.id}`,await workflowDestination(i,store,'APPLICATIONS'),`Application ${record.id}\nApplicant: ${record.applicant_id}\nDuty: ${record.duty_role_id}\n${Object.values(record.answers).join('\n')}`);}
+  if(system==='vote')await summary.refresh(guild,`vote:${record.id}`,await workflowDestination(i,store,'NOTICE_BOARD'),`${record.title}\n${record.status}\n${JSON.stringify(record.counts??{})}\nVote with /vote cast.`);
+ };
+ if(i.isModalSubmit()){
+  if(action==='setup-save'){await call('setup',undefined,{enabled:true,question:i.fields.getTextInputValue('question')});await i.editReply(replyText('Application form enabled for configured duties.'));return;}
+  const id=interactionUuid(i.id);let record;
+  if(action==='submit-save'){record=await call('submit',id,{contents:i.fields.getTextInputValue('body'),source:i.id});}
+  else if(action==='apply-save'){record=await call('apply',id,{duty:context,answers:{response:i.fields.getTextInputValue('answers')}});}
+  else if(action==='open-save'){const title=i.fields.getTextInputValue('title'),body=i.fields.getTextInputValue('body');record=await call('open',id,system==='vote'?{title,options:body.split('\n').map((x:string)=>x.trim()).filter(Boolean),tier:context}:{title,description:body});}
+  else throw new Error('Unknown workflow form');
+  try{await publish(record);}catch{throw new Error(`Saved ${record.id}; Discord delivery needs recovery. Reopen this record using history, review, or list to retry without creating a second record`);}await i.editReply(replyText(`Saved ${record.id}. ${record.status}`));return;
+ }
+ if(system==='recruit'){
+  const member=i.options.getUser('member',true);if(action==='welcome')await i.guild.members.fetch(member.id);const config=await store.load(guild);if(!config)throw new Error('Configure this server first');const channel=await workflowDestination(i,store,'NOTICE_BOARD');
+  if(action==='welcome'){await delivery.deliver(guild,`welcome:${member.id}`,channel,`Welcome ${member.username} to ${config.organizationName}. Use the configured Trailmark access panel and organization commands to get started.`);await call('record',undefined,{member:member.id,action,channel});await i.editReply(replyText('Welcome message delivered once.'));return;}
+  const saved=await call('get',undefined,{member:member.id,action:'invite'});let code=saved?.code;
+  if(!code){const destination=await i.guild.channels.fetch(channel),invites=await destination.fetchInvites();const existing=invites.find((v:any)=>v.inviter?.id===i.guild.client.user.id&&v.maxAge===0&&v.maxUses===0);code=(existing??await destination.createInvite({maxAge:0,maxUses:0,unique:false,reason:'Codex recruitment'})).code;await call('record',undefined,{member:member.id,action:'invite',channel,code});}
+  await i.editReply(replyText(`Reusable invitation for ${config.organizationName}: https://discord.gg/${code}`));return;
+ }
+ if(!component&&action==='setup'){if(system==='strongbox'){await workflowDestination(i,store,'HQ_STRONGBOX',true);await workflowDestination(i,store,'STRONGBOX_DROP');}else await workflowDestination(i,store,'ASSIGNMENTS');await call('setup',undefined,{enabled:true});await i.editReply(replyText('Workflow resources verified.'));return;}
+ if(system==='mentorship'&&!component&&action==='looking-for'){const record=await call('looking-for',interactionUuid(i.id));await i.editReply(replyText(`Mentorship request opened: ${record.id}`));return;}
+ if(system==='application'&&action==='apply'){
+  if(component&&!p.includes('page')){await i.editReply({content:'Complete the configured application form.',components:[{type:1,components:[{type:2,style:1,label:'Apply',custom_id:`${base}:apply-form:${selected}`}]}]});return;}
+  const duties=(await store.organization(guild)).duties;await i.editReply(choices(`${base}:apply`,duties.slice(page*25,page*25+25).map(d=>({id:d.roleId,name:d.displayName})),page,duties.length>(page+1)*25));return;
+ }
+ if(component&&system==='vote'&&action==='ballot'){
+  const record=await call('get',context);await requireTier(i,store,record.voter_tier,record.permission_snapshot);const result=await call('cast',context,{selection:selected});await publish(result);await i.editReply(replyText('Your ballot is recorded.'));return;
+ }
+ if(component&&!p.includes('page')){
+  const id=selected,record=await call('get',id);
+  if(system==='strongbox'&&!staff&&record.discord_member_id!==actor)throw new Error('You can view only your own submissions');
+  if(system==='application'&&!staff&&record.applicant_id!==actor)throw new Error('You can view only your own applications');
+  if(system==='vote'&&action==='cast'){await requireTier(i,store,record.voter_tier,record.permission_snapshot);await i.editReply(choices(`${base}:ballot:${id}`,record.options.map((v:string)=>({id:v,name:v}))));return;}
+  const data:Record<string,unknown>={};
+  if(system==='mentorship'&&['assign','propose','sponsor'].includes(action)){const mentor=action==='assign'?context:actor;await i.guild.members.fetch(mentor);await i.guild.members.fetch(record.mentee_id);data.mentor=mentor;}
+  if(system==='mentorship'&&action==='end'&&record.mentor_id!==actor&&record.mentee_id!==actor)await requireTier(i,store,'LEVEL_3');
+  if(['history','review','status','list','info','requests'].includes(action)){await publish(record);await i.editReply({content:`${system}: ${id}`,files:[{attachment:Buffer.from(JSON.stringify(record,null,2)),name:`${system}.json`}],allowedMentions:{parse:[]}});return;}
+  const result=await call(action,id,data);await publish(result);await i.editReply({content:`${action} saved. ${result.status??''}`,files:action==='audit'?[{attachment:Buffer.from(JSON.stringify(result,null,2)),name:'poll-audit.json'}]:[],allowedMentions:{parse:[]}});return;
+ }
+ const contextId=system==='mentorship'&&action==='assign'?i.options?.getUser('mentor',true)?.id??context:undefined;
+ const rows=await call('list',undefined,{page,staff:staff&&['strongbox','application'].includes(system),all:system==='mentorship'&&['requests','propose','sponsor','assign'].includes(action)});
+ await i.editReply(choices(`${base}:${action}${contextId?`:${contextId}`:''}`,rows.map((r:any)=>({id:r.id,name:`${r.title??r.mentee_id??r.applicant_id??r.discord_member_id??r.id}: ${r.status}`})),page,rows.length===25));
+}

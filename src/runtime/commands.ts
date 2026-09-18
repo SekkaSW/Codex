@@ -6,7 +6,7 @@ const subcommands: Record<string, string[]> = {
     recruit: ["invite", "welcome"], funds: ["deposit", "spend", "set-balance", "refresh-summary", "balance", "history", "undo-last", "monthly"],
     intel: ["set-hq", "topic-add", "topic-edit", "topic-list", "catchall-set", "catchall-clear", "refresh", "repair-reporters", "backfill"],
     strongbox: ["submit", "history"], reference: ["get", "list"], supply: ["create", "log", "undo-last", "redistribute", "status", "contributors", "refresh", "close", "reopen", "cancel"],
-    duty: ["assign", "remove", "list"], application: ["apply", "withdraw", "list", "setup"], apprenticeship: ["looking-for", "withdraw-looking", "propose", "sponsor", "assign", "end", "info", "requests"],
+    duty: ["assign", "remove", "list"], application: ["apply", "withdraw", "list", "setup"], mentorship: ["looking-for", "withdraw-looking", "propose", "sponsor", "assign", "end", "info", "requests"],
     contact: ["setup", "repair", "create", "create-group", "edit", "list", "link-member", "unlink-member", "archive"], vote: ["open", "close", "audit"], briefing: ["setup", "send", "settings"],
     assignment: ["open", "claim", "close", "cancel", "set-member", "clear-member", "sync-roles"], patrol: ["suggest", "list", "resolve"], alliance: ["setup", "sync", "status", "group-add", "group-topics", "group-remove", "headquarters-remove"]
 };
@@ -15,6 +15,7 @@ export function commandDefinitions(namespace?: string): unknown[] {
     const commands: any[] = [new SlashCommandBuilder().setName("ping").setDescription("Check Codex availability")];
     commands.push(new SlashCommandBuilder().setName("server").setDescription("Configure this Codex server").setDefaultMemberPermissions("8").addSubcommand((s: any) => s.setName("setup").setDescription("Start or resume the setup wizard")));
     for (const [name, subs] of Object.entries(subcommands)) {
+        if(['strongbox','recruit','application','mentorship','vote'].includes(name)){commands.push(workflowCommand(name));continue;}
         if(name==='alliance'){const c=new SlashCommandBuilder().setName(name).setDescription('Authorized cross-server intelligence bridges');for(const action of [...subs,'archive-category'])c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(action==='archive-category')s.addChannelOption((o:any)=>o.setName('category').setDescription('Legacy category to retain with staff-only access').setRequired(true).addChannelTypes(4));if(action==='setup'){for(const key of ['name','remote'])s.addStringOption((o:any)=>o.setName(key).setDescription(key==='name'?'Remote organization name':'Remote Discord server ID').setRequired(true).setMaxLength(100));s.addStringOption((o:any)=>o.setName('protocol').setDescription('Bridge protocol').setRequired(true).addChoices({name:'Native Codex',value:'codex-v1'},{name:'Legacy intake',value:'legacy-wayfinder'}));s.addChannelOption((o:any)=>o.setName('intake').setDescription('Legacy intake text channel').addChannelTypes(0));s.addUserOption((o:any)=>o.setName('sender').setDescription('Trusted legacy bot sender'));}return s;});commands.push(c);continue;}
         if(name==='intel'||name==='contact'){commands.push(intelligenceCommand(name));continue;}
         if(name==='advancement'||name==='trailmark'){commands.push(fieldCommand(name));continue;}
@@ -32,7 +33,7 @@ export function commandDefinitions(namespace?: string): unknown[] {
         }
         if (name === 'assignment') {
             const command = new SlashCommandBuilder().setName(name).setDescription('Assignment board and member administration');
-            for (const sub of subs)
+            for (const sub of [...subs,'setup','unclaim','list'])
                 command.addSubcommand((s: any) => { s.setName(sub).setDescription(sub.replaceAll('-', ' ')); if (['set-member', 'clear-member', 'sync-roles'].includes(sub))
                     s.addUserOption((o: any) => o.setName('member').setDescription('Server member').setRequired(true)); return s; });
             commands.push(command);
@@ -49,6 +50,11 @@ export function commandDefinitions(namespace?: string): unknown[] {
         commands.push(memberCommand(namespace));
     }
     return commands.map(command => command.toJSON());
+}
+function workflowCommand(name:string):any {
+ const names:Record<string,string[]>={strongbox:['setup','submit','drop','history','review','process','reject'],recruit:['invite','welcome'],application:['setup','apply','withdraw','list','review','approve','deny'],mentorship:['looking-for','withdraw-looking','propose','sponsor','assign','end','info','requests'],vote:['open','cast','close','audit','list']};
+ const c=new SlashCommandBuilder().setName(name).setDescription(`${name} durable organization workflow`);
+ for(const action of names[name]!)c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(name==='recruit')s.addUserOption((o:any)=>o.setName('member').setDescription('Invite recipient or member to welcome').setRequired(true));if(name==='mentorship'&&action==='assign')s.addUserOption((o:any)=>o.setName('mentor').setDescription('Active mentor').setRequired(true));if(name==='vote'&&action==='open')s.addStringOption((o:any)=>o.setName('voter-tier').setDescription('Minimum voter tier').addChoices(...['BASELINE','LEVEL_1','LEVEL_2','LEVEL_3','LEVEL_4'].map(v=>({name:v,value:v}))));return s;});return c;
 }
 function intelligenceCommand(name:string):any {
  const c=new SlashCommandBuilder().setName(name).setDescription('Intelligence reports and local Contacts');

@@ -3,6 +3,7 @@ import { DurableDelivery, IntelligencePipeline, type ContactRow, type DurablePub
 import type { Registry, ManagedResource } from '../resources.js';
 export class DiscordDurablePublisher implements DurablePublisher {
  constructor(private readonly guild:any){}
+ async edit(channelId:string,messageId:string,body:string):Promise<boolean>{try{const channel=await this.guild.channels.fetch(channelId);if(!channel)return false;const message=await channel.messages.fetch(messageId);if(message.author.id!==this.guild.client.user.id)throw new Error('Stored summary is not owned by this bot');await message.edit({content:'',embeds:[{description:body.slice(0,4096)}],allowedMentions:{parse:[]}});return true;}catch(error){if([10003,10008].includes((error as {code:number}).code))return false;throw error;}}
  async send(channelId:string,key:string,body:string):Promise<string>{
   const channel=await this.guild.channels.fetch(channelId);if(!channel)throw new Error('Delivery destination is missing');
   const payload={embeds:[{description:body.slice(0,4096),footer:{text:`codex-delivery:${key}`}}],allowedMentions:{parse:[]}};

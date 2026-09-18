@@ -14,7 +14,11 @@ import { handleIntelligence,type IntelligenceRepositories } from './handlers/int
 import { DiscordIntelligence } from './intelligenceDiscord.js';
 import {handleBridge,type BridgeRepositories} from './handlers/bridge.js';
 import {BridgeCoordinator} from '../bridge.js';
-export interface RuntimeRepositories extends Registry, SetupStore, FundsRepositories, DutyRepositories, MemberRepositories,FieldRepositories,IntelligenceRepositories,BridgeRepositories {
+import {handleWorkflows,workflowDestination,type WorkflowRepositories} from './handlers/workflows.js';
+import {DurableSummary} from '../workflows.js';
+import {DiscordDurablePublisher} from './intelligenceDiscord.js';
+import {FundsService} from '../services.js';
+export interface RuntimeRepositories extends Registry, SetupStore, FundsRepositories, DutyRepositories, MemberRepositories,FieldRepositories,IntelligenceRepositories,BridgeRepositories,WorkflowRepositories {
 }
 export function createBot(repositories: RuntimeRepositories): Client {
     const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
@@ -103,6 +107,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
 export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRepositories): Promise<void> {
     if (!i.guildId)
         throw new Error('Use Codex inside a server');
+    if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('flow:')){await handleWorkflows(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('bridge:')){await handleBridge(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('intel:')){await handleIntelligence(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('field:')){await handleField(i,repositories);return;}
@@ -140,7 +145,7 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
     if (module && !config.modules[module])
         throw new Error('This optional module is disabled');
     if (i.commandName === 'funds') {
-        await handleFunds(i, repositories);
+        await handleFunds(i, repositories,async()=>{const destination=await workflowDestination(i,repositories,'FUNDS');await new DurableSummary(repositories,new DiscordDurablePublisher(i.guild)).refresh(i.guildId,'funds',destination,`Organization Funds\nBalance: ${await new FundsService(repositories).balance(i.guildId)}`);});
         return;
     }
     if (i.commandName === 'duty') {
@@ -150,6 +155,7 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
     if(i.commandName==='advancement'||i.commandName==='trailmark'){await handleField(i,repositories);return;}
     if(i.commandName==='intel'||i.commandName==='contact'){await handleIntelligence(i,repositories);return;}
     if(i.commandName==='alliance'){await handleBridge(i,repositories);return;}
+    if(['strongbox','recruit','application','mentorship','vote'].includes(i.commandName)||(i.commandName==='assignment'&&!['set-member','clear-member','sync-roles'].includes(i.options.getSubcommand()))){await handleWorkflows(i,repositories);return;}
     if (i.commandName === 'roster' || i.commandName === config.commandNamespace || (i.commandName === 'assignment' && ['set-member', 'clear-member', 'sync-roles'].includes(i.options.getSubcommand()))) {
         await handleMembers(i, repositories);
         return;

@@ -55,3 +55,7 @@ Use /trailmark report for structured capture, /intel deliver while holding an ac
 ## Cross-server intelligence
 
 Native bridges connect configured Discord guilds on the same Codex installation. Each guild administrator independently uses /alliance setup to authorize the other. Use /alliance group-topics for local-to-remote topic mappings and /alliance status/sync for delivery monitoring/retry. See BRIDGE_COMPATIBILITY.md for the supported legacy intake and deployment boundary.
+
+## Organization workflows
+
+Apply migration 008 for Strongbox, duty applications, mentorship, general voting, recruitment and the assignment board. /strongbox setup verifies private HQ review access. /application setup enables a configurable question for configured duties. /mentorship manages persisted requests and relationships. /vote opens durable polls with permission snapshots; /assignment open creates board items distinct from member assignment groups. Funds mutations and /funds refresh-summary maintain the stored public summary message.

@@ -49,3 +49,7 @@ IntelligencePipeline uses the canonical report model and codex_intelligence. Cla
 ## Phase 7 bridges
 
 BridgeCoordinator extends the existing protocol-independent BridgeService. Native codex-v1 transport is a service-only database boundary between mutually authorized guilds in one installation. Version, expected identities and persisted source report are validated before atomic receive/delivery receipt. Imported reports carry immutable origin metadata and do not relay. Legacy ingestion is an isolated Discord message adapter, gated by configured intake channel and trusted sender. Remote guild-local topic names are mapped through stored topic groups.
+
+## Phase 8 organization workflows
+
+The service-only codex_workflow RPC extends existing domain tables with durable review metadata, configurable forms, voter snapshots, uniqueness/cycle checks and audit. It does not replace the Funds ledger. DurableSummary stores message IDs in bot_message_state, edits surviving bot-owned messages and uses delivery receipts for replacement after confirmed deletion. Strongbox, welcome and application sends use the same receipts. Setup no longer shadows StrongboxStore.save: configuration uses its atomic organization save path.
