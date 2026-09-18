@@ -65,13 +65,13 @@ function intelligenceCommand(name:string):any {
 function fieldCommand(name:string):any {
  const c=new SlashCommandBuilder().setName(name).setDescription(name==='advancement'?'Advancement cases and ballots':'Trailmark access and field information');
  const names=name==='advancement'?['setup','eligible','status','open','close','approve','deny','ballots']:['panel','leave','list','sessions','create','edit','deactivate','set-atlas','clear-atlas','report','hq','repair','configure'];
- for(const action of names)c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(name==='advancement'&&['open','eligible'].includes(action))s.addUserOption((o:any)=>o.setName('member').setDescription('Candidate').setRequired(true));if(name==='advancement'&&action==='setup'){s.addStringOption((o:any)=>o.setName('voter-tier').setDescription('Minimum voter permission tier').setRequired(true).addChoices(...['BASELINE','LEVEL_1','LEVEL_2','LEVEL_3','LEVEL_4'].map(v=>({name:v,value:v}))));s.addIntegerOption((o:any)=>o.setName('minimum-yes').setDescription('Minimum affirmative votes; majority is also required').setRequired(true).setMinValue(1).setMaxValue(10000));}return s;});return c;
+ for(const action of names)c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(name==='trailmark'&&action==='sessions')s.addIntegerOption((o:any)=>o.setName('page').setDescription('Page of up to 100 sessions, starting at zero').setMinValue(0));if(name==='advancement'&&['open','eligible'].includes(action))s.addUserOption((o:any)=>o.setName('member').setDescription('Candidate').setRequired(true));if(name==='advancement'&&action==='setup'){s.addStringOption((o:any)=>o.setName('voter-tier').setDescription('Minimum voter permission tier').setRequired(true).addChoices(...['BASELINE','LEVEL_1','LEVEL_2','LEVEL_3','LEVEL_4'].map(v=>({name:v,value:v}))));s.addIntegerOption((o:any)=>o.setName('minimum-yes').setDescription('Minimum affirmative votes; majority is also required').setRequired(true).setMinValue(1).setMaxValue(10000));}return s;});return c;
 }
 function memberCommand(name: string): any {
     const command = new SlashCommandBuilder().setName(name).setDescription('Persisted organization member administration');
     for (const sub of ['info', 'export', 'assignments', 'audit', 'inactive-review', 'sync-member', 'sync-all', 'sync-join-history', 'status', 'retire-left', 'note', 'notes', 'promote', 'rank'])
         command.addSubcommand((s: any) => {
-            s.setName(sub).setDescription(`${sub.replaceAll('-', ' ')} member records`);
+            s.setName(sub).setDescription(`${sub.replaceAll('-', ' ')} member records`);if(['sync-all','retire-left'].includes(sub))s.addIntegerOption((o:any)=>o.setName('page').setDescription('Page of up to 100 members, starting at zero').setMinValue(0));
             if (!['export', 'inactive-review', 'sync-all', 'retire-left'].includes(sub))
                 s.addUserOption((o: any) => o.setName('member').setDescription('Member').setRequired(sub !== 'info'));
             if (sub === 'status')

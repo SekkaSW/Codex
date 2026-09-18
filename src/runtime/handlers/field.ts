@@ -72,7 +72,7 @@ export async function handleField(i:any,store:FieldRepositories):Promise<void>{
   const ready=await adapter.ensure(trailmark);await i.editReply(replyText(`Created ${ready.name}: <#${ready.channel_id}>.`));return;
  }
  if(action==='leave'){await lifecycle.leave(i.guildId,i.user.id);await i.editReply(replyText('Trailmark access revoked.'));return;}
- if(action==='sessions'){const sessions=await store.trailmark<AccessSession[]>(i.guildId,'sessions',i.user.id,undefined,{all:true});await i.editReply({content:`${sessions.length} active/pending sessions (bounded to 100).`,files:[{attachment:Buffer.from(JSON.stringify(sessions,null,2)),name:'sessions.json'}]});return;}
+ if(action==='sessions'){const sessions=await store.trailmark<AccessSession[]>(i.guildId,'sessions',i.user.id,undefined,{all:true,page:i.options?.getInteger?.('page')??0});await i.editReply({content:`${sessions.length} active/pending sessions on this page; use the next page if this contains 100.`,files:[{attachment:Buffer.from(JSON.stringify(sessions,null,2)),name:'sessions.json'}]});return;}
  if(action==='report-form'||action==='edit-form'){
   const [id,revision]=context.split('/');const trailmark=await store.trailmark(i.guildId,'get',i.user.id,id);
   if(action==='edit-form'){await store.trailmark(i.guildId,'edit',i.user.id,id,{revision:Number(revision),name:i.fields.getTextInputValue('name').trim(),description:i.fields.getTextInputValue('description').trim()});await i.editReply(replyText('Trailmark details updated; its Discord name and position were preserved.'));return;}

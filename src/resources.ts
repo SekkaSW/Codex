@@ -34,7 +34,8 @@ export function desiredResources(modules: Record<ModuleKey, boolean>): ResourceS
 }
 export interface Provisioner {
     exists(id: string): Promise<boolean>;
-    create(spec: ResourceSpec, parentId?: string): Promise<string>;
+    create(spec: ResourceSpec, parentId?: string, recoveryToken?:string): Promise<string>;
+    recover?(spec:ResourceSpec,recoveryToken:string):Promise<string|undefined>;
     restorePermissions(resource: ManagedResource, spec: ResourceSpec): Promise<void>;
 }
 export interface Registry {
@@ -51,9 +52,16 @@ export async function repairResources(guildId: string, specs: ResourceSpec[], re
     const retained: string[] = [];
     for (const spec of specs) {
         let record = byKey.get(spec.key);
+        if(record?.discordId.startsWith('pending:')){
+            const recovered=await provisioner.recover?.(spec,record.discordId);
+            if(!recovered)throw new Error(`Creation of ${spec.key} has an uncertain outcome. In /server setup select the existing resource explicitly before retrying Repair; do not create a duplicate.`);
+            record={...record,discordId:recovered};await registry.put(record);byKey.set(spec.key,record);
+        }
         if (!record || !(await provisioner.exists(record.discordId))) {
             const parentId = spec.parent ? byKey.get(spec.parent)?.discordId : undefined;
-            const discordId = await provisioner.create(spec, parentId);
+            const recoveryToken=`pending:${crypto.randomUUID()}`;
+            await registry.put({guildId,key:spec.key,discordId:recoveryToken,kind:spec.kind});
+            const discordId = await provisioner.create(spec, parentId,recoveryToken);
             record = { guildId, key: spec.key, discordId, kind: spec.kind };
             await registry.put(record);
             byKey.set(spec.key, record);

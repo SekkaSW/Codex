@@ -2,9 +2,9 @@
 
 ## Supabase
 
-Apply migrations `001` through `004` in order. Migration `003` adds durable drafts and authored notes. Migration `004` adds member versions, historical managed-role ownership, operation receipts, additional resource specifications, and atomic administration RPCs. It enables RLS on administrative tables and restricts administration RPCs to `service_role`. Existing Atlas RPC contracts are unchanged. Codex must use `SUPABASE_SERVICE_ROLE_KEY` only on the server. Browser-facing Atlas access belongs behind separately audited RPCs—never expose the service key.
+Apply migrations `001` through `011` in order. Migration `003` adds durable drafts and authored notes. Migration `004` adds member versions, historical managed-role ownership, operation receipts, additional resource specifications, and atomic administration RPCs. It enables RLS on administrative tables and restricts administration RPCs to `service_role`. Existing Atlas RPC contracts are unchanged. Codex must use `SUPABASE_SERVICE_ROLE_KEY` only on the server. Browser-facing Atlas access belongs behind separately audited RPCs—never expose the service key.
 
-The repository adapter performs real table upserts/selects and invokes the compatibility RPC names for link codes, access requests, and Field Drops. Deployments must install compatible RPC implementations with restricted execute grants. Queue claims must be atomic in production.
+The repository adapter performs real table upserts/selects and invokes the compatibility RPC names for link codes, access requests, and Field Drops. Migration 010 implements the bot-side Atlas contracts with restricted execute grants and atomic leased claims; migration 011 completes grants and integration hardening. Verify companion signatures against ATLAS_COMPATIBILITY.md before rollout.
 
 ## Discord
 
@@ -89,3 +89,13 @@ Atlas bot polling runs every five seconds when enabled, skipping busy guilds and
 All new Atlas browser-facing RPCs remain service-role-only. A trusted authenticated Atlas backend must map its caller to the Atlas account before invoking link/queue/position RPCs. Do not grant these functions to anon/authenticated or put the service key in a browser. Actual companion compatibility needs staging against its deployed signatures. The bot does not control the browser/local mod or change the Skyrim local bridge.
 
 Smoke test each disabled module through both slash and saved components, then enable and exercise its full lifecycle. For Atlas, test two guilds, expired/reused link codes, queue lease reclamation after restart, a field drop into the canonical HQ pipeline, profile sync and visit end/heartbeat. Verify disabled Atlas claims nothing and unrelated field expiration continues after a simulated Atlas failure.
+
+## Final audit migration and operating limits
+
+Apply 011_production_audit.sql after 001-010. It consolidates legacy report_topics into the canonical topic store, archives the original rows in audit_events, preserves a read compatibility view, fixes service-role grants, enforces guild references and adds durable report work tracking. The bot only processes pending/changed reports; completed history does not delay new arrivals. Contact-group changes requeue affected reports without resending earlier Contact deliveries. Failed report work rotates by attempt timestamp.
+
+Resource provisioning records a pending creation before calling Discord. Text/forum creation can recover by an exact bot resource token. Discord categories have no such metadata; after an ambiguous create response, explicitly bind the existing category in /server setup instead of retrying creation blindly. Surviving resources retain names/positions. A confirmed failure with no created category requires administrator inspection and clearing/rebinding the pending registry record.
+
+Bulk member sync/retirement and Trailmark session exports accept page numbers with up to 100 records per page. Guild workers use round-robin scheduling with at most four concurrent guild jobs, one writer per guild, five-second Atlas opportunities and thirty-second core field recovery. Funds balances aggregate in SQL and public history retrieves at most 25 rows. Monthly summaries/undo retain the original ledger semantics. Briefing reads require LEVEL_1 because dispatch-desk is a restricted resource.
+
+The unreleased migration 010 grant loop was narrowed to its explicit function names so unrelated Atlas overloads/functions are not blanket-revoked. Compare deployed companion signatures before applying it. Review the complete command inventory in COMMANDS.md and audit evidence in FINAL_AUDIT.md.

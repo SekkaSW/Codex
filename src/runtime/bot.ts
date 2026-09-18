@@ -42,7 +42,6 @@ export function createBot(repositories: RuntimeRepositories): Client {
     client.once(Events.ClientReady, ready => console.info(`Codex ready as ${ready.user.tag}`));
     // Serialize guild writes in this process, including configuration and member role mutations.
     const pending = new Map<string, Promise<void>>();
-    const intelligencePages=new Map<string,number>();
     const atlasRuntime=new AtlasRuntime(repositories);
     client.on(Events.MessageCreate,message=>{
         if(!message.guildId||!message.guild||!message.author.bot||message.author.id===client.user?.id)return;
@@ -50,14 +49,37 @@ export function createBot(repositories: RuntimeRepositories): Client {
         const work=(pending.get(key)??Promise.resolve()).then(async()=>{const config=await repositories.load(key);if(!config)return;const id=await new BridgeCoordinator(repositories).ingest(key,message.channelId,message.webhookId??message.author.id,message.id,message.content,config.confidentialityMarker);if(id)await new DiscordIntelligence(message.guild,repositories).pipeline.process(key,id);}).catch(error=>console.error('Bridge intake rejected or requires recovery',key,error instanceof Error?error.message:'Intake failure'));
         pending.set(key,work);void work.finally(()=>{if(pending.get(key)===work)pending.delete(key);});
     });
-    client.once(Events.ClientReady,()=>{
-        let running=false,ticks=0;
-        const tick=async()=>{if(running)return;running=true;ticks++;try{for(const guild of client.guilds.cache.values()){
-            if(pending.has(guild.id))continue;
-            const work=(async()=>{if(!await repositories.load(guild.id))return;try{await atlasRuntime.poll(guild);}catch(error){console.error('Atlas recovery requires retry',guild.id,error instanceof Error?error.message:'Atlas failed');}if(ticks%6!==1)return;const result=await new TrailmarkLifecycle(repositories,new DiscordTrailmarkAccess(guild,repositories)).reconcile(guild.id,client.user!.id);if(result.failures.length)console.error('Trailmark reconciliation requires retry',guild.id,result.failures);const page=intelligencePages.get(guild.id)??0;const intel=await new DiscordIntelligence(guild,repositories).pipeline.batch(guild.id,page);intelligencePages.set(guild.id,intel.processed+intel.failures.length===0?0:page+1);if(intel.failures.length)console.error('Intelligence recovery requires retry',guild.id,intel.failures);const config=await repositories.load(guild.id);if(config)await new BridgeCoordinator(repositories).drain(guild.id,config.confidentialityMarker);})().catch(error=>console.error('Field recovery failed',guild.id,error));
-            pending.set(guild.id,work);await work;if(pending.get(guild.id)===work)pending.delete(guild.id);
-        }}finally{running=false;}};
-        const timer=setInterval(()=>void tick(),5_000);timer.unref();void tick();
+    client.once(Events.ClientReady, () => {
+        let active = 0, cursor = 0;
+        const lastField = new Map<string, number>();
+        const runGuild = async (guild: any) => {
+            const config = await repositories.load(guild.id);
+            if (!config) return;
+            try { await atlasRuntime.poll(guild); }
+            catch (error) { console.error('Atlas recovery requires retry', guild.id, error instanceof Error ? error.message : 'Atlas failed'); }
+            if (Date.now() - (lastField.get(guild.id) ?? 0) < 30_000) return;
+            lastField.set(guild.id, Date.now());
+            const result = await new TrailmarkLifecycle(repositories, new DiscordTrailmarkAccess(guild, repositories)).reconcile(guild.id, client.user!.id);
+            if (result.failures.length) console.error('Trailmark reconciliation requires retry', guild.id, result.failures);
+            const intel = await new DiscordIntelligence(guild, repositories).pipeline.batch(guild.id);
+            if (intel.failures.length) console.error('Intelligence recovery requires retry', guild.id, intel.failures);
+            await new BridgeCoordinator(repositories).drain(guild.id, config.confidentialityMarker);
+        };
+        const tick = () => {
+            const guilds = [...client.guilds.cache.values()];
+            // Round-robin bounded concurrency prevents one slow guild from holding every peer.
+            for (let scanned = 0; scanned < guilds.length && active < 4; scanned++) {
+                const guild = guilds[cursor++ % guilds.length]!;
+                if (pending.has(guild.id)) continue;
+                active++;
+                const work = runGuild(guild).catch(error => console.error('Field recovery failed', guild.id, error));
+                pending.set(guild.id, work);
+                void work.finally(() => { active--; if (pending.get(guild.id) === work) pending.delete(guild.id); });
+            }
+        };
+        const timer = setInterval(tick, 5_000);
+        timer.unref();
+        tick();
     });
     client.on(Events.InteractionCreate, i => {
         const key = i.guildId ?? i.id;
@@ -166,5 +188,5 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
         await handleMembers(i, repositories);
         return;
     }
-    throw new Error(`/${i.commandName} is registered but its production workflow is not implemented yet.`);
+    throw new Error(`Unknown or stale command /${i.commandName}. Ask an administrator to re-register this installation's commands.`);
 }

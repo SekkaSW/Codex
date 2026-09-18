@@ -52,7 +52,7 @@ export async function handleFunds(interaction: ChatInputCommandInteraction, repo
     }
     if (subcommand === "history") {
         const limit = interaction.options.getInteger("limit") ?? 10;
-        const rows = (await repositories.history(guildId)).slice(-limit).reverse();
+        const rows = repositories.recentHistory?await repositories.recentHistory(guildId,limit):(await repositories.history(guildId)).slice(-limit).reverse();
         const content = rows.length ? rows.map(row => `• <t:${Math.floor(Date.parse(row.createdAt) / 1000)}:d> **${signed(row.amount)}** — ${row.note} (<@${row.actorId}>)`).join("\n") : "No fund transactions have been recorded.";
         await interaction.editReply(content.length>1900?{content:"Fund history is attached.",files:[{attachment:Buffer.from(content),name:"fund-history.txt"}],allowedMentions:{parse:[]}}:{content,allowedMentions:{parse:[]}});
         return;

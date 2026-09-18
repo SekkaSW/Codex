@@ -47,6 +47,8 @@ function dataOrThrow<T>(result: {
 }): T { if (result.error)
     throw new Error(result.error.message); return result.data as T; }
 export class SupabaseRepositories extends FieldRepository implements Registry, TrailmarkStore, IntelStore, LedgerStore, StrongboxStore, AtlasGateway {
+    async balanceTotal(guildId:string):Promise<number>{return Number(await this.rpc('codex_funds_total',{p_guild:guildId}));}
+    recentHistory(guildId:string,limit:number):Promise<LedgerEntry[]>{return this.rpc('codex_funds_recent',{p_guild:guildId,p_limit:limit});}
     async server(guildId: string): Promise<ServerConfig | undefined> {
         const rows = dataOrThrow(await this.client.from("server_config").select("*,server_modules(*)").eq("guild_id", guildId).limit(1) as unknown as {
             data: Record<string, unknown>[] | null;

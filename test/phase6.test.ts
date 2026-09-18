@@ -24,6 +24,11 @@ test('Phase 6 migration, canonical HQ pipeline, confidential local publication a
   await pipeline.batch('g');await pipeline.process('g',id);assert.equal(sends.length,3);
   const row=await store.intelligence<ReportRow>('g','report-get','admin',id),canonical=canonicalReport(row,'[CONFIDENTIAL]');assert.equal(row.delivery_status,'PUBLISHED');assert.equal(canonical.authorId,'reporter');assert.equal(canonical.sourceTrailmarkId,t.id);assert.equal(canonical.confidential,true);assert.equal(mayTransfer(canonical,'[CONFIDENTIAL]'),false);assert.deepEqual(nativeAdapter.parse(nativeAdapter.serialize(canonical)),JSON.parse(JSON.stringify(canonical)));
   await assert.rejects(store.intelligence('other','report-get','admin',id));
+  assert.deepEqual(await store.intelligence('g','pending','system'),[]);
+  const second=await store.intelligence<ContactRow>('g','contact-create','admin',crypto.randomUUID(),{name:'Second contact',kind:'CONTACT'});
+  await store.intelligence('g','contact-group','admin',group.id,{contacts:[contact.id,second.id]});
+  assert.equal((await store.intelligence<ReportRow[]>('g','pending','system')).length,1);
+  await pipeline.batch('g');assert.equal(sends.length,4);assert.equal(sends.at(-1)!.channel,second.id);
  }finally{await db.close();}
 });
 test('Phase 6 topics, Contacts, links, archives, revisions and guild isolation survive repository restart',async()=>{

@@ -6,7 +6,7 @@ export async function handleOptional(i:any,store:OptionalRepositories):Promise<v
  if(component&&p[1]!==actor)throw new Error('This optional-system panel belongs to another user');
  const system=component?p[2]:i.commandName,action=component?p[3]:i.options.getSubcommand(),context=p[4],selected=i.values?.[0]??context,base=`optional:${actor}:${system}`,page=p.includes('page')?Number(p.at(-1)):0;
  const config=await store.load(guild),module=system==='briefing'?'briefings':system==='patrol'?'patrols':system;if(system!=='reference'&&!config?.modules[module as keyof typeof config.modules])throw new Error('This optional module is disabled');
- await requireTier(i,store,['create','create-save','setup','setup-save','edit','edit-save','send','send-save','redistribute','redistribute-save','close','reopen','cancel','resolve'].includes(action)?'LEVEL_3':'BASELINE');
+ await requireTier(i,store,['create','create-save','setup','setup-save','edit','edit-save','send','send-save','redistribute','redistribute-save','close','reopen','cancel','resolve'].includes(action)?'LEVEL_3':system==='briefing'?'LEVEL_1':'BASELINE');
  const call=(action:string,id?:string,data:Record<string,unknown>={})=>store.optional(guild,system,action,actor,id,data);
  if(!component&&system==='supply'&&action==='create'){await i.showModal(textModal(`${base}:create-save:new`,'Supply campaign',[{id:'title',label:'Title and resource/unit',max:200}]));return;}
  if(!component&&system==='reference'&&action==='edit'){await i.showModal(textModal(`${base}:edit-save:new`,'Save reference entry',[{id:'key',label:'Stable lookup key',max:100},{id:'title',label:'Title',max:200},{id:'body',label:'Reference content',max:4000,paragraph:true}]));return;}

@@ -53,6 +53,7 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
     if (sub === 'sync-all' || sub === 'retire-left') {
         const live = await i.guild.members.fetch();
         const persisted = await store.members(i.guildId);
+        const previous = new Map(persisted.map(m=>[m.memberId,m]));
         const known = new Map(persisted.map(m => [m.memberId, m]));
         const relevant = new Set([...managedRoles(c), ...(await store.permissionRoles(i.guildId)).map(r => r.roleId)]);
         const failures: string[] = [];
@@ -67,9 +68,10 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
                     catch (error) {
                         failures.push(`${member.id}: ${String(error)}`);
                     }
-        for (const m of known.values())
+        const page=Math.max(0,i.options.getInteger?.('page')??0),batch=[...known.values()].sort((a,b)=>a.memberId.localeCompare(b.memberId)).slice(page*100,(page+1)*100);
+        for (const m of batch)
             try {
-                const before = await store.member(i.guildId, m.memberId), member = live.get(m.memberId);
+                const before = previous.get(m.memberId), member = live.get(m.memberId);
                 if (sub === 'retire-left' && m.status !== 'LEFT')
                     continue;
                 const after = { ...m, status: sub === 'retire-left' || m.status === 'RETIRED' ? 'RETIRED' as const : !member ? 'LEFT' as const : m.status === 'LEFT' ? 'INACTIVE' as const : m.status, displayName: member?.displayName ?? m.displayName };
@@ -79,7 +81,7 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
             catch (error) {
                 failures.push(`${m.memberId}: ${String(error)}`);
             }
-        await i.editReply({ content: `Processed ${completed} members. Failures: ${failures.length}.`, ...(failures.length ? { files: [{ attachment: Buffer.from(failures.join('\n')), name: 'sync-errors.txt' }] } : {}) });
+        await i.editReply({ content: `Processed ${completed} members. Failures: ${failures.length}. Page ${page}; ${known.size>(page+1)*100?`continue with page ${page+1}`:'no further page'}.`, ...(failures.length ? { files: [{ attachment: Buffer.from(failures.join('\n')), name: 'sync-errors.txt' }] } : {}) });
         return;
     }
     if (!memberId)

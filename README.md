@@ -1,6 +1,6 @@
 # Codex
 
-Codex is a configuration-driven Discord framework for ESO roleplay organizations. It separates ranks, permission tiers, appointed duties, and arbitrary assignment dimensions rather than prescribing one organization's vocabulary.
+Codex is a configuration-driven Discord organization-management and field-information framework. It separates ranks, permission tiers, appointed duties, and arbitrary assignment dimensions rather than prescribing one organization's vocabulary.
 
 ## Installation
 
@@ -34,7 +34,7 @@ Trailmarks retain private sessions, reports, HQ designation, and Atlas associati
 
 ## Reconfiguration
 
-Duty roles, assignment groups/entries, permission mappings, ranks/progression and module switches are independently editable. Intel topic administration remains a later-phase workflow. Codex never manages unrelated server resources and does not enforce layout after creation.
+Duty roles, assignment groups/entries, permission mappings, ranks/progression and module switches are independently editable. Intel topics are managed through /intel topic-add and topic-edit. Codex never manages unrelated server resources and does not enforce layout after creation.
 
 ## Development and deployment
 
@@ -42,7 +42,7 @@ Run `npm test`, `npm run typecheck`, and `npm run lint`. Build with `npm run bui
 
 ## Production implementation
 
-The runtime uses Discord.js interactions, a Supabase service-role repository, ID-based resource repair, and multi-guild background-job boundaries. Apply all four migrations in order, including `004_phase4_administration.sql` before running this version. Run one active writer for each guild; see [deployment and recovery](docs/DEPLOYMENT.md). The test suite exercises the production handlers with Discord fakes and applies the real migrations to a local PostgreSQL engine. Retained service behavior and known implementation limits are tracked in [the feature matrix](docs/FEATURE_MATRIX.md); Atlas and the unchanged Skyrim bridge boundary are documented separately in [Atlas compatibility](docs/ATLAS_COMPATIBILITY.md).
+The runtime uses Discord.js interactions, a Supabase service-role repository, ID-based resource repair, and multi-guild background-job boundaries. Apply all eleven migrations in order through `011_production_audit.sql` before running this version. Run one active writer for each guild; see [deployment and recovery](docs/DEPLOYMENT.md). The test suite exercises the production handlers with Discord fakes and applies the real migrations to a local PostgreSQL engine. Retained service behavior and known implementation limits are tracked in [the feature matrix](docs/FEATURE_MATRIX.md); Atlas and the unchanged Skyrim bridge boundary are documented separately in [Atlas compatibility](docs/ATLAS_COMPATIBILITY.md).
 
 ## Advancement and field access
 
@@ -54,7 +54,7 @@ Use /trailmark report for structured capture, /intel deliver while holding an ac
 
 ## Cross-server intelligence
 
-Native bridges connect configured Discord guilds on the same Codex installation. Each guild administrator independently uses /alliance setup to authorize the other. Use /alliance group-topics for local-to-remote topic mappings and /alliance status/sync for delivery monitoring/retry. See BRIDGE_COMPATIBILITY.md for the supported legacy intake and deployment boundary.
+Native bridges connect configured Discord guilds on the same Codex installation. Each guild administrator independently uses /alliance setup to authorize the other. Use /alliance group-topics for local-to-remote topic mappings and /alliance status/sync for delivery monitoring/retry. See [bridge compatibility](docs/BRIDGE_COMPATIBILITY.md) for the supported legacy intake and deployment boundary.
 
 ## Organization workflows
 

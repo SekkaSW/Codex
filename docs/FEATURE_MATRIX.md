@@ -5,8 +5,8 @@ This matrix distinguishes an executable path from schema or architecture alone.
 | System | Status | Current production path / remaining work |
 |---|---|---|
 | Generalized configuration, permissions, ranks, assignments | Complete | Interactive configuration, normalized atomic persistence, validation, and production member orchestration. |
-| Supabase persistence | Complete for Phase 4 | Transactional configuration/member/note RPCs, member versions, role ownership, operation receipts, rank history and durable audit; existing feature repositories retained. |
-| Discord runtime and deployment | Complete for Phase 4 | Production setup, roster/organization, member assignments, duties and Funds routing; confirmation/repair synchronizes the guild namespace. Other namespaces fail explicitly until their later phase. |
+| Supabase persistence | Complete for implemented bot paths | Eleven ordered migrations, transactional RPCs, service-role grants, RLS on all Codex tables, guild-reference checks and durable operation/delivery receipts. |
+| Discord runtime and deployment | Complete locally | Every registered command routes to a production handler; all command builders serialize. Guild namespace synchronization and bounded multi-guild workers are executable. Live staging is still required. |
 | `/server setup` | Complete | Owner/revision/expiry-checked durable drafts; role/channel/entity selectors; text modals; paginated choices; full preview; normalized save; retryable provisioning. |
 | Managed resources and repair | Complete | Desired module-aware resources, stored-ID lookup, missing-resource recreation, registry update, and functional overwrite restoration are executable. |
 | Post-setup server configuration | Complete | View with readable export, editing all Phase 4 configuration areas, ID-based Repair, and Cancel. |
@@ -35,8 +35,8 @@ This matrix distinguishes an executable path from schema or architecture alone.
 
 Obscure Wayfinder wire fields and exact Atlas RPC signatures not stated in the migration specification remain isolated behind adapters. They must be confirmed against deployed contracts rather than invented.
 
-No retained command reaches a generic “accepted” response. Namespaces without a completed production handler return an explicit not-implemented error and remain classified as partial above.
+Every registered namespace has an executable production handler. Unknown/stale registrations fail clearly and require command re-registration. Explicitly partial external compatibility is documented above; it is not represented as a complete deployed integration.
 
-Phase 4 completion means implemented and locally tested production paths, not a live deployment claim. The runtime uses real Discord.js/Supabase dependencies; tests run real PostgreSQL migrations and RPCs locally and fake Discord boundaries. No live guild or hosted Supabase smoke test has been performed. Operational constraints and crash/uncertain-commit recovery are documented in DEPLOYMENT.md.
+Complete means implemented and locally tested production paths, not a live deployment claim. The runtime uses real Discord.js/Supabase dependencies; tests run real PostgreSQL migrations and RPCs locally and fake Discord boundaries. No live guild or hosted Supabase smoke test has been performed. Operational constraints and crash/uncertain-commit recovery are documented in DEPLOYMENT.md.
 
 Member notes and Phase 4 audits are complete: notes retain author/visibility/time; member mutations and configuration snapshots have transactional durable audit records. Optional log-channel delivery contains operation metadata only. Notes remain administrator-readable even when labelled MEMBER.

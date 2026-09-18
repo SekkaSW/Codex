@@ -35,10 +35,10 @@ export class IntelService {
     await this.store.saveReport(report); return report;
   }
   async markAtHeadquarters(id: string, delivererId?: string): Promise<StoredReport> {
-    const existing = await this.required(id); const report: StoredReport = { ...existing, status: "AT_HQ", ...(delivererId ? { delivererId } : {}) };
+    const existing = await this.required(id); const report: StoredReport = { ...existing, status: existing.status==='PUBLISHED'?'PUBLISHED':"AT_HQ", ...(delivererId ? { delivererId } : {}) };
     await this.store.saveReport(report); return report;
   }
-  async publishLocally(id: string): Promise<StoredReport> { const report = { ...(await this.required(id)), status: "PUBLISHED" as const }; await this.store.saveReport(report); return report; }
+  async publishLocally(id: string): Promise<StoredReport> {const existing=await this.required(id);if(existing.status==='CAPTURED')throw new Error('HQ delivery is required before local publication'); const report = { ...existing, status: "PUBLISHED" as const }; await this.store.saveReport(report); return report; }
   private async required(id: string): Promise<StoredReport> { const report = await this.store.getReport(id); if (!report) throw new Error("Report not found"); return report; }
 }
 export interface ContactPublisher { publish(contactId: string, report: StoredReport): Promise<string> }
@@ -65,10 +65,10 @@ export class BridgeService {
 }
 
 export interface LedgerEntry { id: string; guildId: string; amount: number; kind: "DEPOSIT" | "SPEND" | "ADJUSTMENT"; actorId: string; note: string; createdAt: string; reversedEntryId?: string }
-export interface LedgerStore { history(guildId: string): Promise<LedgerEntry[]>; append(entry: LedgerEntry): Promise<void> }
+export interface LedgerStore { history(guildId: string): Promise<LedgerEntry[]>; append(entry: LedgerEntry): Promise<void>;balanceTotal?(guildId:string):Promise<number>;recentHistory?(guildId:string,limit:number):Promise<LedgerEntry[]> }
 export class FundsService {
   constructor(private readonly store: LedgerStore, private readonly clock: Clock = systemClock) {}
-  async balance(guildId: string): Promise<number> { return (await this.store.history(guildId)).reduce((sum, row) => sum + row.amount, 0); }
+  async balance(guildId: string): Promise<number> { if(this.store.balanceTotal)return this.store.balanceTotal(guildId);return (await this.store.history(guildId)).reduce((sum, row) => sum + row.amount, 0); }
   async record(guildId: string, amount: number, actorId: string, note: string, kind: LedgerEntry["kind"]): Promise<LedgerEntry> {
     if (!Number.isFinite(amount) || amount === 0) throw new Error("Amount must be non-zero");
     const entry = { id: crypto.randomUUID(), guildId, amount: kind === "SPEND" ? -Math.abs(amount) : amount, kind, actorId, note, createdAt: this.clock.now().toISOString() };

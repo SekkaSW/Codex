@@ -21,7 +21,7 @@ export interface IntelligenceDestinations {topic(topic?:TopicRow):Promise<string
 export class IntelligencePipeline {
  constructor(private readonly store:IntelligenceStore,private readonly delivery:DurableDelivery,private readonly destinations:IntelligenceDestinations){}
  async process(guild:string,id:string):Promise<boolean>{
-  let report=await this.store.intelligence<ReportRow>(guild,'report-get','system',id);if(report.delivery_status==='CAPTURED')return false;
+  let report=await this.store.intelligence<ReportRow>(guild,'report-begin','system',id);if(report.delivery_status==='CAPTURED')return false;
   const topics=await this.store.intelligence<TopicRow[]>(guild,'topics','system');
   const name=report.delivery_status==='PUBLISHED'?report.topic:typeof report.adapter_metadata.mappedTopic==='string'?report.adapter_metadata.mappedTopic:classifyReport(report.body,topics);
   report=await this.store.intelligence<ReportRow>(guild,'report-classify','system',id,{topic:name??null});
@@ -30,6 +30,7 @@ export class IntelligencePipeline {
   await this.delivery.deliver(guild,`report:${id}`,channel,body);
   await this.store.intelligence(guild,'report-published','system',id);
   for(const contact of await this.store.intelligence<ContactRow[]>(guild,'report-contacts','system',id))await this.delivery.deliver(guild,`contact:${id}:${contact.id}`,await this.destinations.contact(contact),body);
+  await this.store.intelligence(guild,'report-complete','system',id);
   return true;
  }
  async batch(guild:string,page=0):Promise<{processed:number;failures:string[]}>{let processed=0;const failures:string[]=[];for(const report of await this.store.intelligence<ReportRow[]>(guild,'pending','system',undefined,{page})){try{if(await this.process(guild,report.id))processed++;}catch(error){failures.push(`${report.id}: ${error instanceof Error?error.message:'Delivery failed'}`);}}return {processed,failures};}

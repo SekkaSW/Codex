@@ -10,7 +10,7 @@ export const nativeAdapter = {
   parse(payload: string): CodexReport { if(payload.length>20000)throw new Error('Bridge envelope is too large');const value: unknown = JSON.parse(payload); if (!value || typeof value !== "object" || (value as {type?:unknown}).type !== "codex.report" || (value as {version?:unknown}).version!==1) throw new Error("Unsupported Codex bridge payload");const report=(value as {report:CodexReport}).report;validateReport(report);return report; }
 };
 function validateReport(report:CodexReport):void {if(!report||typeof report!=='object'||typeof report.id!=='string'||report.id.length<1||report.id.length>100||typeof report.originGuildId!=='string'||report.originGuildId.length<1||report.originGuildId.length>30||typeof report.body!=='string'||!report.body.trim()||report.body.length>4000||typeof report.createdAt!=='string'||!Number.isFinite(Date.parse(report.createdAt))||!['codex','legacy-wayfinder'].includes(report.source)||report.confidential!==undefined&&typeof report.confidential!=='boolean')throw new Error('Malformed report envelope');}
-// Legacy Wayfinder messages are accepted without changing the deployed legacy bot.
+// The documented legacy JSON subset maps into Codex without legacy domain fields.
 export const legacyWayfinderAdapter = {
   parse(payload: string, originGuildId: string): CodexReport {
     if(payload.length>20000)throw new Error('Legacy envelope is too large');const value: unknown = JSON.parse(payload); if (!value || typeof value !== "object") throw new Error("Invalid legacy payload");

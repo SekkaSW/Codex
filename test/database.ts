@@ -2,9 +2,9 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFile,readdir } from 'node:fs/promises';
 import type { SupabaseClientLike } from '../src/persistence/supabase.js';
 import { emptyOrganization } from '../src/administration.js';
-export async function testDatabase(){
+export async function testDatabase(beforeMigration?:(db:PGlite,file:string)=>Promise<void>){
  const db=new PGlite();await db.exec('create role anon; create role authenticated; create role service_role bypassrls;');
- const dir=new URL('../../migrations/',import.meta.url);for(const file of (await readdir(dir)).filter(f=>f.endsWith('.sql')).sort())await db.exec(await readFile(new URL(file,dir),'utf8'));
+ const dir=new URL('../../migrations/',import.meta.url);for(const file of (await readdir(dir)).filter(f=>f.endsWith('.sql')).sort()){await beforeMigration?.(db,file);await db.exec(await readFile(new URL(file,dir),'utf8'));}
  const client:SupabaseClientLike={from(){throw new Error('Unexpected table call in RPC test');},async rpc<T>(name:string,args:Record<string,unknown>={}){
   try{if(!/^[a-z_]+$/.test(name)||Object.keys(args).some(k=>!/^p_[a-z_]+$/.test(k)))throw new Error('Invalid test SQL identifier');
    const result=await db.query<{value:T}>(`select ${name}(${Object.keys(args).map((key,index)=>`${key} => $${index+1}`).join(',')}) as value`,Object.values(args));return {data:result.rows[0]!.value,error:null};
