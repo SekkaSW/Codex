@@ -23,7 +23,7 @@ export class IntelligencePipeline {
  async process(guild:string,id:string):Promise<boolean>{
   let report=await this.store.intelligence<ReportRow>(guild,'report-get','system',id);if(report.delivery_status==='CAPTURED')return false;
   const topics=await this.store.intelligence<TopicRow[]>(guild,'topics','system');
-  const name=report.delivery_status==='PUBLISHED'?report.topic:classifyReport(report.body,topics);
+  const name=report.delivery_status==='PUBLISHED'?report.topic:typeof report.adapter_metadata.mappedTopic==='string'?report.adapter_metadata.mappedTopic:classifyReport(report.body,topics);
   report=await this.store.intelligence<ReportRow>(guild,'report-classify','system',id,{topic:name??null});
   const body=`Report ${id}\n${report.author_id?`Reporter: ${report.author_id}\n`:''}${report.body}`;
   const channel=await this.destinations.topic(topics.find(t=>t.name===name));

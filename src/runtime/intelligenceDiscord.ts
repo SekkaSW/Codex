@@ -1,4 +1,4 @@
-import { ChannelType } from 'discord.js';
+import { ChannelType,PermissionFlagsBits } from 'discord.js';
 import { DurableDelivery, IntelligencePipeline, type ContactRow, type DurablePublisher, type IntelligenceDestinations, type IntelligenceStore, type TopicRow } from '../intelligence.js';
 import type { Registry, ManagedResource } from '../resources.js';
 export class DiscordDurablePublisher implements DurablePublisher {
@@ -24,12 +24,12 @@ export class DiscordDurablePublisher implements DurablePublisher {
 export class DiscordIntelligence implements IntelligenceDestinations {
  readonly delivery:DurableDelivery;readonly pipeline:IntelligencePipeline;
  constructor(private readonly guild:any,private readonly store:IntelligenceStore&Registry){this.delivery=new DurableDelivery(store,new DiscordDurablePublisher(guild));this.pipeline=new IntelligencePipeline(store,this.delivery,this);}
- async resource(key:ManagedResource['key'],name:string,forum=false):Promise<string>{
+ async resource(key:ManagedResource['key'],name:string,forum=false,restricted=false):Promise<string>{
   const records=await this.store.list(this.guild.id),record=records.find(r=>r.key===key);let channel=record?await this.fetch(record.discordId):null;
   if(channel){if(channel.type!==(forum?ChannelType.GuildForum:ChannelType.GuildText))throw new Error('Stored Intelligence destination has the wrong channel type');return channel.id;}
   const token=`codex-resource:${this.guild.id}:${key}`,matches=(await this.guild.channels.fetch()).filter((c:any)=>c?.topic===token);
   if(matches.size>1)throw new Error('Duplicate Intelligence resource tokens require administrator repair');channel=matches.first();
-  if(!channel){const parent=records.find(r=>r.key==='INTELLIGENCE_CATEGORY');channel=await this.guild.channels.create({name:name.slice(0,100),type:forum?ChannelType.GuildForum:ChannelType.GuildText,topic:token,...(parent?{parent:parent.discordId}:{})});}
+  if(!channel){const parent=records.find(r=>r.key==='INTELLIGENCE_CATEGORY');channel=await this.guild.channels.create({name:name.slice(0,100),type:forum?ChannelType.GuildForum:ChannelType.GuildText,topic:token,...(restricted?{permissionOverwrites:[{id:this.guild.id,deny:[PermissionFlagsBits.ViewChannel]},{id:this.guild.client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.SendMessages]}]}:{}),...(parent?{parent:parent.discordId}:{})});}
   await this.store.put({guildId:this.guild.id,key,discordId:channel.id,kind:forum?'FORUM':'CHANNEL'});return channel.id;
  }
  topic(topic?:TopicRow):Promise<string>{return topic?this.resource(`REPORT_TOPIC:${topic.id}`,`reports-${topic.name}`):this.resource('REPORT_CATCHALL','reports-general');}

@@ -45,3 +45,7 @@ Trailmark access is persisted desired state (PENDING, ACTIVE, REVOKING, CLOSED).
 ## Phase 6 intelligence
 
 IntelligencePipeline uses the canonical report model and codex_intelligence. Classification order is priority, name, stable ID; blank keywords never match. HQ delivery precedes local publication. Contact groups expand to active individual Contacts and deduplicate with direct links. Confidentiality only restricts bridge transfer. Durable discord_deliveries receipts protect report sends and Contact forum creation. An uncertain send is recovered by an exact bot-authored token, never blindly retried. The runtime drains 25-report pages per configured guild and serializes them with foreground writes.
+
+## Phase 7 bridges
+
+BridgeCoordinator extends the existing protocol-independent BridgeService. Native codex-v1 transport is a service-only database boundary between mutually authorized guilds in one installation. Version, expected identities and persisted source report are validated before atomic receive/delivery receipt. Imported reports carry immutable origin metadata and do not relay. Legacy ingestion is an isolated Discord message adapter, gated by configured intake channel and trusted sender. Remote guild-local topic names are mapped through stored topic groups.

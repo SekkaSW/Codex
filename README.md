@@ -51,3 +51,7 @@ Apply migration `005_advancement_trailmarks.sql` for `/advancement` ballots and 
 ## Intelligence and Contacts
 
 Use /trailmark report for structured capture, /intel deliver while holding an active HQ session, and topic/catch-all publication. /intel topic-add/topic-edit, /contact create/create-group/group-members, and /intel link-report provide the local workflow. Apply migration 006 before using these commands. See deployment notes for uncertain-delivery recovery.
+
+## Cross-server intelligence
+
+Native bridges connect configured Discord guilds on the same Codex installation. Each guild administrator independently uses /alliance setup to authorize the other. Use /alliance group-topics for local-to-remote topic mappings and /alliance status/sync for delivery monitoring/retry. See BRIDGE_COMPATIBILITY.md for the supported legacy intake and deployment boundary.
