@@ -41,3 +41,7 @@ The roster and the configured organization namespace share executable member han
 `field.ts` owns advancement orchestration and Trailmark access reconciliation. `persistence/field.ts` extends the existing administration repository; migration 005 provides guild-scoped service-role-only RPCs. Advancement approval supplies a transactional commit callback to the existing member transition service, allowing rank history and the case decision to commit together. Ballot snapshots preserve historical configuration even if live ranks change.
 
 Trailmark access is persisted desired state (PENDING, ACTIVE, REVOKING, CLOSED). The Discord adapter manipulates only Trailmark channel/member overwrites and stable managed resource identities. The runtime starts recovery on ready and serializes background work with foreground guild mutations.
+
+## Phase 6 intelligence
+
+IntelligencePipeline uses the canonical report model and codex_intelligence. Classification order is priority, name, stable ID; blank keywords never match. HQ delivery precedes local publication. Contact groups expand to active individual Contacts and deduplicate with direct links. Confidentiality only restricts bridge transfer. Durable discord_deliveries receipts protect report sends and Contact forum creation. An uncertain send is recovered by an exact bot-authored token, never blindly retried. The runtime drains 25-report pages per configured guild and serializes them with foreground writes.

@@ -2,6 +2,7 @@ import { AdministrationRepository } from './administration.js';
 import { PersistenceUncertainError, type MemberState } from '../administration.js';
 import type { AdvancementCase, FieldStore, FieldTrailmark } from '../field.js';
 export class FieldRepository extends AdministrationRepository implements FieldStore {
+ intelligence<T=unknown>(guild:string,action:string,actor:string,id?:string,data:Record<string,unknown>={}):Promise<T>{return this.rpc('codex_intelligence',{p_guild:guild,p_action:action,p_actor:actor,p_id:id??null,p_data:data});}
  advancement<T=AdvancementCase>(guildId:string,action:string,actorId:string,id?:string,data:Record<string,unknown>={}):Promise<T>{return this.rpc('codex_advancement',{p_guild:guildId,p_action:action,p_actor:actorId,p_id:id??null,p_data:data});}
  trailmark<T=FieldTrailmark>(guildId:string,action:string,actorId:string,id?:string,data:Record<string,unknown>={}):Promise<T>{return this.rpc('codex_trailmarks',{p_guild:guildId,p_action:action,p_actor:actorId,p_id:id??null,p_data:data});}
  async approveAdvancement(record:AdvancementCase,before:MemberState,after:MemberState,actorId:string):Promise<void>{

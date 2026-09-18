@@ -15,6 +15,7 @@ export function commandDefinitions(namespace?: string): unknown[] {
     const commands: any[] = [new SlashCommandBuilder().setName("ping").setDescription("Check Codex availability")];
     commands.push(new SlashCommandBuilder().setName("server").setDescription("Configure this Codex server").setDefaultMemberPermissions("8").addSubcommand((s: any) => s.setName("setup").setDescription("Start or resume the setup wizard")));
     for (const [name, subs] of Object.entries(subcommands)) {
+        if(name==='intel'||name==='contact'){commands.push(intelligenceCommand(name));continue;}
         if(name==='advancement'||name==='trailmark'){commands.push(fieldCommand(name));continue;}
         if (name === "funds") {
             commands.push(fundsCommand());
@@ -47,6 +48,11 @@ export function commandDefinitions(namespace?: string): unknown[] {
         commands.push(memberCommand(namespace));
     }
     return commands.map(command => command.toJSON());
+}
+function intelligenceCommand(name:string):any {
+ const c=new SlashCommandBuilder().setName(name).setDescription('Intelligence reports and local Contacts');
+ const names=name==='intel'?[...subcommands.intel!,'reports','deliver','link-report','recover-delivery']:[...subcommands.contact!,'group-members'];
+ for(const action of names)c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(action==='catchall-set')s.addChannelOption((o:any)=>o.setName('channel').setDescription('Local catch-all text channel').setRequired(true).addChannelTypes(0));if(action==='backfill'||action==='repair')s.addIntegerOption((o:any)=>o.setName('page').setDescription('Batch page, starting at zero').setMinValue(0));if(action==='recover-delivery')for(const key of ['key','message'])s.addStringOption((o:any)=>o.setName(key).setDescription(key==='key'?'Delivery key from recovery error':'Original bot message ID').setRequired(true).setMaxLength(150));return s;});return c;
 }
 function fieldCommand(name:string):any {
  const c=new SlashCommandBuilder().setName(name).setDescription(name==='advancement'?'Advancement cases and ballots':'Trailmark access and field information');

@@ -47,3 +47,7 @@ The runtime uses Discord.js interactions, a Supabase service-role repository, ID
 ## Advancement and field access
 
 Apply migration `005_advancement_trailmarks.sql` for `/advancement` ballots and the full `/trailmark` lifecycle. Reviewers configure/open/close/approve/deny advancement cases; members vote through selectors. Trailmark panels grant timed, durable access, `leave` revokes it, and restart-safe background reconciliation expires sessions. Reports retain local confidentiality and distinguish HQ origin from pending delivery. See deployment documentation for permissions and recovery.
+
+## Intelligence and Contacts
+
+Use /trailmark report for structured capture, /intel deliver while holding an active HQ session, and topic/catch-all publication. /intel topic-add/topic-edit, /contact create/create-group/group-members, and /intel link-report provide the local workflow. Apply migration 006 before using these commands. See deployment notes for uncertain-delivery recovery.

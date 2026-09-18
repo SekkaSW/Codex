@@ -10,7 +10,9 @@ import { commandDefinitions } from './commands.js';
 import { handleField, type FieldRepositories } from './handlers/field.js';
 import { TrailmarkLifecycle } from '../field.js';
 import { DiscordTrailmarkAccess } from './trailmarkAccess.js';
-export interface RuntimeRepositories extends Registry, SetupStore, FundsRepositories, DutyRepositories, MemberRepositories,FieldRepositories {
+import { handleIntelligence,type IntelligenceRepositories } from './handlers/intelligence.js';
+import { DiscordIntelligence } from './intelligenceDiscord.js';
+export interface RuntimeRepositories extends Registry, SetupStore, FundsRepositories, DutyRepositories, MemberRepositories,FieldRepositories,IntelligenceRepositories {
 }
 export function createBot(repositories: RuntimeRepositories): Client {
     const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
@@ -32,11 +34,12 @@ export function createBot(repositories: RuntimeRepositories): Client {
     client.once(Events.ClientReady, ready => console.info(`Codex ready as ${ready.user.tag}`));
     // Serialize guild writes in this process, including configuration and member role mutations.
     const pending = new Map<string, Promise<void>>();
+    const intelligencePages=new Map<string,number>();
     client.once(Events.ClientReady,()=>{
         let running=false;
         const tick=async()=>{if(running)return;running=true;try{for(const guild of client.guilds.cache.values()){
             if(pending.has(guild.id))continue;
-            const work=(async()=>{if(!await repositories.load(guild.id))return;const result=await new TrailmarkLifecycle(repositories,new DiscordTrailmarkAccess(guild,repositories)).reconcile(guild.id,client.user!.id);if(result.failures.length)console.error('Trailmark reconciliation requires retry',guild.id,result.failures);})().catch(error=>console.error('Trailmark recovery failed',guild.id,error));
+            const work=(async()=>{if(!await repositories.load(guild.id))return;const result=await new TrailmarkLifecycle(repositories,new DiscordTrailmarkAccess(guild,repositories)).reconcile(guild.id,client.user!.id);if(result.failures.length)console.error('Trailmark reconciliation requires retry',guild.id,result.failures);const page=intelligencePages.get(guild.id)??0;const intel=await new DiscordIntelligence(guild,repositories).pipeline.batch(guild.id,page);intelligencePages.set(guild.id,intel.processed+intel.failures.length===0?0:page+1);if(intel.failures.length)console.error('Intelligence recovery requires retry',guild.id,intel.failures);})().catch(error=>console.error('Field recovery failed',guild.id,error));
             pending.set(guild.id,work);await work;if(pending.get(guild.id)===work)pending.delete(guild.id);
         }}finally{running=false;}};
         const timer=setInterval(()=>void tick(),30_000);timer.unref();void tick();
@@ -92,6 +95,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
 export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRepositories): Promise<void> {
     if (!i.guildId)
         throw new Error('Use Codex inside a server');
+    if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('intel:')){await handleIntelligence(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('field:')){await handleField(i,repositories);return;}
     if ((i.isButton() || i.isAnySelectMenu() || i.isModalSubmit()) && i.customId.startsWith('setup:')) {
         await wizard.handle(i);
@@ -135,6 +139,7 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
         return;
     }
     if(i.commandName==='advancement'||i.commandName==='trailmark'){await handleField(i,repositories);return;}
+    if(i.commandName==='intel'||i.commandName==='contact'){await handleIntelligence(i,repositories);return;}
     if (i.commandName === 'roster' || i.commandName === config.commandNamespace || (i.commandName === 'assignment' && ['set-member', 'clear-member', 'sync-roles'].includes(i.options.getSubcommand()))) {
         await handleMembers(i, repositories);
         return;

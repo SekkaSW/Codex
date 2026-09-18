@@ -1,9 +1,9 @@
-export interface CodexReport { id: string; originGuildId: string; authorId?: string; body: string; createdAt: string; topic?: string; source: "codex" | "legacy-wayfinder" }
+export interface CodexReport { id: string; originGuildId: string; authorId?: string; body: string; createdAt: string; topic?: string; source: "codex" | "legacy-wayfinder";reporterId?:string|undefined;sourceTrailmarkId?:string|undefined;sourceChannelId?:string|undefined;sourceMessageId?:string|undefined;confidential?:boolean;hqDeliveryState?:'CAPTURED'|'AT_HQ'|'PUBLISHED';linkedContactIds?:string[];linkedGroupIds?:string[];adapterMetadata?:Record<string,unknown> }
 export function isConfidential(body: string, marker: string): boolean { return marker.trim() !== "" && body.toLocaleLowerCase().includes(marker.toLocaleLowerCase()); }
-export function mayTransfer(report: CodexReport, marker: string): boolean { return !isConfidential(report.body, marker); }
+export function mayTransfer(report: CodexReport, marker: string): boolean { return !report.confidential && !isConfidential(report.body, marker); }
 export function classifyReport(body: string, topics: ReadonlyArray<{name: string; keywords: string[]}>): string | undefined {
   const normalized = body.toLocaleLowerCase();
-  return topics.find(topic => topic.keywords.some(keyword => normalized.includes(keyword.toLocaleLowerCase())))?.name;
+  return topics.find(topic => topic.keywords.some(keyword => keyword.trim()!=='' && normalized.includes(keyword.toLocaleLowerCase())))?.name;
 }
 export const nativeAdapter = {
   serialize(report: CodexReport): string { return JSON.stringify({version:1, type:"codex.report", report}); },
