@@ -4,6 +4,18 @@ import type { PermissionRole } from "../domain.js";
 import type { ManagedResource, Provisioner, ResourceSpec } from "../resources.js";
 export class DiscordProvisioner implements Provisioner {
     constructor(private readonly guild: Guild, private readonly mappings: PermissionRole[]) { }
+    async permissionsMatch(channel: any, spec: ResourceSpec): Promise<boolean> {
+        const expected = await this.overwrites(spec);
+        if (!expected) return true;
+        const actual = channel.permissionOverwrites?.cache;
+        if (!actual || actual.size !== expected.length) return false;
+        return expected.every(w => {
+            const found = actual.get(w.id);
+            const allow = (w.allow ?? []).reduce((bits: bigint, v: bigint) => bits | v, 0n);
+            const deny = (w.deny ?? []).reduce((bits: bigint, v: bigint) => bits | v, 0n);
+            return found?.allow.bitfield === allow && found?.deny.bitfield === deny;
+        });
+    }
     async exists(id: string): Promise<boolean> { try {
         return Boolean(await this.guild.channels.fetch(id));
     }

@@ -2,11 +2,14 @@ import {test} from 'node:test';import assert from 'node:assert/strict';
 import {testDatabase,fixtureConfig,fixtureOrganization} from './database.js';import {FieldRepository} from '../src/persistence/field.js';import {SupabaseRepositories} from '../src/persistence/supabase.js';
 import {commandDefinitions} from '../src/runtime/commands.js';import {route} from '../src/runtime/bot.js';import {repairResources,type ManagedResource} from '../src/resources.js';import {BridgeCoordinator,type BridgeRow} from '../src/bridge.js';import {DurableDelivery,IntelligencePipeline,type ContactRow} from '../src/intelligence.js';
 import {FundsService} from '../src/services.js';
+import {needsConfirmation,handleConfirmation} from '../src/runtime/confirmation.js';
 test('Final audit: every registered command routes to its production handler, with no unavailable namespace',async()=>{
  let count=0;for(const c of commandDefinitions('organization') as any[]){for(const sub of c.options?.length?c.options:[{name:''}]){
   const i:any={guildId:'g',id:'event',channelId:'commands',user:{id:'actor'},commandName:c.name,memberPermissions:{has:()=>true},guild:{members:{async fetch(){throw new Error('handler reached');}},roles:{async fetch(){return new Map();}}},isButton:()=>false,isAnySelectMenu:()=>false,isModalSubmit:()=>false,isStringSelectMenu:()=>false,isChatInputCommand:()=>true,async deferReply(){},async reply(){},options:new Proxy({getSubcommand:()=>sub.name},{get:(target:any,key:string)=>target[key]??(()=>null)})};
   const config={...fixtureConfig(),commandNamespace:'organization',modules:{atlas:true,supply:true,briefings:true,patrols:true}},repos:any=new Proxy({load:async()=>config,list:async()=>[]},{get:(target:any,key:string)=>target[key]??(async()=>{throw new Error('handler reached');})});
-  if(c.name==='ping')await route(i,{} as any,repos);else await assert.rejects(route(i,{async start(){throw new Error('handler reached');}} as any,repos),/handler reached/);count++;
+  if(c.name==='ping')await route(i,{} as any,repos);
+  else if(needsConfirmation(i)){if(c.name==='funds'&&sub.name==='undo-last')repos.recentHistory=async()=>[];let prompt:any;i.reply=async(p:any)=>{prompt=p;};await route(i,{} as any,repos);assert.match(prompt.content,/Confirm/);const click={...i,customId:prompt.components[0].components[0].custom_id,isChatInputCommand:()=>false,isButton:()=>true};await assert.rejects(handleConfirmation(click,next=>route(next,{} as any,repos,true)),/handler reached/);}
+  else await assert.rejects(route(i,{async start(){throw new Error('handler reached');}} as any,repos),/handler reached/);count++;
  }}assert.ok(count>100);
 });
 test('Final audit: resource creation fences ambiguous category sends and recovers channels without duplicate creation',async()=>{

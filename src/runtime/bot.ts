@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';
 import type { ServerConfig } from '../domain.js';
-import { desiredResources, repairResources, type Registry } from '../resources.js';
+import { configuredResources, repairResources, type Registry } from '../resources.js';
 import { DiscordProvisioner } from './discordProvisioner.js';
 import { SetupWizard, type SetupStore } from './setupWizard.js';
 import { handleFunds, type FundsRepositories } from './handlers/funds.js';
@@ -20,13 +20,16 @@ import {DiscordDurablePublisher} from './intelligenceDiscord.js';
 import {FundsService} from '../services.js';
 import {handleOptional,type OptionalRepositories} from './handlers/optional.js';
 import {AtlasRuntime,handleAtlas,type AtlasRepositories} from './atlas.js';
+import { openPanel, handlePanel } from './panels.js';
+import { askConfirmation, needsConfirmation, handleConfirmation, friendlyError } from './confirmation.js';
+import { browse } from './browse.js';
 export interface RuntimeRepositories extends Registry, SetupStore, FundsRepositories, DutyRepositories, MemberRepositories,FieldRepositories,IntelligenceRepositories,BridgeRepositories,WorkflowRepositories,OptionalRepositories,AtlasRepositories {
 }
 export function createBot(repositories: RuntimeRepositories): Client {
     const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent,...(process.env.CODEX_DISCORD_PRESENCE==='true'?[GatewayIntentBits.GuildPresences]:[])] });
     const wizard = new SetupWizard(repositories, async (config: ServerConfig, actorId: string) => {
         const guild = await client.guilds.fetch(config.guildId), organization = await repositories.organization(config.guildId);
-        const specs = [...desiredResources(config.modules), ...organization.additionalResources].map(s => s.key === 'ORGANIZATION_CATEGORY' ? { ...s, name: config.organizationName } : s);
+        const specs = configuredResources(config.modules, organization.additionalResources).map(s => s.key === 'ORGANIZATION_CATEGORY' && !organization.additionalResources.some(r => r.key === s.key) ? { ...s, name: config.organizationName } : s);
         const result = await repairResources(config.guildId, specs, repositories, new DiscordProvisioner(guild, await repositories.permissionRoles(config.guildId)));
         // Register only the organization tree at guild scope. Global generic commands stay intact.
         const definitions = commandDefinitions(config.commandNamespace) as any[];
@@ -110,7 +113,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
             console.error(error);
             if (!i.isRepliable())
                 return;
-            const payload = { content: (error instanceof Error ? error.message : 'Codex could not complete this request.').slice(0, 1900), ephemeral: true, allowedMentions: { parse: [] as never[] } };
+            const payload = { content: friendlyError(error), components: [{ type: 1 as const, components: [{ type: 2 as const, style: 2 as const, label: 'Open Help', custom_id: `ux:${i.user.id}:help` }] }], ephemeral: true, allowedMentions: { parse: [] as never[] } };
             try {
                 if (i.deferred)
                     await i.editReply(payload);
@@ -129,9 +132,15 @@ export function createBot(repositories: RuntimeRepositories): Client {
     });
     return client;
 }
-export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRepositories): Promise<void> {
+export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRepositories, fromPanel = false): Promise<void> {
     if (!i.guildId)
         throw new Error('Use Codex inside a server');
+    if (i.customId?.startsWith('uxbrowse:')) { await browse(i, repositories); return; }
+    if (i.customId?.startsWith('uxconfirm:')) { await handleConfirmation(i, next => route(next, wizard, repositories, true)); return; }
+    if (i.customId?.startsWith('ux:') || i.customId?.startsWith('uxform:')) {
+        await handlePanel(i, repositories, next => route(next, wizard, repositories, true), async () => { await i.reply(await wizard.start(i.guildId, i.user.id)); }); return;
+    }
+    if (needsConfirmation(i)) { await askConfirmation(i, repositories); return; }
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('optional:')){await handleOptional(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('flow:')){await handleWorkflows(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('bridge:')){await handleBridge(i,repositories);return;}
@@ -146,7 +155,7 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
         return;
     }
     if (!i.isChatInputCommand())
-        return;
+        { if (i.isButton() || i.isAnySelectMenu() || i.isModalSubmit()) await i.reply({ content: 'This panel is no longer supported. Open /help for a fresh panel.', ephemeral: true }); return; }
     if (i.commandName === 'ping') {
         await i.reply({ content: 'Codex is ready.', ephemeral: true });
         return;
@@ -163,6 +172,7 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
     const config = await repositories.load(i.guildId);
     if (!config)
         throw new Error('Run /server setup first');
+    if ((i.commandName === 'help' && !i.options.getSubcommand(false)) || (!fromPanel && i.options.getSubcommand(false) === 'panel')) { await openPanel(i, repositories, i.commandName === 'help' && !i.options.getSubcommand(false) ? '$help' : i.commandName); return; }
     const commandDestination = (await repositories.list(i.guildId)).find(r => r.key === 'BOT_COMMANDS');
     if (commandDestination && i.channelId !== commandDestination.discordId && !i.memberPermissions?.has(PermissionFlagsBits.Administrator))
         throw new Error(`Use Codex commands in <#${commandDestination.discordId}>. An administrator can update this destination in /server setup.`);

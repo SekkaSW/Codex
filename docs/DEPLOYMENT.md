@@ -99,3 +99,17 @@ Resource provisioning records a pending creation before calling Discord. Text/fo
 Bulk member sync/retirement and Trailmark session exports accept page numbers with up to 100 records per page. Guild workers use round-robin scheduling with at most four concurrent guild jobs, one writer per guild, five-second Atlas opportunities and thirty-second core field recovery. Funds balances aggregate in SQL and public history retrieves at most 25 rows. Monthly summaries/undo retain the original ledger semantics. Briefing reads require LEVEL_1 because dispatch-desk is a restricted resource.
 
 The unreleased migration 010 grant loop was narrowed to its explicit function names so unrelated Atlas overloads/functions are not blanket-revoked. Compare deployed companion signatures before applying it. Review the complete command inventory in COMMANDS.md and audit evidence in FINAL_AUDIT.md.
+# Discord UX update
+
+After installing this update, rebuild and redeploy slash-command definitions. The update adds `/help` and `panel` to feature trees, so restarting the bot alone does not update Discord's command registration. Existing subcommands are retained. The deploy script compiles with the normal build and should only be executed against the intended installation.
+
+1. Run `npm install`, `npm test`, `npm run lint`, and `npm run build`.
+2. For a staging guild, set `DISCORD_GUILD_ID` and its `ORGANIZATION_NAMESPACE` in the operator's shell alongside the existing bot credentials, then run `npm run deploy:commands`. Never commit these values or credentials.
+3. For production generic commands, use the existing global registration procedure with the guild and organization overrides unset. Synchronize each configured guild's organization namespace through `/server setup` → Repair → confirm. Follow the existing guild/global cleanup instructions below to avoid shadowing registrations.
+4. Smoke-test `/help`, a member dashboard, a staff dashboard, and `/server setup`. Enter one answer, interrupt setup, and Resume. Verify Back, Skip, section editing, stale buttons, review, final confirmation, and the repair preview in staging.
+5. Test a >25-item selector and Reference search across multiple pages. Revoke a staff role after opening a panel and verify the action is denied. Disable an optional module and verify old controls are blocked. Test Leave Trailmark after eligibility loss, and a destructive action's Confirm/Cancel paths.
+6. Restart the bot with an open argument form/confirmation/search: it must ask the member to reopen a panel. Setup answers and saved workflow records must remain available. Verify Funds undo rejects a ledger change made after its confirmation opened.
+
+No new migrations, gateway intents, environment settings, or live-data conversions are required for this UX update. The existing eleven migrations and Supabase deployment configuration remain required. Ordinary input forms/search sessions last 15 minutes; confirmations last 10 minutes. Setup drafts retain their seven-day expiry. A single active writer per guild remains the supported deployment model.
+
+The UX implementation was tested locally with fake Discord boundaries and real SQL migrations in PGlite. It was not deployed and did not access production data. See [UX completion](UX_COMPLETION.md) for exact validation and remaining limits.

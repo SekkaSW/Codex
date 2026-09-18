@@ -1,7 +1,7 @@
 import type {WorkflowStore} from '../../workflows.js';import {DurableSummary} from '../../workflows.js';
 import {DurableDelivery} from '../../intelligence.js';
 import {DiscordDurablePublisher} from '../intelligenceDiscord.js';import {DiscordProvisioner} from '../discordProvisioner.js';
-import {choices,interactionUuid,replyText,requireTier,textModal} from '../interactions.js';import type {BridgeRepositories} from './bridge.js';
+import {choices,interactionUuid,replyText,requireTier,textModal,recordView} from '../interactions.js';import type {BridgeRepositories} from './bridge.js';
 export type WorkflowRepositories=BridgeRepositories&WorkflowStore;
 export async function workflowDestination(i:any,store:WorkflowRepositories,key:string,restricted=false):Promise<string>{const r=(await store.list(i.guildId)).find(r=>r.key===key);if(!r)throw new Error(`Configure ${key} through /server setup first`);const channel=await i.guild.channels.fetch(r.discordId);if(!channel)throw new Error(`${key} is missing; run /server setup Repair`);if(restricted)await new DiscordProvisioner(i.guild,await store.permissionRoles(i.guildId)).restorePermissions(r,{key:r.key,name:channel.name,kind:'CHANNEL',minimumTier:'LEVEL_3'});return r.discordId;}
 export async function handleWorkflows(i:any,store:WorkflowRepositories):Promise<void>{
@@ -56,7 +56,7 @@ export async function handleWorkflows(i:any,store:WorkflowRepositories):Promise<
   const data:Record<string,unknown>={};
   if(system==='mentorship'&&['assign','propose','sponsor'].includes(action)){const mentor=action==='assign'?context:actor;await i.guild.members.fetch(mentor);await i.guild.members.fetch(record.mentee_id);data.mentor=mentor;}
   if(system==='mentorship'&&action==='end'&&record.mentor_id!==actor&&record.mentee_id!==actor)await requireTier(i,store,'LEVEL_3');
-  if(['history','review','status','list','info','requests'].includes(action)){await publish(record);await i.editReply({content:`${system}: ${id}`,files:[{attachment:Buffer.from(JSON.stringify(record,null,2)),name:`${system}.json`}],allowedMentions:{parse:[]}});return;}
+  if(['history','review','status','list','info','requests'].includes(action)){await publish(record);await i.editReply(recordView(system,record));return;}
   const result=await call(action,id,data);await publish(result);await i.editReply({content:`${action} saved. ${result.status??''}`,files:action==='audit'?[{attachment:Buffer.from(JSON.stringify(result,null,2)),name:'poll-audit.json'}]:[],allowedMentions:{parse:[]}});return;
  }
  const contextId=system==='mentorship'&&action==='assign'?i.options?.getUser('mentor',true)?.id??context:undefined;

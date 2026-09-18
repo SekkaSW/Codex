@@ -10,9 +10,10 @@ const subcommands: Record<string, string[]> = {
     contact: ["setup", "repair", "create", "create-group", "edit", "list", "link-member", "unlink-member", "archive"], vote: ["open", "close", "audit"], briefing: ["setup", "send", "settings"],
     assignment: ["open", "claim", "close", "cancel", "set-member", "clear-member", "sync-roles"], patrol: ["suggest", "list", "resolve"], alliance: ["setup", "sync", "status", "group-add", "group-topics", "group-remove", "headquarters-remove"]
 };
-export const genericCommandNames = ["ping", "server", ...Object.keys(subcommands)] as const;
+export const genericCommandNames = ["ping", "help", "server", ...Object.keys(subcommands)] as const;
 export function commandDefinitions(namespace?: string): unknown[] {
     const commands: any[] = [new SlashCommandBuilder().setName("ping").setDescription("Check Codex availability")];
+    if (namespace !== 'help') commands.push(new SlashCommandBuilder().setName('help').setDescription('Open your Codex feature guide'));
     commands.push(new SlashCommandBuilder().setName("server").setDescription("Configure this Codex server").setDefaultMemberPermissions("8").addSubcommand((s: any) => s.setName("setup").setDescription("Start or resume the setup wizard")));
     for (const [name, subs] of Object.entries(subcommands)) {
         if(['supply','briefing','patrol','reference'].includes(name)){const c=new SlashCommandBuilder().setName(name).setDescription(`${name} operations`);for(const action of [...subs,...(name==='reference'?['edit']:name==='briefing'?['history']:[])])c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(action==='redistribute'){s.addUserOption((o:any)=>o.setName('member').setDescription('Recipient member').setRequired(true));s.addNumberOption((o:any)=>o.setName('quantity').setDescription('Quantity to allocate').setRequired(true).setMinValue(0.0001).setMaxValue(1000000000));}return s;});commands.push(c);continue;}
@@ -46,11 +47,19 @@ export function commandDefinitions(namespace?: string): unknown[] {
         commands.push(command);
     }
     if (namespace) {
-        if (genericCommandNames.includes(namespace as any))
+        if (namespace !== 'help' && genericCommandNames.includes(namespace as any))
             throw new Error('Organization namespace conflicts with a core command');
         commands.push(memberCommand(namespace));
     }
-    return commands.map(command => command.toJSON());
+    return commands.map(command => {
+        const json = command.toJSON();
+        if (json.options?.some((o: any) => o.type === 1) && json.name !== 'server') {
+            const existing = json.options.find((o: any) => o.name === 'panel');
+            if (existing) existing.description = 'Open your feature dashboard';
+            else json.options.unshift({ type: 1, name: 'panel', description: 'Open your feature dashboard' });
+        }
+        return json;
+    });
 }
 function workflowCommand(name:string):any {
  const names:Record<string,string[]>={strongbox:['setup','submit','drop','history','review','process','reject'],recruit:['invite','welcome'],application:['setup','apply','withdraw','list','review','approve','deny'],mentorship:['looking-for','withdraw-looking','propose','sponsor','assign','end','info','requests'],vote:['open','cast','close','audit','list']};

@@ -15,6 +15,10 @@ export interface ResourceSpec {
     parent?: ResourceKey;
     minimumTier?: "LEVEL_1" | "LEVEL_3";
 }
+/** Draft resource preferences override creation defaults; stored Discord IDs still win. */
+export function configuredResources(modules: Record<ModuleKey, boolean>, additional: ResourceSpec[] = []): ResourceSpec[] {
+    return [...new Map([...desiredResources(modules), ...additional].filter(spec => (spec.key !== 'ATLAS' || modules.atlas) && (spec.key !== 'DISPATCH_DESK' || modules.briefings)).map(spec => [spec.key, spec])).values()];
+}
 export function desiredResources(modules: Record<ModuleKey, boolean>): ResourceSpec[] {
     const specs: ResourceSpec[] = [
         { key: "CORE_CATEGORY", kind: "CATEGORY", name: "Codex" }, { key: "NOTICE_BOARD", kind: "CHANNEL", name: "notice-board", parent: "CORE_CATEGORY" },

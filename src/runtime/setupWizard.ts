@@ -1,8 +1,10 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import { emptyOrganization, validateOrganization, type AdministrationStore } from '../administration.js';
 import { permissionTiers, type ServerConfig } from '../domain.js';
-import { desiredResources } from '../resources.js';
+import { configuredResources } from '../resources.js';
+import { DiscordProvisioner } from './discordProvisioner.js';
 import { beginSetup, preview, validateForConfirmation, type StoredSetupDraft } from '../setup.js';
+import { answerConversation, beginConversation, conversationView } from './setupConversation.js';
 export interface SetupStore extends AdministrationStore {
     load(guildId: string): Promise<ServerConfig | undefined>;
     loadSetupDraft(guildId: string): Promise<StoredSetupDraft | undefined>;
@@ -18,15 +20,21 @@ export class SetupWizard {
     constructor(private readonly store: SetupStore, private readonly provision: (config: ServerConfig, actorId: string) => Promise<string>) { }
     async start(guildId: string, ownerId: string): Promise<any> {
         let d = await this.store.loadSetupDraft(guildId);
+        let resumed = !!d;
         if (d && Date.parse(d.expiresAt) <= Date.now()) {
             await this.store.deleteSetupDraft(guildId, d.ownerId);
             d = undefined;
+            resumed = false;
         }
         if (d && d.ownerId !== ownerId)
             throw new Error('Another administrator owns the active setup draft');
         const existing = await this.store.load(guildId);
         if (!d) {
             d = { ...beginSetup(existing), guildId, ownerId, updatedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(), organization: existing ? await this.store.organization(guildId) : emptyOrganization(), editor: { section: 'identity', page: 0 } };
+            d.config.guildId = guildId;
+            d.config.modules ??= { briefings: false, patrols: false, supply: false, atlas: false };
+            d.config.confidentialityMarker ??= '[CONFIDENTIAL]';
+            beginConversation(d, existing ? 'sections' : 'identity');
             await this.store.saveSetupDraft(d);
         }
         if (!d.organization || !d.editor) {
@@ -35,6 +43,7 @@ export class SetupWizard {
             d.revision++;
             await this.store.saveSetupDraft(d);
         }
+        if (resumed) return { content: `You have an unfinished setup from ${Math.max(0, Math.floor((Date.now() - Date.parse(d.updatedAt)) / 60000))} minutes ago. Your answers are saved.`, components: [row(button(`setup:${d.revision}:resume`, 'Resume', 1), button(`setup:${d.revision}:restart`, 'Start Over'), button(`setup:${d.revision}:progress`, 'View Progress'), button(`setup:${d.revision}:cancel`, 'Cancel', 4))], ephemeral: true };
         return { ...this.render(d), ephemeral: true };
     }
     private async required(guildId: string, ownerId: string, revision: number): Promise<StoredSetupDraft> {
@@ -55,8 +64,39 @@ export class SetupWizard {
         if (!i.guildId || !i.memberPermissions?.has(PermissionFlagsBits.Administrator))
             throw new Error('Discord Administrator permission required');
         const [, rev, action] = i.customId.split(':');
-        const d = await this.required(i.guildId, i.user.id, Number(rev));
+        let d: StoredSetupDraft;
+        try { d = await this.required(i.guildId, i.user.id, Number(rev)); }
+        catch (error) {
+            const latest = await this.store.loadSetupDraft(i.guildId);
+            if (latest && latest.ownerId === i.user.id && Date.parse(latest.expiresAt) > Date.now() && Number(rev) !== latest.revision) {
+                await i.reply({ content: 'Your setup changed in another interaction. Press Resume to load the newest saved answers.', ephemeral: true, components: [row(button(`setup:${latest.revision}:resume`, 'Resume', 1))] }); return;
+            }
+            throw error;
+        }
         const c = d.organization!, e = d.editor!, selected = e.selected, section = e.section;
+        if (action === 'resume' || action === 'progress') {
+            await i.update(action === 'progress' ? { content: this.summary(d), components: [row(button(`setup:${d.revision}:resume`, 'Resume', 1))], files: [{ attachment: Buffer.from(this.fullSummary(d)), name: 'setup-progress.txt' }], allowedMentions: { parse: [] } } : this.render(d));
+            return;
+        }
+        if (action === 'restart') {
+            await i.update({ content: 'Discard this draft and start from the saved server configuration? Production settings will stay as they are.', components: [row(button(`setup:${d.revision}:restart-confirm`, 'Confirm', 4), button(`setup:${d.revision}:resume`, 'Cancel'))] }); return;
+        }
+        if (action === 'restart-confirm') {
+            await this.store.deleteSetupDraft(d.guildId, d.ownerId);
+            const payload = await this.start(d.guildId, d.ownerId); delete payload.ephemeral; await i.update(payload); return;
+        }
+        if (action.startsWith('guide-')) {
+            if (!e.conversation) beginConversation(d);
+            if (e.section === 'preview') e.section = 'identity';
+            if (await answerConversation(d, action.slice(6), i) === 'modal') return;
+            d.stage = e.section === 'preview' ? 'preview' : 'identity';
+            d.revision++; d.updatedAt = new Date().toISOString();
+            await this.store.saveSetupDraft(d);
+            if (i.isModalSubmit()) { await i.reply({ ...this.render(d), ephemeral: true }); }
+            else await i.update(this.render(d));
+            return;
+        }
+        if (action === 'advanced') { delete e.conversation; e.section = 'identity'; d.revision++; await this.store.saveSetupDraft(d); await i.update(this.render(d)); return; }
         if (action === 'cancel') {
             await this.store.deleteSetupDraft(d.guildId, d.ownerId);
             await i.update({ content: 'Setup draft cancelled.', components: [] });
@@ -70,6 +110,24 @@ export class SetupWizard {
             return;
         }
         if (action === 'repair') {
+            const saved = await this.store.load(d.guildId);
+            if (!saved) throw new Error('Confirm setup before repairing');
+            await i.deferReply({ ephemeral: true });
+            const organization = await this.store.organization(d.guildId);
+            const resources = configuredResources(saved.modules, organization.additionalResources);
+            const checker = new DiscordProvisioner(i.guild, organization.permissions);
+            let present = 0, missing = 0, mismatched = 0;
+            for (const spec of resources) {
+                const bound = organization.resources.find(r => r.key === spec.key);
+                const channel = bound && !bound.discordId.startsWith('pending:') ? await i.guild.channels.fetch(bound.discordId).catch((error: any) => { if (error.code === 10003) return null; throw error; }) : null;
+                if (!channel) missing++;
+                else if (await checker.permissionsMatch(channel, spec)) present++;
+                else mismatched++;
+            }
+            await i.editReply({ content: `Codex found ${present} healthy managed resources, ${missing} missing or unresolved resources, and ${mismatched} permission mismatches. Repair checks functional permissions and creates missing resources. Healthy names and positions are retained. Uncertain creation may require an existing-resource binding.`, components: [row(button(`setup:${d.revision}:repair-confirm`, 'Repair Missing/Incorrect Items', 3), button(`setup:${d.revision}:view`, 'View Details'), button(`setup:${d.revision}:resume`, 'Cancel'))] });
+            return;
+        }
+        if (action === 'repair-confirm') {
             await i.deferReply({ ephemeral: true });
             const config = await this.store.load(d.guildId);
             if (!config)
@@ -101,6 +159,7 @@ export class SetupWizard {
         else
             await i.deferUpdate();
         if (action === 'section') {
+            delete e.conversation;
             e.section = i.values[0];
             delete e.selected;
             e.page = 0;
@@ -129,7 +188,7 @@ export class SetupWizard {
             else if (section === 'namespace') {
                 if (!/^[a-z0-9_-]{1,32}$/.test(name))
                     throw new Error('Use 1–32 lowercase letters, digits, underscores or hyphens');
-                if ((await import('./commands.js')).genericCommandNames.includes(name as any))
+                if ((await import('./commands.js')).genericCommandNames.includes(name as any) && !(name === 'help' && d.config.commandNamespace === 'help'))
                     throw new Error('Choose a namespace that does not replace a core command');
                 d.config.commandNamespace = name;
             }
@@ -255,7 +314,7 @@ export class SetupWizard {
             return c.additionalResources.map(x => ({ id: x.key, name: x.name, rename: (name: string) => { x.name = name; } }));
         return rows.map(x => ({ id: x.id, name: x.name, rename: (name: string) => { x.name = name; } }));
     }
-    private specs(d: StoredSetupDraft) { return [...desiredResources(d.config.modules ?? { briefings: false, patrols: false, supply: false, atlas: false }), ...d.organization!.additionalResources, { key: 'BOT_COMMANDS' as const, name: 'Command destination', kind: 'CHANNEL' as const }, { key: 'BOT_LOGS' as const, name: 'Log destination', kind: 'CHANNEL' as const }]; }
+    private specs(d: StoredSetupDraft) { return [...configuredResources(d.config.modules ?? { briefings: false, patrols: false, supply: false, atlas: false }, d.organization!.additionalResources).filter(r => !['BOT_COMMANDS','BOT_LOGS'].includes(r.key)), { key: 'BOT_COMMANDS' as const, name: 'Command destination', kind: 'CHANNEL' as const }, { key: 'BOT_LOGS' as const, name: 'Log destination', kind: 'CHANNEL' as const }]; }
     private remove(d: StoredSetupDraft): void {
         const c = d.organization!, id = d.editor!.selected, s = d.editor!.section;
         if (s === 'ranks') {
@@ -284,6 +343,12 @@ export class SetupWizard {
     }
     render(d: StoredSetupDraft): any {
         const c = d.organization!, e = d.editor!, s = e.section, id = (action: string) => `setup:${d.revision}:${action}`;
+        if (e.conversation && s !== 'preview') {
+            const payload = conversationView(d);
+            if (e.conversation.step === 'sections') payload.components.push(row(button(id('view'), 'View Saved'), button(id('repair'), 'Repair'), button(id('advanced'), 'Detailed Editor')));
+            return payload;
+        }
+        if (e.conversation && s === 'preview') return { content: this.summary(d).slice(0,1700) + '\nConfirm Setup applies these changes and provisions resources. Review removals carefully: affected members may need synchronization. Full details are attached.', components: [row(button(id('guide-back'), 'Back'), button(id('guide-sections'), 'Edit Section'), button(id('confirm'), 'Confirm Setup', 3), button(id('cancel'), 'Cancel', 4))], files: [{ attachment: Buffer.from(this.fullSummary(d)), name: 'configuration-preview.txt' }], allowedMentions: { parse: [] } };
         const components: any[] = [row(select(id('section'), 'Configuration area', sections.map(x => option(x, x))))];
         let content = `**Setup / Edit: ${s}** — changes are a durable draft until preview and confirmation.`;
         if (['identity', 'namespace', 'integration'].includes(s))

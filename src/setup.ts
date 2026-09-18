@@ -16,6 +16,15 @@ export interface StoredSetupDraft extends SetupDraft {
         section: string;
         selected?: string;
         page: number;
+        conversation?: {
+            step: string;
+            history: Array<{ step: string; selected?: string; group?: string; branch?: string; index: number }>;
+            index: number;
+            group?: string;
+            branch?: string;
+            sync?: boolean;
+            notice?: string;
+        };
     };
 }
 export interface SetupDraftPersistence {

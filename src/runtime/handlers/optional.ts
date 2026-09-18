@@ -1,5 +1,5 @@
 import type {WorkflowRepositories} from './workflows.js';import {workflowDestination} from './workflows.js';
-import {choices,interactionUuid,replyText,requireTier,textModal} from '../interactions.js';import {DurableDelivery} from '../../intelligence.js';import {DurableSummary} from '../../workflows.js';import {DiscordDurablePublisher} from '../intelligenceDiscord.js';
+import {choices,interactionUuid,replyText,requireTier,textModal,recordView} from '../interactions.js';import {DurableDelivery} from '../../intelligence.js';import {DurableSummary} from '../../workflows.js';import {DiscordDurablePublisher} from '../intelligenceDiscord.js';
 export interface OptionalRepositories extends WorkflowRepositories {optional<T=any>(guild:string,system:string,action:string,actor:string,id?:string,data?:Record<string,unknown>):Promise<T>}
 export async function handleOptional(i:any,store:OptionalRepositories):Promise<void>{
  const component=!!i.customId,p=component?i.customId.split(':'):[],actor=i.user.id,guild=i.guildId;
@@ -23,13 +23,13 @@ export async function handleOptional(i:any,store:OptionalRepositories):Promise<v
   else if(action==='log-save')record=await call('log',context,{quantity:Number(i.fields.getTextInputValue('quantity')),operation:id});else throw new Error('Unknown optional workflow form');
   try{await publish(record);}catch{throw new Error(`Saved ${record.id}; use refresh/history to retry Discord delivery`);}await i.editReply(replyText(`Saved ${record.id}.`));return;
  }
- if(system==='briefing'&&action==='settings'){await i.editReply(replyText(JSON.stringify(await call('settings'))));return;}
+ if(system==='briefing'&&action==='settings'){await i.editReply(recordView('briefing',await call('settings')));return;}
  if(system==='patrol'&&!component&&action==='suggest'){const record=await call('suggest',interactionUuid(i.id)),t=await store.trailmark(guild,'get',actor,record.trailmark_id);await i.editReply(replyText(`Suggested patrol: ${t.name}\n${record.reason}\nRequest authorized access through /trailmark panel.`));return;}
  if(component&&!p.includes('page')){
   if(system==='supply'&&action==='log'){await i.editReply({content:'Log a contribution.',components:[{type:1,components:[{type:2,style:1,label:'Enter quantity',custom_id:`${base}:log-form:${selected}`}]}]});return;}
   const data:Record<string,unknown>={operation:interactionUuid(i.id)};
   if(system==='supply'&&action==='redistribute'){const [recipient,quantity]=context.split('~');await i.guild.members.fetch(recipient);data.recipient=recipient;data.quantity=Number(quantity);}
-  const record=await call(['get','list','history'].includes(action)?'get':action,selected,data);if(!record)throw new Error('Record no longer exists');await publish(record);await i.editReply({content:`${system}: ${record.title??record.status??record.id}`,files:[{attachment:Buffer.from(JSON.stringify(record,null,2)),name:`${system}.json`}],allowedMentions:{parse:[]}});return;
+  const record=await call(['get','list','history'].includes(action)?'get':action,selected,data);if(!record)throw new Error('Record no longer exists');await publish(record);await i.editReply(recordView(system,record));return;
  }
  const extra=system==='supply'&&action==='redistribute'?component?context:`${i.options.getUser('member',true).id}~${i.options.getNumber('quantity',true)}`:undefined;
  const rows=await call('list',undefined,{page});await i.editReply(choices(`${base}:${action}${extra?`:${extra}`:''}`,rows.map((r:any)=>({id:r.id,name:r.title??r.key??`${r.status}: ${r.created_at}`})),page,rows.length===25));
