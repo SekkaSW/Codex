@@ -2,7 +2,7 @@
 
 ## Supabase
 
-Apply `migrations/001_codex_core.sql` and `002_production_features.sql` in order. The normalized configuration remains authoritative; the second migration adds member, Trailmark, Intel, Contact, finance, workflow, bridge, and Atlas queue data. Sensitive production tables have RLS enabled without permissive public policies. Codex must use `SUPABASE_SERVICE_ROLE_KEY` only on the server. Browser-facing Atlas access belongs behind separately audited `SECURITY DEFINER` RPCs—never expose the service key.
+Apply migrations `001` through `004` in order. Migration `003` adds durable drafts and authored notes. Migration `004` adds member versions, historical managed-role ownership, operation receipts, additional resource specifications, and atomic administration RPCs. It enables RLS on administrative tables and restricts administration RPCs to `service_role`. Existing Atlas RPC contracts are unchanged. Codex must use `SUPABASE_SERVICE_ROLE_KEY` only on the server. Browser-facing Atlas access belongs behind separately audited RPCs—never expose the service key.
 
 The repository adapter performs real table upserts/selects and invokes the compatibility RPC names for link codes, access requests, and Field Drops. Deployments must install compatible RPC implementations with restricted execute grants. Queue claims must be atomic in production.
 
@@ -16,10 +16,28 @@ Optional commands reject use when their module is disabled. Atlas poll work is s
 
 ## Setup and repair
 
-`/server setup` starts an administrator-only interaction. The wizard is split into identity, namespace, permissions, ranks, duties, assignments, modules, resources, destinations, integrations, preview, confirmation, and provisioning stages. Production UI expansion should use Discord role/channel selectors for their respective stages; values must be persisted before provisioning.
+`/server setup` starts an administrator-only interaction. Its area menu covers identity, namespace, permissions, ranks, branches, progression, duties, assignment groups and entries, modules, resources, destinations, confidentiality settings, and preview. Role and channel selectors handle Discord identities; names are entered in text modals. Entity lists paginate at 25 choices. Drafts are durable, revision-checked, owner-scoped and expire after seven days. Resume with `/server setup`; stale panels cannot overwrite newer drafts.
+
+Preview includes all configured ranks/edges, duties, assignments, roles, modules and resource destinations as a readable attachment. Confirm validates the graph and Discord roles, saves configuration/audit in one transaction, then provisions. The bot role must be above all synchronized roles. Missing, integration-managed or unassignable roles are rejected. Roles can be shared with permission mappings, but ranks, duties and assignment entries need distinct synchronized roles.
+
+Existing managed categories/channels may be selected by type. Additional channels are LEVEL_1 resources under the organization category. Removing an additional resource definition leaves its Discord channel intact. BOT_COMMANDS and BOT_LOGS are optional existing text-channel destinations: non-administrator slash commands use the configured command channel; setup remains available to administrators elsewhere. The log channel receives operation metadata without note bodies. Durable audit records remain in Supabase, and log delivery failures are reported separately from completed operations.
 
 Repair resolves every managed resource by its stored Discord ID. Existing renamed or reordered resources are retained. Missing resources are recreated, their registry IDs are updated, and functional permission overwrites are restored. Repair never restores aesthetic names or positions.
+
+Restricted channels receive overwrites at creation, before becoming visible. Missing-channel responses allow recreation; Discord permission and network failures do not. Confirmation merges current registry IDs so an old draft cannot restore IDs replaced by a repair. Provisioning and guild-command synchronization can be retried through Repair. Reconfiguration preserves member state and rejects deleting definitions still assigned to members or changing cardinality in ways that invalidate current memberships. Changing role mappings retains the old role in the Codex ownership registry; run member synchronization to remove obsolete mappings.
+
+## Member operations and recovery
+
+Deploy **one active bot writer per guild**. The runtime serializes guild operations and asks concurrent callers to retry. PostgreSQL additionally checks member versions and setup revisions. Multiple active gateway workers mutating the same guild are not supported; database version checks alone cannot serialize Discord side effects.
+
+Newly imported members start INACTIVE and retain unambiguous configured rank, duty and assignment roles. Complete required memberships before activation. If multiple rank roles are present during first import, remove the obsolete role and retry. Existing records are authoritative during synchronization. Absent members become LEFT; returning LEFT members become INACTIVE; RETIRED stays retired. `sync-join-history` imports Discord's currently available joined-at timestamp, not unavailable historical join events. Bulk sync reports per-member failures; retrying continues from persisted state after an interruption.
+
+Rank, assignment, duty and status changes first apply scoped Discord role deltas, then atomically write member state, rank history and audit. Confirmed write failures compensate role changes. Failed compensation explicitly requests synchronization. If the database response is ambiguous, operation receipts are checked when available; the bot does not claim rollback or success when the result cannot be confirmed. Run `sync-member` to reconcile to persisted state before retrying. A process crash between Discord and PostgreSQL likewise requires synchronization. Unrelated roles are never replaced through a full role-set write.
+
+`rank` is an administrator-only initialization/correction tool. `promote` allows only explicit outgoing graph edges for ACTIVE members, including same-tier branch alternatives. `retire-left` processes persisted LEFT members. Notes are authored records with ADMIN/MEMBER visibility labels; both labels are currently retrieved only by LEVEL_3/Administrator. All roster/admin responses are ephemeral. CSV exports contain the complete persisted roster and escape formula-leading cell values.
 
 ## Operational checks
 
 Run `npm test`, `npm run typecheck`, `npm run lint`, and `git diff --check`. Monitor failed interaction responses and background-job completion details. Encrypt bridge credentials before persistence and rotate both Discord and Supabase credentials through the hosting platform.
+
+Tests apply the real migrations to PGlite (PostgreSQL) and exercise the production repository RPC adapter and Discord handlers through fakes. They require no live Supabase or Discord credentials. A live staging-guild smoke test remains a deployment step: verify bot hierarchy, intents, channel permissions, command registration, setup, a member import/promotion, and Repair with the deployment's own credentials.

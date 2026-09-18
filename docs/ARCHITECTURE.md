@@ -23,3 +23,15 @@ Atlas remains an optional module and Trailmark identity/access remains the integ
 ## Scope retained for service migration
 
 Existing feature services (roster, funds, strongbox, contacts, applications, mentorship, voting, recruitment, Trailmarks, and Intel) should consume these configuration interfaces as they are brought into the target. Removed feature families—medals, field names, and runecloak—have no schema or command registration here. The `reference` command, if recovered from legacy source, requires functional review rather than automatic deletion.
+
+## Phase 4 administration
+
+`runtime/setupWizard.ts` owns Discord configuration editing. Every action reloads an owner/revision/expiry-checked Supabase draft; selectors persist structured configuration, with no administrator-entered JSON. `codex_save_organization` atomically updates normalized tables and snapshots the change into audit. Stored resource IDs remain authoritative across retries. Configuration stores historical role ownership so old mappings can be reconciled safely.
+
+`administration.ts` handles explicit-edge advancement, cardinality, managed-role deltas, compensation and roster generation. `runtime/handlers/members.ts` and `duty.ts` authorize using freshly fetched Discord membership and live role mappings, then invoke these services. `persistence/administration.ts` calls service-only Supabase RPCs. Member state, duty/assignment membership, rank history and audit commit together with a version check. Notes are separately authored and transactionally audited.
+
+Discord and PostgreSQL cannot share an atomic transaction. The supported deployment has one writer per guild, compensated Discord mutations on confirmed database failure, and explicit reconciliation after crashes, uncertain commits or failed compensation. A durable operation receipt distinguishes acknowledged database commits from some lost responses. Configuration and membership writes use a guild advisory lock within PostgreSQL; that lock does not cover remote Discord calls.
+
+Rank permission tiers remain metadata independent of permission-role mappings. Advancement traverses graph edges, rejects cycles/self/dangling edges, and does not include appointed roles unless explicitly configured as ranks. Duty and assignment roles are independent. Required group membership is enforced for ACTIVE members, while INACTIVE staging allows onboarding across several required groups.
+
+The roster and the configured organization namespace share executable member handlers. Assignment board operations remain separate and deferred; only member assignment administration is part of Phase 4. Existing Funds, Trailmark, Intel, Contact, bridge and Atlas boundaries are retained.
