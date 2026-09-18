@@ -17,7 +17,7 @@ const button = (id: string, label: string, style = 2) => ({ type: 2, custom_id: 
 const option = (label: string, value: string) => ({ label: label.slice(0, 100), value });
 const select = (id: string, placeholder: string, options: any[], max = 1, min = 1) => ({ type: 3, custom_id: id, placeholder, options, max_values: max, min_values: min });
 export class SetupWizard {
-    constructor(private readonly store: SetupStore, private readonly provision: (config: ServerConfig, actorId: string) => Promise<string>) { }
+    constructor(protected readonly store: SetupStore, private readonly provision: (config: ServerConfig, actorId: string) => Promise<string>) { }
     async start(guildId: string, ownerId: string): Promise<any> {
         let d = await this.store.loadSetupDraft(guildId);
         let resumed = !!d;

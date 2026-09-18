@@ -16,7 +16,7 @@ Optional commands reject use when their module is disabled. Atlas poll work is s
 
 ## Setup and repair
 
-`/server setup` starts an administrator-only interaction. Its area menu covers identity, namespace, permissions, ranks, branches, progression, duties, assignment groups and entries, modules, resources, destinations, confidentiality settings, and preview. Role and channel selectors handle Discord identities; names are entered in text modals. Entity lists paginate at 25 choices. Drafts are durable, revision-checked, owner-scoped and expire after seven days. Resume with `/server setup`; stale panels cannot overwrite newer drafts.
+`/server setup` starts an administrator-only interaction. Its area menu covers identity, namespace, permissions, ranks, branches, progression, duties, assignment groups and entries, modules, resources, destinations, confidentiality settings, and preview. Role and channel selectors handle Discord identities; names are answered with literal owner messages. Entity lists paginate at 25 choices. Drafts are durable, revision-checked, owner-scoped and expire after seven days. Resume with `/server setup`; stale panels cannot overwrite newer drafts.
 
 Preview includes all configured ranks/edges, duties, assignments, roles, modules and resource destinations as a readable attachment. Confirm validates the graph and Discord roles, saves configuration/audit in one transaction, then provisions. The bot role must be above all synchronized roles. Missing, integration-managed or unassignable roles are rejected. Roles can be shared with permission mappings, but ranks, duties and assignment entries need distinct synchronized roles.
 
@@ -113,3 +113,16 @@ After installing this update, rebuild and redeploy slash-command definitions. Th
 No new migrations, gateway intents, environment settings, or live-data conversions are required for this UX update. The existing eleven migrations and Supabase deployment configuration remain required. Ordinary input forms/search sessions last 15 minutes; confirmations last 10 minutes. Setup drafts retain their seven-day expiry. A single active writer per guild remains the supported deployment model.
 
 The UX implementation was tested locally with fake Discord boundaries and real SQL migrations in PGlite. It was not deployed and did not access production data. See [UX completion](UX_COMPLETION.md) for exact validation and remaining limits.
+
+
+## Conversational setup runtime
+
+Enable **Message Content Intent** under **Developer Portal → Application → Bot → Privileged Gateway Intents** (and obtain approval if Discord requires it for the application). The bot already requests Message Content for legacy bridge compatibility; setup reuses that intent and the single MessageCreate listener. Setup checks the configured intent and application entitlement flags before posting questions. If verification fails, it gives setup recovery instructions. A gateway rejection for disallowed privileged intents can prevent the bot from connecting at all; enable the required intents before restarting it.
+
+In a normal server text channel, Codex prefers a private thread named “Codex setup — administrator”. The bot needs Create Private Threads and Send Messages in Threads and must be able to read the parent channel. It adds the owner and disables invitations. Administrators/moderators with Discord thread-management access may still see private threads. No channel permission overwrites are weakened. If a private thread is unavailable, setup binds to the invocation channel and accepts only direct replies to its latest question. It needs View Channel and Send Messages there. Answers are visible to that channel’s readers.
+
+Repeated setup reuses the stored thread/channel. Archived threads are reopened when permitted. If reuse is impossible, the draft rebinds to the invocation channel; an uncertain thread creation is not blindly retried. Successful completion or cancellation attempts to archive the bot’s private setup thread, without deleting its transcript. Archiving failures may require manual cleanup.
+
+Prompt bindings and pending text edits are saved in the existing draft JSON using the existing revision RPC. Each accepted answer is saved before the next question. Sending and saving a prompt are fenced separately: an orphan message after a failure cannot accept answers. Run /server setup and Resume after errors or restart; accepted answers are retained. Guild operations share the existing in-process queue. Run only one bot writer per guild, as before.
+
+This correction changes no command definitions, database schemas, policies, RPCs or migrations. Deploying its code and restarting the bot is sufficient; slash commands need redeployment only if the prior dashboard overhaul has not yet been registered. No live deployment is performed by the implementation task.

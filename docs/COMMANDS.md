@@ -56,7 +56,7 @@ Use `/help` → choose a feature → choose an action. Dashboards show ten actio
 
 Reference search inspects at most 250 records per interaction. Continue Search reaches later batches; selecting a result uses the existing Reference reader. My Claimed Assignments uses the same bounded browsing pattern. These filters add no database schema or business rules. Patrol requests the existing automatic suggestion; it does not introduce a new free-text suggestion backend.
 
-Ordinary feature panels reload current permissions/module state. Argument forms expire after 15 minutes, confirmations after 10 minutes, and search sessions after 15 minutes; restarting the bot invalidates these UI-only sessions. Reopen `/help` to continue. Saved workflow records and seven-day setup drafts survive restarts. Setup revision conflicts offer a fresh Resume button. Other record revision conflicts explain how to reopen the feature.
+Ordinary feature panels reload current permissions/module state. Argument forms expire after 15 minutes, confirmations after 10 minutes, and search sessions after 15 minutes; restarting the bot invalidates these UI-only sessions. Reopen `/help` to continue. Saved workflow records and seven-day setup drafts survive restarts. Stale setup controls explain how to run `/server setup` and Resume the saved draft. Other record revision conflicts explain how to reopen the feature.
 
 Advanced bridge configuration still requests a remote guild ID because Discord provides no guild picker. Delivery recovery retains its technical identifiers. Setup and routine local record selection never require typing Discord IDs or JSON.
 
@@ -79,6 +79,15 @@ Discord Administrator overrides configured tiers where intended. Deleted configu
 | uxbrowse: | browse | Owner/guild/expiry, current BASELINE access, bounded read-only searches |
 | uxconfirm: | handleConfirmation | Owner/guild/expiry, single use, original handler reauthorization and record checks; Funds undo also checks ledger head |
 
-Setup uses role/channel/entity selectors, buttons and modals. Field workflows use entity selectors, ballot buttons and forms. Intel uses Contact/group/topic/report selectors, member selectors and text modals. Bridge uses configured peer selectors and mapping forms. Organization workflows use duty/member/record/poll selectors and application/submission forms. Optional systems use campaign/reference selectors and text forms. Forum creation is a durable Discord side effect with a stored thread ID and receipt; no unhandled forum custom-ID family exists.
+Setup uses actual owner message replies for free text, role/channel/entity selectors for identities, and buttons for navigation and confirmation. Field workflows use entity selectors, ballot buttons and forms. Intel uses Contact/group/topic/report selectors, member selectors and text modals. Bridge uses configured peer selectors and mapping forms. Organization workflows use duty/member/record/poll selectors and application/submission forms. Optional systems use campaign/reference selectors and text forms. Forum creation is a durable Discord side effect with a stored thread ID and receipt; no unhandled forum custom-ID family exists.
 
 Funds mutations require LEVEL_2; reads are available to server members through the configured command destination. Duties and member administration require LEVEL_3. Advancement setup requires Administrator, decisions require LEVEL_3 and ballots use the case snapshot. Trailmark leave remains available after loss of eligibility so access can be revoked. Unknown/stale slash registrations produce a clear error instead of success.
+
+
+## Setup message conversation
+
+Organization name, namespace, confidentiality marker, rank/branch/duty/group/entry names, and managed-resource creation names use messages. Existing freeform edits in the Detailed Editor also ask for a message. Text answers are limited to 100 characters (namespace: 1–32 lowercase letters, digits, underscores or hyphens, excluding reserved command names). No new description fields were added.
+
+A private setup thread accepts the owner’s next message only while a text question is pending. The channel fallback requires a direct Discord Reply to the current question. Other users, bots/webhooks, old replies, other channels and ordinary chat are ignored. Buttons/selectors verify current Administrator permission and the owner, guild, prompt and revision too. Back displays retained values and Keep Current; Skip preserves optional sections. Invalid answers reissue the question. Cancel deletes the draft without applying it. Review and Confirm Setup are still required to apply configuration and provision resources.
+
+Run /server setup after a restart and choose Resume. Accepted answers and the conversation binding remain in the seven-day durable draft. Old controls cannot overwrite the fresh prompt. Message Content Intent must be enabled; see DEPLOYMENT.md. Messages in the fallback channel are visible to its readers, so choose a suitable channel.

@@ -2,6 +2,7 @@ import { Client, Events, GatewayIntentBits, PermissionFlagsBits } from 'discord.
 import type { ServerConfig } from '../domain.js';
 import { configuredResources, repairResources, type Registry } from '../resources.js';
 import { DiscordProvisioner } from './discordProvisioner.js';
+import { MessageSetupWizard } from './messageSetup.js';
 import { SetupWizard, type SetupStore } from './setupWizard.js';
 import { handleFunds, type FundsRepositories } from './handlers/funds.js';
 import { handleDuty, type DutyRepositories } from './handlers/duty.js';
@@ -27,7 +28,7 @@ export interface RuntimeRepositories extends Registry, SetupStore, FundsReposito
 }
 export function createBot(repositories: RuntimeRepositories): Client {
     const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent,...(process.env.CODEX_DISCORD_PRESENCE==='true'?[GatewayIntentBits.GuildPresences]:[])] });
-    const wizard = new SetupWizard(repositories, async (config: ServerConfig, actorId: string) => {
+    const wizard = new MessageSetupWizard(repositories, async (config: ServerConfig, actorId: string) => {
         const guild = await client.guilds.fetch(config.guildId), organization = await repositories.organization(config.guildId);
         const specs = configuredResources(config.modules, organization.additionalResources).map(s => s.key === 'ORGANIZATION_CATEGORY' && !organization.additionalResources.some(r => r.key === s.key) ? { ...s, name: config.organizationName } : s);
         const result = await repairResources(config.guildId, specs, repositories, new DiscordProvisioner(guild, await repositories.permissionRoles(config.guildId)));
@@ -47,7 +48,18 @@ export function createBot(repositories: RuntimeRepositories): Client {
     const pending = new Map<string, Promise<void>>();
     const atlasRuntime=new AtlasRuntime(repositories);
     client.on(Events.MessageCreate,message=>{
-        if(!message.guildId||!message.guild||!message.author.bot||message.author.id===client.user?.id)return;
+        if (!message.guildId || !message.guild || message.author.id === client.user?.id) return;
+        if (!message.author.bot) {
+            const revision = wizard.messageRevision(message);
+            if (revision === undefined) return;
+            const key = message.guildId;
+            const work = (pending.get(key) ?? Promise.resolve()).then(() => wizard.handleMessage(message, revision)).catch(async error => {
+                console.error('Setup reply requires recovery', key, error instanceof Error ? error.message : 'Setup failure');
+                await message.channel.send({ content: 'Could not accept that setup reply. Check that you still have Administrator permission, then run /server setup to resume your saved answers.', allowedMentions: { parse: [] } }).catch(() => undefined);
+            });
+            pending.set(key, work); void work.finally(() => { if (pending.get(key) === work) pending.delete(key); });
+            return;
+        }
         const key=message.guildId;
         const work=(pending.get(key)??Promise.resolve()).then(async()=>{const config=await repositories.load(key);if(!config)return;const id=await new BridgeCoordinator(repositories).ingest(key,message.channelId,message.webhookId??message.author.id,message.id,message.content,config.confidentialityMarker);if(id)await new DiscordIntelligence(message.guild,repositories).pipeline.process(key,id);}).catch(error=>console.error('Bridge intake rejected or requires recovery',key,error instanceof Error?error.message:'Intake failure'));
         pending.set(key,work);void work.finally(()=>{if(pending.get(key)===work)pending.delete(key);});
@@ -138,7 +150,7 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
     if (i.customId?.startsWith('uxbrowse:')) { await browse(i, repositories); return; }
     if (i.customId?.startsWith('uxconfirm:')) { await handleConfirmation(i, next => route(next, wizard, repositories, true)); return; }
     if (i.customId?.startsWith('ux:') || i.customId?.startsWith('uxform:')) {
-        await handlePanel(i, repositories, next => route(next, wizard, repositories, true), async () => { await i.reply(await wizard.start(i.guildId, i.user.id)); }); return;
+        await handlePanel(i, repositories, next => route(next, wizard, repositories, true), async () => { if (wizard instanceof MessageSetupWizard) await wizard.startInteraction(i); else await i.reply(await wizard.start(i.guildId, i.user.id)); }); return;
     }
     if (needsConfirmation(i)) { await askConfirmation(i, repositories); return; }
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('optional:')){await handleOptional(i,repositories);return;}
@@ -163,6 +175,7 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
     if (i.commandName === 'server') {
         if (!i.memberPermissions?.has(PermissionFlagsBits.Administrator))
             throw new Error('Discord Administrator permission required');
+        if (wizard instanceof MessageSetupWizard) { await wizard.startInteraction(i); return; }
         await i.deferReply({ ephemeral: true });
         const payload = await wizard.start(i.guildId, i.user.id);
         delete payload.ephemeral;

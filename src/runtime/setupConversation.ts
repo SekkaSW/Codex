@@ -124,7 +124,7 @@ export async function answerConversation(d: Draft, action: string, i: any): Prom
     if (action === 'previous' || action === 'next') { e.page = Math.max(0, e.page + (action === 'next' ? 1 : -1)); return 'save'; }
     if (action === 'skip') { const target = skipTo(d); if (!target) throw new Error('This question needs an answer before continuing.'); next(target, 'Optional question skipped. Existing settings are retained.'); return 'save'; }
     if (s === 'sections') { if (!(value in setupSections)) throw new Error('Choose a listed section.'); g.index = 0; delete e.selected; next(value); return 'save'; }
-    if (action === 'new-branch') { next('branch-name'); return 'save'; }
+    if (action === 'new-branch') { next('branch-name'); delete g.branch; return 'save'; }
     if (action === 'custom-name' && s === 'resources') { next('resource-name'); return 'save'; }
     if (s === 'identity' || s === 'namespace' || s.endsWith('-name') || s === 'integration') {
         const name = action === 'default' && s === 'integration' ? '[CONFIDENTIAL]' : answer;
@@ -144,7 +144,9 @@ export async function answerConversation(d: Draft, action: string, i: any): Prom
             if (!rank) { rank = { id: crypto.randomUUID(), guildId: d.guildId, name, tier: 'BASELINE' }; c.ranks.push(rank); }
             rank.name = name; e.selected = rank.id; next('rank-role', `Rank name set to **${name}**.`);
         } else if (s === 'branch-name') {
-            let branch = c.branches.find(b => b.name === name);
+            let branch = c.branches.find(b => b.id === g.branch) ?? c.branches.find(b => b.name === name);
+            if (branch && c.branches.some(b => b.id !== branch!.id && b.name === name)) throw new Error('Choose a unique branch name.');
+            if (branch) branch.name = name;
             if (!branch) { branch = { id: crypto.randomUUID(), name }; c.branches.push(branch); }
             g.branch = branch.id; next(g.history.some(h => h.step === 'rank-branch') && g.history.at(-1)?.step === 'rank-branch' ? 'rank-more' : 'edge-from', `Branch **${name}** saved. Explicit edges determine progression.`);
         } else if (s === 'duty-name') { c.duties.find(x => x.roleId === e.selected)!.displayName = name; next('duty-more', `Duty **${name}** saved.`); }

@@ -12,6 +12,16 @@ export interface StoredSetupDraft extends SetupDraft {
     expiresAt: string;
     organization?: import('./administration.js').OrganizationConfig;
     resourceSelections?: string[];
+    messageConversation?: {
+        channelId: string;
+        privateThread: boolean;
+        threadAttempted: boolean;
+        promptId?: string;
+        revision?: number;
+        answerAction?: string;
+        question?: string;
+        textPrompt?: { action: string; content: string };
+    };
     editor?: {
         section: string;
         selected?: string;
