@@ -1,0 +1,9 @@
+# Bridge compatibility
+
+Native codex-v1 bridges operate between configured guilds sharing one Codex bot/database. This is a real cross-server workflow with independent administrator consent, authenticated service-role execution, durable retries and atomic receiving receipts. Separate Codex installations and arbitrary HTTP endpoints are not supported by this transport. They require a separately specified authenticated network protocol; endpoint strings are never fetched as arbitrary URLs.
+
+Legacy intake supports a configured local text channel and trusted bot sender, with JSON message content containing a string content, report or body field. Optional id and created_at/createdAt are preserved; unknown fields, including removed-system fields, are ignored. Source guild comes from administrator configuration, not the untrusted envelope. The Discord source-message ID is the durable replay identity. Payloads are bounded, dates validated, and confidential bodies/flags rejected at intake. The report then enters local HQ classification/publication.
+
+Exact deployed Wayfinder envelopes, webhook identities, attachments, embeds and proprietary wire fields were not available. Automatic legacy wire compatibility and historical import are therefore PARTIAL. This adapter does not impersonate or modify the legacy bot, and does not promise zero-change interoperability. Only configured bot-authored JSON is accepted; webhook posts require an explicitly reviewed identity integration. Failed malformed messages need correction by the trusted source; replaying the original valid Discord event is idempotent.
+
+Legacy category archival is an explicit local /alliance archive-category operation. It preserves resources and history while restoring LEVEL_3/Administrator visibility; it does not scan, rename, or modify any legacy repository.

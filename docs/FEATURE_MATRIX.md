@@ -4,34 +4,39 @@ This matrix distinguishes an executable path from schema or architecture alone.
 
 | System | Status | Current production path / remaining work |
 |---|---|---|
-| Generalized configuration, permissions, ranks, assignments | Complete | Normalized schema and tested domain resolution; rank progression uses explicit edges. |
-| Supabase persistence | Partially complete | Concrete configuration/resource, durable setup-draft, duty assignment, audit, Trailmark-session, Intel, Contact-forward, funds, Strongbox, and Atlas repository methods exist. Full member and assignment CRUD still need expansion. |
-| Discord runtime and deployment | Partially complete | Login, intents, command deployment, interaction router, errors, module gates, and dynamic namespace deployment exist. Generic acceptance acknowledgements have been removed; Funds has dedicated routing, while unimplemented namespaces now fail explicitly rather than claiming success. |
-| `/server setup` | Partially complete | Administrator entry, owner-scoped seven-day durable/resumable/cancellable drafts, modal stages, explicit preview/confirmation, existing-config actions, and provisioning exist. Rich role/channel selects and full normalized rank/assignment editing still remain. |
+| Generalized configuration, permissions, ranks, assignments | Complete | Interactive configuration, normalized atomic persistence, validation, and production member orchestration. |
+| Supabase persistence | Complete for implemented bot paths | Eleven ordered migrations, transactional RPCs, service-role grants, RLS on all Codex tables, guild-reference checks and durable operation/delivery receipts. |
+| Discord runtime and deployment | Complete locally | Every registered command routes to a production handler; all command builders serialize. Guild namespace synchronization and bounded multi-guild workers are executable. Live staging is still required. |
+| `/server setup` | Complete | Owner/revision/expiry-checked durable drafts; role/channel/entity selectors; text modals; paginated choices; full preview; normalized save; retryable provisioning. |
 | Managed resources and repair | Complete | Desired module-aware resources, stored-ID lookup, missing-resource recreation, registry update, and functional overwrite restoration are executable. |
-| Post-setup server configuration | Partially complete | View and ID-based repair are executable; targeted rich editors for all normalized configuration remain. |
-| Permission mappings | Partially complete | Multiple-role hierarchical production resolution is used by Funds and Duties and safely fails closed for absent roles; interactive mapping management remains. |
-| Rank configuration | Partially complete | Explicit graph model and self/dangling-edge validation exist; interactive normalized rank/branch editing remains. |
-| Duties | Partially complete | Typed `/duty assign`, `/duty remove`, and `/duty list` perform authorization, persistent assignment, Discord role changes, rollback, and audit. Interactive duty-role configuration remains. |
-| Assignment groups | Partially complete | Normalized schema and cardinality domain behavior exist; production administration and member Discord handlers remain. |
-| Member/roster persistence | Partially complete | Durable members, rank history, duties, assignments, authored notes, and audit schema exist; complete repository and roster paths remain. |
-| Member synchronization | Partially complete | Non-cumulative desired-role calculation exists; Discord reconciliation and bulk workflows remain. |
-| Rank-role synchronization | Partially complete | Desired rank roles are non-cumulative; production role mutation and history orchestration remain. |
-| Direct advancement/member promotion | Partially complete | Explicit branch-aware targets exist; production Discord transition handler remains. |
-| Roster output/export | Partially complete | Persistent source schema exists; Discord display/export handler remains. |
-| Advancement/promotion | Partially complete | Branch-aware targets and schema are present; ballot lifecycle and Discord promotion actions remain. |
-| Trailmarks and expiry | Partially complete | Persistent Trailmark/session schema, single-active-session service, expiration, and multi-guild job exist; full panels and channel lifecycle handlers remain. |
-| Intel and structured reports | Partially complete | Capture, classification, state transitions, metadata, persistence, and local confidential processing exist; Discord capture/backfill/reporter-repair handlers remain. |
-| Contacts and HQ forwarding | Partially complete | HQ gating, source-message requirement, duplicate prevention, publisher boundary, and persistence exist; forum-thread CRUD interactions remain. |
+| Post-setup server configuration | Complete | View with readable export, editing all Phase 4 configuration areas, ID-based Repair, and Cancel. |
+| Permission mappings | Complete | View/add/remove multiple roles per tier; hierarchical authorization uses fetched membership and existing roles. |
+| Rank configuration | Complete | Rank names/roles/tiers, branches and explicit edges have interactive editors; self/dangling/cyclic graphs are rejected before confirmation. |
+| Duties | Complete | Role definition editor and `/duty assign/remove/list`; transactional member/audit persistence and compensating Discord role changes. |
+| Assignment groups | Complete | Group/entry editors, optional role mapping, single/multiple and required/optional rules; `/assignment set-member/clear-member/sync-roles` persist, synchronize and audit. |
+| Member/roster persistence | Complete | Guild-scoped members, statuses/timestamps, rank history, duties, assignments, authored notes, versions and audit through production Supabase RPCs. |
+| Member synchronization | Complete | One-member and bulk reconciliation, initial role import, departure/return/status review, scoped rank/duty/assignment roles and per-member failure reports. Single writer per guild is required. |
+| Rank-role synchronization | Complete | Non-cumulative role deltas preserve unrelated roles; rank history and audit commit with state; confirmed failures compensate, uncertain outcomes request reconciliation. |
+| Direct advancement/member promotion | Complete | Authorized ACTIVE-member promotion via explicit edges, paginated target selection, independent administrator rank initialization/correction. |
+| Roster output/export | Complete | Ephemeral persisted roster summary and full escaped CSV with rank, branch, duties and configured assignment columns. |
+| Advancement/promotion | Complete | Durable cases, snapshotted requirements, authorized duplicate-safe ballots, close/approve/deny, atomic rank/history/decision/audit, restart recovery. |
+| Trailmarks and expiry | Complete | Production lifecycle, ID-based channels/repair, HQ, access selectors, durable grant/revocation/expiry recovery, reports and Atlas linkage. Local report publication is tracked under Intel. |
+| Intel and structured reports | Complete | Structured Trailmark capture, canonical metadata, HQ delivery, deterministic topics/catch-all, local publication, bounded backfill, resource repair and durable delivery recovery. |
+| Contacts and HQ forwarding | Complete | Forum creation/repair, details/archive, member links, paginated group/report linking, HQ-gated direct/group deduplication and durable local delivery receipts. Uncertain outcomes require recovery, never blind resend. |
 | Confidentiality | Complete | Case-insensitive detection is local-pipeline-neutral and bridge transfer is denied at the transport boundary. |
-| Cross-server bridge | Partially complete | Native and isolated legacy adapters plus transfer boundary exist; bridge provisioning, authentication, retries, alliance topic synchronization, and exact undocumented legacy fields remain. |
-| Funds | Partially complete | Typed Discord commands route through generalized LEVEL_2 authorization to the persistent Supabase ledger for deposit, spend, set-balance, undo, balance, history, UTC monthly summaries, and on-demand summary output. Every mutation records actor, reason, timestamp, and reversal linkage. Maintaining a durable public summary-message ID and editing that message in place remains. |
-| Strongbox | Partially complete | Persistent submission service/schema and correct managed resources exist; modal review/processing workflow remains. |
-| Recruitment, duties, applications, mentorship, voting, assignment board, reference | Partially complete | Command surfaces and normalized schemas exist; feature-specific Discord components/services remain. |
-| Supply, briefings, patrol | Partially complete | Module gating and relevant resource suppression work; full legacy workflows remain. |
-| Atlas | Partially complete | Eligibility/link expiry, compatibility RPC repository, per-guild module-gated poll service/job, and schema exist; full profile/presence and visit/heartbeat RPC implementations remain. |
+| Cross-server bridge | Native complete; legacy compatibility partial | Reciprocal same-installation guild authorization, private HQ/intake, topic groups/mappings, atomic native receipts, bounded retries, status and explicit category archival. Trusted legacy JSON ingestion works; undocumented deployed Wayfinder envelopes and separate-installation transport are not claimed. |
+| Funds | Complete | Existing ledger behavior preserved; durable public summary IDs, in-place edits, confirmed-deletion recovery and operation receipts. |
+| Strongbox | Complete | Modal submissions, private LEVEL_3 HQ delivery, public receipt, persisted staff review/process/reject and history. |
+| Recruitment, applications, mentorship, voting, assignment board | Complete | Real Discord forms/selectors and durable RPCs, review metadata, membership/duplicate/cycle checks, eligible ballots, board claims, idempotent welcome/invite behavior and audit. |
+| Reference | Complete | Staff stable-key editor, persisted entries, authorized get/list selectors and bounded output. |
+| Supply, briefings, patrol | Complete | Current-config module gating at interaction and SQL boundaries; durable stock/contribution/allocation lifecycle, dispatch-desk delivery receipts, and configured-Trailmark suggestions. |
+| Atlas | Bot-side complete; companion compatibility partial | Ten-minute hashed links, service-only RPCs, leased multi-guild five-second polling, access/drop orchestration, profile/presence sync, visits/heartbeats and live-position boundary. Browser authentication, deployed overloads, calibration/settlement/share contracts require companion verification. |
 | Medals, Field Names, Runecloak | Not implemented (intentional) | No commands or runtime services are registered for removed systems. |
 
 Obscure Wayfinder wire fields and exact Atlas RPC signatures not stated in the migration specification remain isolated behind adapters. They must be confirmed against deployed contracts rather than invented.
 
-No retained command reaches a generic “accepted” response. Namespaces without a completed production handler return an explicit not-implemented error and remain classified as partial above.
+Every registered namespace has an executable production handler. Unknown/stale registrations fail clearly and require command re-registration. Explicitly partial external compatibility is documented above; it is not represented as a complete deployed integration.
+
+Complete means implemented and locally tested production paths, not a live deployment claim. The runtime uses real Discord.js/Supabase dependencies; tests run real PostgreSQL migrations and RPCs locally and fake Discord boundaries. No live guild or hosted Supabase smoke test has been performed. Operational constraints and crash/uncertain-commit recovery are documented in DEPLOYMENT.md.
+
+Member notes and Phase 4 audits are complete: notes retain author/visibility/time; member mutations and configuration snapshots have transactional durable audit records. Optional log-channel delivery contains operation metadata only. Notes remain administrator-readable even when labelled MEMBER.

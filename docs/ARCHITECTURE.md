@@ -23,3 +23,41 @@ Atlas remains an optional module and Trailmark identity/access remains the integ
 ## Scope retained for service migration
 
 Existing feature services (roster, funds, strongbox, contacts, applications, mentorship, voting, recruitment, Trailmarks, and Intel) should consume these configuration interfaces as they are brought into the target. Removed feature families—medals, field names, and runecloak—have no schema or command registration here. The `reference` command, if recovered from legacy source, requires functional review rather than automatic deletion.
+
+## Phase 4 administration
+
+`runtime/setupWizard.ts` owns Discord configuration editing. Every action reloads an owner/revision/expiry-checked Supabase draft; selectors persist structured configuration, with no administrator-entered JSON. `codex_save_organization` atomically updates normalized tables and snapshots the change into audit. Stored resource IDs remain authoritative across retries. Configuration stores historical role ownership so old mappings can be reconciled safely.
+
+`administration.ts` handles explicit-edge advancement, cardinality, managed-role deltas, compensation and roster generation. `runtime/handlers/members.ts` and `duty.ts` authorize using freshly fetched Discord membership and live role mappings, then invoke these services. `persistence/administration.ts` calls service-only Supabase RPCs. Member state, duty/assignment membership, rank history and audit commit together with a version check. Notes are separately authored and transactionally audited.
+
+Discord and PostgreSQL cannot share an atomic transaction. The supported deployment has one writer per guild, compensated Discord mutations on confirmed database failure, and explicit reconciliation after crashes, uncertain commits or failed compensation. A durable operation receipt distinguishes acknowledged database commits from some lost responses. Configuration and membership writes use a guild advisory lock within PostgreSQL; that lock does not cover remote Discord calls.
+
+Rank permission tiers remain metadata independent of permission-role mappings. Advancement traverses graph edges, rejects cycles/self/dangling edges, and does not include appointed roles unless explicitly configured as ranks. Duty and assignment roles are independent. Required group membership is enforced for ACTIVE members, while INACTIVE staging allows onboarding across several required groups.
+
+The roster and the configured organization namespace share executable member handlers. Assignment board operations remain separate and deferred; only member assignment administration is part of Phase 4. Existing Funds, Trailmark, Intel, Contact, bridge and Atlas boundaries are retained.
+
+## Phase 5 durable workflows
+
+`field.ts` owns advancement orchestration and Trailmark access reconciliation. `persistence/field.ts` extends the existing administration repository; migration 005 provides guild-scoped service-role-only RPCs. Advancement approval supplies a transactional commit callback to the existing member transition service, allowing rank history and the case decision to commit together. Ballot snapshots preserve historical configuration even if live ranks change.
+
+Trailmark access is persisted desired state (PENDING, ACTIVE, REVOKING, CLOSED). The Discord adapter manipulates only Trailmark channel/member overwrites and stable managed resource identities. The runtime starts recovery on ready and serializes background work with foreground guild mutations.
+
+## Phase 6 intelligence
+
+IntelligencePipeline uses the canonical report model and codex_intelligence. Classification order is priority, name, stable ID; blank keywords never match. HQ delivery precedes local publication. Contact groups expand to active individual Contacts and deduplicate with direct links. Confidentiality only restricts bridge transfer. Durable discord_deliveries receipts protect report sends and Contact forum creation. An uncertain send is recovered by an exact bot-authored token, never blindly retried. The runtime drains 25-report pages per configured guild and serializes them with foreground writes.
+
+## Phase 7 bridges
+
+BridgeCoordinator extends the existing protocol-independent BridgeService. Native codex-v1 transport is a service-only database boundary between mutually authorized guilds in one installation. Version, expected identities and persisted source report are validated before atomic receive/delivery receipt. Imported reports carry immutable origin metadata and do not relay. Legacy ingestion is an isolated Discord message adapter, gated by configured intake channel and trusted sender. Remote guild-local topic names are mapped through stored topic groups.
+
+## Phase 8 organization workflows
+
+The service-only codex_workflow RPC extends existing domain tables with durable review metadata, configurable forms, voter snapshots, uniqueness/cycle checks and audit. It does not replace the Funds ledger. DurableSummary stores message IDs in bot_message_state, edits surviving bot-owned messages and uses delivery receipts for replacement after confirmed deletion. Strongbox, welcome and application sends use the same receipts. Setup no longer shadows StrongboxStore.save: configuration uses its atomic organization save path.
+
+## Phase 9 optional systems and Atlas
+
+Optional commands and component submissions check current module configuration; their SQL boundary also enforces gating. Supply has immutable contribution/allocation/undo events, stock checks and durable campaign lifecycle. Briefings use delivery receipts; Reference edits are keyed upserts. Patrol rotates suggestions among configured active Trailmarks. AtlasRuntime uses the retained AtlasService/AtlasGateway boundary. Queue claims are bounded to 25 with 30-second leases and five attempts, and all polling is guild-scoped. An access request atomically references its durable Trailmark session before Discord reconciliation, so reclaims do not renew the request. Drops reuse queue UUIDs as report IDs. Profile synchronization batches ten linked members per poll; visits follow durable active sessions. Atlas failure does not suppress Trailmark expiration or local report processing.
+
+## Final audit hardening
+
+One canonical topic table backs the legacy report_topics compatibility view; migrated rows are snapshotted in the audit log. All Codex-owned tables have RLS and explicit service-role-only grants. Triggers reject cross-guild rank/Trailmark/Contact references. Durable report dirty/attempt state prevents scanning completed history on every worker pass and requeues changes to group membership. Provisioning writes a pending registry record before external creation and refuses blind retries after uncertain category creation. Multi-guild workers are round-robin with four concurrent guilds, while foreground/background work remains serialized within each guild.
