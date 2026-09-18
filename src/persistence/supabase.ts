@@ -1,4 +1,5 @@
-import type { ServerConfig } from "../domain.js";
+import type { DutyRole, PermissionRole, ServerConfig } from "../domain.js";
+import type { StoredSetupDraft } from "../setup.js";
 import type { ManagedResource, Registry } from "../resources.js";
 import type { AtlasDrop, AtlasGateway, AtlasRequest, IntelStore, LedgerEntry, LedgerStore, StoredReport, StrongboxStore, StrongboxSubmission, TrailmarkSession, TrailmarkStore } from "../services.js";
 
@@ -7,6 +8,7 @@ export interface SupabaseQuery {
   select(columns?: string): SupabaseQuery; eq(column: string, value: unknown): SupabaseQuery; is(column: string, value: null): SupabaseQuery;
   order(column: string, options?: { ascending?: boolean }): SupabaseQuery; limit(count: number): SupabaseQuery;
   upsert(value: unknown, options?: { onConflict?: string }): QueryResult<unknown>; insert(value: unknown): QueryResult<unknown>; update(value: unknown): SupabaseQuery;
+  delete(): SupabaseQuery;
   then<TResult1 = {data:unknown;error:{message:string}|null}>(onfulfilled?: ((value:{data:unknown;error:{message:string}|null})=>TResult1|PromiseLike<TResult1>) | null): Promise<TResult1>;
 }
 export interface SupabaseClientLike { from(table: string): SupabaseQuery; rpc<T = unknown>(name: string, args?: Record<string, unknown>): QueryResult<T> }
@@ -23,6 +25,19 @@ export class SupabaseRepositories implements Registry, TrailmarkStore, IntelStor
     dataOrThrow(await this.client.from("server_config").upsert({guild_id:config.guildId,organization_name:config.organizationName,command_namespace:config.commandNamespace,confidentiality_marker:config.confidentialityMarker},{onConflict:"guild_id"}));
     dataOrThrow(await this.client.from("server_modules").upsert(Object.entries(config.modules).map(([module_key,enabled])=>({guild_id:config.guildId,module_key,enabled})),{onConflict:"guild_id,module_key"}));
   }
+  async loadSetupDraft(guildId:string):Promise<StoredSetupDraft|undefined>{
+    const rows=dataOrThrow(await this.client.from("setup_drafts").select().eq("guild_id",guildId).limit(1) as unknown as {data:RecordType[]|null;error:{message:string}|null});const row=rows[0];if(!row)return undefined;
+    const payload=row.payload as StoredSetupDraft;return{...payload,guildId:String(row.guild_id),ownerId:String(row.owner_id),stage:String(row.stage) as StoredSetupDraft["stage"],revision:Number(row.revision),updatedAt:String(row.updated_at),expiresAt:String(row.expires_at)};
+  }
+  async saveSetupDraft(draft:StoredSetupDraft):Promise<void>{dataOrThrow(await this.client.from("setup_drafts").upsert({guild_id:draft.guildId,owner_id:draft.ownerId,stage:draft.stage,revision:draft.revision,payload:{config:draft.config,stage:draft.stage,revision:draft.revision},updated_at:draft.updatedAt,expires_at:draft.expiresAt},{onConflict:"guild_id"}));}
+  async deleteSetupDraft(guildId:string,ownerId?:string):Promise<void>{let query=this.client.from("setup_drafts").delete().eq("guild_id",guildId);if(ownerId)query=query.eq("owner_id",ownerId);dataOrThrow(await query as unknown as {data:unknown;error:{message:string}|null});}
+  async permissionRoles(guildId:string):Promise<PermissionRole[]>{const rows=dataOrThrow(await this.client.from("permission_roles").select().eq("guild_id",guildId) as unknown as {data:RecordType[]|null;error:{message:string}|null});return rows.map(row=>({guildId:String(row.guild_id),roleId:String(row.discord_role_id),tier:String(row.tier) as PermissionRole["tier"]}));}
+  async dutyRoles(guildId:string):Promise<DutyRole[]>{const rows=dataOrThrow(await this.client.from("duty_roles").select().eq("guild_id",guildId) as unknown as {data:RecordType[]|null;error:{message:string}|null});return rows.map(row=>({guildId:String(row.guild_id),roleId:String(row.discord_role_id),displayName:String(row.display_name)}));}
+  async memberDuties(guildId:string,memberId:string):Promise<DutyRole[]>{const assigned=dataOrThrow(await this.client.from("member_duties").select().eq("guild_id",guildId).eq("discord_member_id",memberId) as unknown as {data:RecordType[]|null;error:{message:string}|null});const configured=await this.dutyRoles(guildId);const ids=new Set(assigned.map(row=>String(row.discord_role_id)));return configured.filter(role=>ids.has(role.roleId));}
+  async addMemberDuty(guildId:string,memberId:string,roleId:string):Promise<void>{await this.ensureMember(guildId,memberId);dataOrThrow(await this.client.from("member_duties").insert({guild_id:guildId,discord_member_id:memberId,discord_role_id:roleId}));}
+  async removeMemberDuty(guildId:string,memberId:string,roleId:string):Promise<boolean>{if(!(await this.memberDuties(guildId,memberId)).some(row=>row.roleId===roleId))return false;dataOrThrow(await this.client.from("member_duties").delete().eq("guild_id",guildId).eq("discord_member_id",memberId).eq("discord_role_id",roleId) as unknown as {data:unknown;error:{message:string}|null});return true;}
+  async audit(guildId:string,actorId:string,subjectId:string,eventType:string,detail:Record<string,unknown>):Promise<void>{dataOrThrow(await this.client.from("audit_events").insert({id:crypto.randomUUID(),guild_id:guildId,actor_id:actorId,subject_id:subjectId,event_type:eventType,detail}));}
+  private async ensureMember(guildId:string,memberId:string):Promise<void>{dataOrThrow(await this.client.from("members").upsert({guild_id:guildId,discord_member_id:memberId,display_name:memberId,status:"ACTIVE",updated_at:new Date().toISOString()},{onConflict:"guild_id,discord_member_id"}));}
   async list(guildId: string): Promise<ManagedResource[]> { const rows=dataOrThrow(await this.client.from("managed_resources").select().eq("guild_id",guildId) as unknown as {data:RecordType[]|null;error:{message:string}|null}); return rows.map(row=>({guildId:String(row.guild_id),key:String(row.resource_key) as ManagedResource["key"],discordId:String(row.discord_id),kind:String(row.resource_kind) as ManagedResource["kind"],...(row.owner_id?{ownerId:String(row.owner_id)}:{})})); }
   async put(row: ManagedResource): Promise<void> { dataOrThrow(await this.client.from("managed_resources").upsert({guild_id:row.guildId,resource_key:row.key,discord_id:row.discordId,resource_kind:row.kind,owner_id:row.ownerId??null},{onConflict:"guild_id,resource_key"})); }
   async listActiveSessions(guildId?: string): Promise<TrailmarkSession[]> { let query=this.client.from("trailmark_sessions").select().eq("active",true); if(guildId)query=query.eq("guild_id",guildId); return (dataOrThrow(await query as unknown as {data:RecordType[]|null;error:{message:string}|null})).map(sessionFromRow); }
