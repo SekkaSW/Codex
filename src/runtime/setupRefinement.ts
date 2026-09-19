@@ -1,3 +1,4 @@
+import { selectionView, answerSelection, type PendingSelection } from './setupSelections.js';
 import { permissionLabels, permissionTiers, type PermissionTier } from '../domain.js';
 import { configuredResources, desiredResources, type ResourceSpec } from '../resources.js';
 import { validateRankGraph, type StoredSetupDraft } from '../setup.js';
@@ -16,6 +17,8 @@ export interface RefinementPoint {
     disable?: 'intelligence' | 'trailmarks';
 }
 export interface Refinement extends RefinementPoint {
+    pending?: PendingSelection;
+    newRanks?: string[];
     history: RefinementPoint[];
     editing: boolean;
     notice?: string;
@@ -95,6 +98,7 @@ export function refinementSummary(d: StoredSetupDraft): string {
     return lines.join('\n');
 }
 export function refinementView(d: StoredSetupDraft): any {
+    const selection = selectionView(d); if (selection) return selection;
     const g = f(d), c = d.organization!, s = g.step, id = (a: string) => `setup:${d.revision}:refine-${a}`, button = (a: string, label: string, style = 2) => ({ type: 2, custom_id: id(a), label, style });
     const rows: any[] = [], buttons = (...items: [
         string,
@@ -247,7 +251,9 @@ export function refinementView(d: StoredSetupDraft): any {
 }
 export async function answerRefinement(d: StoredSetupDraft, action: string, i: any): Promise<void> {
     const g = f(d), c = d.organization!, s = g.step, values: string[] = i.values ?? [], value = values[0], answer = i.isModalSubmit() ? String(i.fields.getTextInputValue('name')).trim() : undefined, next = (step: string, notice?: string) => move(d, step, notice);
+    if (await answerSelection(d, action, i)) return;
     if (action === 'back') {
+        delete g.pending;
         const point = g.history.pop();
         delete g.disable;
         if (point)
@@ -258,10 +264,12 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
         return;
     }
     if (action === 'sections') {
+        delete g.pending;
         next('sections');
         return;
     }
     if (action === 'review') {
+        delete g.pending;
         next('review');
         return;
     }
@@ -302,7 +310,7 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
                 throw new Error('Choose a lowercase command of 1–32 letters, digits, hyphens or underscores. This name must not conflict with a core command.');
             d.config.commandNamespace = name;
             g.index = 0;
-            next('permissions', `Command set to **/${name}**.`);
+            next('permissions', `Command set to /${name} in your setup draft.`);
         }
         if (s === 'marker') {
             d.config.confidentialityMarker = answer;
@@ -406,7 +414,9 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
         }
         if (action !== 'continue')
             throw new Error('Choose Continue or Edit List.');
+        const previousRankIds = new Set(c.ranks.map(r => r.id));
         c.ranks = g.names!.map(name => ({ ...c.ranks.find(x => x.name.toLowerCase() === name.toLowerCase()), id: c.ranks.find(x => x.name.toLowerCase() === name.toLowerCase())?.id ?? crypto.randomUUID(), guildId: d.guildId, name, tier: c.ranks.find(x => x.name.toLowerCase() === name.toLowerCase())?.tier ?? 'BASELINE' }));
+        g.newRanks = [...(g.newRanks ?? []), ...c.ranks.filter(r => !previousRankIds.has(r.id)).map(r => r.id)];
         c.edges = c.edges.filter(e => c.ranks.some(r => r.id === e.fromRankId) && c.ranks.some(r => r.id === e.toRankId));
         g.index = 0;
         next('rank-config');

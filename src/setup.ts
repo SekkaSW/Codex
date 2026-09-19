@@ -24,6 +24,7 @@ export interface StoredSetupDraft extends SetupDraft {
         revision?: number;
         answerAction?: string;
         question?: string;
+        rankInput?: { promptId: string; revision: number; rankId: string };
         textPrompt?: { action: string; content: string };
     };
     editor?: {

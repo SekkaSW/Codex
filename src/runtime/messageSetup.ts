@@ -122,14 +122,22 @@ export class MessageSetupWizard extends SetupWizard {
             memberPermissions: permissions, customId: `setup:${d.revision}:${b.answerAction}`, isModalSubmit: () => true,
             fields: { getTextInputValue: () => content } }, d, true);
     }
+    private readonly componentQueue = new Map<string, Promise<void>>();
     override async handle(i: any): Promise<void> {
+        const run = (this.componentQueue.get(i.guildId) ?? Promise.resolve()).catch(() => {}).then(() => this.handleComponent(i));
+        this.componentQueue.set(i.guildId, run);
+        try { await run; } finally { if (this.componentQueue.get(i.guildId) === run) this.componentQueue.delete(i.guildId); }
+    }
+    private async handleComponent(i: any): Promise<void> {
         const d = await this.store.loadSetupDraft(i.guildId);
         if (!d?.messageConversation) throw new Error('Run /server setup to resume this draft as a conversation.');
         await this.admin(i.guild, i.user.id);
         const b = d.messageConversation;
         if (d.ownerId !== i.user.id) throw new Error('Only the draft owner can edit or confirm setup');
         if (Date.parse(d.expiresAt) <= Date.now()) throw new Error('Setup draft expired. Run /server setup again.');
-        if (i.channelId !== b.channelId || i.message?.id !== b.promptId || Number(i.customId.split(':')[1]) !== d.revision || b.revision !== d.revision)
+        const rank = d.editor?.refinement, prior = b.rankInput;
+        const paired = rank?.step === 'rank-config' && !rank.pending?.review && prior && prior.rankId === d.organization?.ranks[rank.index]?.id && i.message?.id === prior.promptId && Number(i.customId.split(':')[1]) === prior.revision && /:refine-(role|tier)$/.test(i.customId);
+        if (i.channelId !== b.channelId || (!paired && (i.message?.id !== b.promptId || Number(i.customId.split(':')[1]) !== d.revision || b.revision !== d.revision)))
             throw new Error('This setup question is stale. Run /server setup to resume your saved answers.');
         // Text submission is exclusively via the bound message route, never a forged modal/select.
         if (i.isModalSubmit() || ['save-text', 'create'].includes(i.customId.split(':')[2]) ||
@@ -140,7 +148,7 @@ export class MessageSetupWizard extends SetupWizard {
             if (!b.answerAction || b.answerAction === 'create' || !value) throw new Error('There is no current value to keep.');
             await this.execute({ guildId: i.guildId, guild: i.guild, channel: i.channel, user: i.user, memberPermissions: i.memberPermissions,
                 customId: `setup:${d.revision}:${b.answerAction}`, isModalSubmit: () => true, fields: { getTextInputValue: () => value } }, d, true);
-        } else await this.execute(i, d, false);
+        } else await this.execute(paired ? new Proxy(i, { get: (t,k) => k === 'customId' ? t.customId.replace(/^setup:\d+:/, `setup:${d.revision}:`) : typeof t[k] === 'function' ? t[k].bind(t) : t[k] }) : i, d, false);
     }
     private question(d: StoredSetupDraft): string { return JSON.stringify([d.editor?.refinement && [d.editor.refinement.step,d.editor.refinement.index,d.editor.refinement.group,d.editor.refinement.branch,d.editor.refinement.source,d.editor.refinement.page], d.editor?.section, d.editor?.conversation?.step, d.editor?.selected, d.editor?.conversation?.index, d.editor?.conversation?.group, d.editor?.conversation?.branch]); }
 
@@ -190,11 +198,12 @@ export class MessageSetupWizard extends SetupWizard {
         const latest = await this.store.loadSetupDraft(before.guildId);
         if (latest && !latest.messageConversation) { latest.messageConversation = { channelId: before.messageConversation!.channelId, privateThread: before.messageConversation!.privateThread, threadAttempted: true }; await this.save(latest); }
         if (message && latest && latest.revision > before.revision && !before.editor?.conversation && !before.editor?.refinement && payload) payload.content = `Value set to **${i.fields.getTextInputValue('name').trim()}** in the draft.\n\n${payload.content}`;
-        if (payload) await this.publish(before.guildId, i.channel, payload, answerAction, !['progress', 'restart', 'view', 'repair', 'repair-confirm'].includes(action));
+        const sameRank = before.editor?.refinement?.step === 'rank-config' && latest?.editor?.refinement?.step === 'rank-config' && !latest.editor.refinement.pending?.review && before.editor.refinement.index === latest.editor.refinement.index && ['refine-role','refine-tier'].includes(action);
+        if (payload) await this.publish(before.guildId, i.channel, payload, answerAction, !['progress', 'restart', 'view', 'repair', 'repair-confirm'].includes(action), sameRank ? i.message : undefined);
         if (!latest && before.messageConversation?.privateThread) await i.channel.setArchived(true).catch(() => undefined);
     }
 
-    private async publish(guildId: string, channel: any, source: any, explicitAction?: string, clearText = false): Promise<void> {
+    private async publish(guildId: string, channel: any, source: any, explicitAction?: string, clearText = false, inPlace?: any): Promise<void> {
         const d = await this.store.loadSetupDraft(guildId);
         const payload = { ...source, allowedMentions: safe }; delete payload.ephemeral;
         if (d?.refinedSetup && payload.content) payload.content = humanSetupCopy(payload.content);
@@ -204,6 +213,8 @@ export class MessageSetupWizard extends SetupWizard {
         if (explicitAction) {
             if (b.textPrompt?.action !== explicitAction) b.textPrompt = { action: explicitAction, content: source.content };
         } else if (clearText) delete b.textPrompt;
+        if (inPlace && b.promptId && b.revision) b.rankInput ??= { promptId: b.promptId, revision: b.revision, rankId: d.organization!.ranks[d.editor!.refinement!.index]!.id };
+        else delete b.rankInput;
         // Fence the old prompt before sending. An orphan prompt after a send/save failure is inert.
         delete b.promptId; delete b.answerAction; delete b.revision; delete b.question;
         await this.save(d);
@@ -220,7 +231,7 @@ export class MessageSetupWizard extends SetupWizard {
             if (value && payload.components.length < 5) payload.components.unshift({ type: 1, components: [{ type: 2, custom_id: `setup:${revision}:keep`, label: 'Keep Current', style: 2 }] });
         }
         payload.content = payload.content?.slice(0, 2000);
-        const prompt = await channel.send(payload);
+        const prompt = inPlace?.edit ? await inPlace.edit(payload) : await channel.send(payload);
         b.promptId = prompt.id; if (answerAction) b.answerAction = answerAction; b.revision = revision; b.question = this.question(d);
         await this.save(d);
         this.active.set(guildId, { ownerId: d.ownerId, binding: { ...b } });
