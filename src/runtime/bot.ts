@@ -1,3 +1,11 @@
+import { handleNativeMember } from './nativeMembers.js';
+import { handleNativePromotion } from './nativePromotion.js';
+import { handleNativeOptional } from './nativeOptional.js';
+import { handleNativeIntelligence } from './nativeIntelligence.js';
+import { handleNativeTrailmark } from './nativeField.js';
+import { handleNativeWorkflow } from './nativeWorkflows.js';
+import { autocompleteNative } from './nativeAutocomplete.js';
+import { handleSupply, autocompleteSupply } from './supply.js';
 import { prepareFeatureChange } from './featureLifecycle.js';
 import { requireFeature, backgroundFeatures } from './features.js';
 import { Client, Events, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';
@@ -104,13 +112,17 @@ export function createBot(repositories: RuntimeRepositories): Client {
         tick();
     });
     client.on(Events.InteractionCreate, i => {
+        if(i.isAutocomplete()){void (i.commandName==='supply'?autocompleteSupply(i,repositories):autocompleteNative(i,repositories)).catch(console.error);return;}
         const key = i.guildId ?? i.id;
-        if (pending.has(key)) {
+        const setupSelection = i.isAnySelectMenu() && /^setup:\d+:refine-(role|tier)$/.test(i.customId);
+        if (pending.has(key) && !setupSelection) {
             if (i.isRepliable())
                 void i.reply({ content: 'A Codex operation is still running for this server. Retry when it finishes.', ephemeral: true }).catch(console.error);
             return;
         }
+        const acknowledgement = setupSelection ? i.deferUpdate() : Promise.resolve();
         const run = (pending.get(key) ?? Promise.resolve()).then(async () => {
+            await acknowledgement;
             await route(i, wizard, repositories);
             if (!i.guildId || !i.isRepliable() || !i.replied)
                 return;
@@ -154,12 +166,18 @@ export function createBot(repositories: RuntimeRepositories): Client {
 export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRepositories, fromPanel = false): Promise<void> {
     if (!i.guildId)
         throw new Error('Use Codex inside a server');
+    if (i.isAutocomplete?.()) { if(i.commandName==='supply') await autocompleteSupply(i,repositories); else await autocompleteNative(i,repositories); return; }
+    if(i.customId?.startsWith('native:') && await handleNativeIntelligence(i,repositories))return;
+    if(i.customId?.startsWith('native:') && await handleNativePromotion(i,repositories))return;
+    if(i.customId?.startsWith('native:') && await handleNativeOptional(i,repositories))return;
+    if(i.customId?.startsWith('native:') && await handleNativeTrailmark(i,repositories))return;
+    if(i.customId?.startsWith('native:') && await handleNativeWorkflow(i,repositories)) return;
     if (i.customId?.startsWith('uxbrowse:')) { await browse(i, repositories); return; }
     if (i.customId?.startsWith('uxconfirm:')) { await handleConfirmation(i, next => route(next, wizard, repositories, true)); return; }
     if (i.customId?.startsWith('ux:') || i.customId?.startsWith('uxform:')) {
         await handlePanel(i, repositories, next => route(next, wizard, repositories, true), async () => { if (wizard instanceof MessageSetupWizard) await wizard.startInteraction(i); else await i.reply(await wizard.start(i.guildId, i.user.id)); }); return;
     }
-    if (i.commandName) await requireFeature(repositories, i.guildId, i.commandName);
+    if (i.commandName && !(i.commandName==='trailmark'&&i.options.getSubcommand()==='leave')) await requireFeature(repositories, i.guildId, i.commandName);
     if (needsConfirmation(i)) { await askConfirmation(i, repositories); return; }
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('optional:')){await handleOptional(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('flow:')){await handleWorkflows(i,repositories);return;}
@@ -193,14 +211,20 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
     const config = await repositories.load(i.guildId);
     if (!config)
         throw new Error('Run /server setup first');
-    if ((i.commandName === 'help' && !i.options.getSubcommand(false)) || (!fromPanel && i.options.getSubcommand(false) === 'panel')) { await openPanel(i, repositories, i.commandName === 'help' && !i.options.getSubcommand(false) ? '$help' : i.commandName); return; }
+    if ((i.commandName === 'help' && !i.options.getSubcommand(false)) || (!fromPanel && i.options.getSubcommand(false) === 'panel' && i.commandName!=='trailmark')) { await openPanel(i, repositories, i.commandName === 'help' && !i.options.getSubcommand(false) ? '$help' : i.commandName); return; }
     const commandDestination = (await repositories.list(i.guildId)).find(r => r.key === 'BOT_COMMANDS');
-    if (commandDestination && i.channelId !== commandDestination.discordId && !i.memberPermissions?.has(PermissionFlagsBits.Administrator))
+    if (commandDestination && i.channelId !== commandDestination.discordId && !i.memberPermissions?.has(PermissionFlagsBits.Administrator) && !(i.commandName==='trailmark'&&['report','leave'].includes(i.options.getSubcommand())))
         throw new Error(`Use Codex commands in <#${commandDestination.discordId}>. An administrator can update this destination in /server setup.`);
     const modules: Record<string, keyof ServerConfig['modules']> = { atlas: 'atlas', briefing: 'briefings', patrol: 'patrols', supply: 'supply' };
     const module = modules[i.commandName];
     if (module && !config.modules[module])
         throw new Error('This optional module is disabled');
+    if(['contact','intel'].includes(i.commandName)&&await handleNativeIntelligence(i,repositories))return;
+    if(i.commandName==='trailmark'&&await handleNativeTrailmark(i,repositories))return;
+    if((['briefing','patrol'].includes(i.commandName)||(i.commandName===config.commandNamespace&&i.options.getSubcommand()==='briefing'))&&await handleNativeOptional(i,repositories))return;
+    if(i.commandName===config.commandNamespace){if(await handleNativeMember(i,repositories))return;await handleMembers(i,repositories);return;}
+    if(['promotion','advancement'].includes(i.commandName)&&await handleNativePromotion(i,repositories))return;
+    if(['vote','assignment','reference','mentorship','apprenticeship'].includes(i.commandName)&&await handleNativeWorkflow(i,repositories))return;
     if (i.commandName === 'funds') {
         await handleFunds(i, repositories,async()=>{const destination=await workflowDestination(i,repositories,'FUNDS');await new DurableSummary(repositories,new DiscordDurablePublisher(i.guild)).refresh(i.guildId,'funds',destination,`Organization Funds\nBalance: ${await new FundsService(repositories).balance(i.guildId)}`);});
         return;
@@ -209,10 +233,11 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
         await handleDuty(i, repositories);
         return;
     }
-    if(i.commandName==='advancement'||i.commandName==='trailmark'){await handleField(i,repositories);return;}
+    if(i.commandName==='advancement'||i.commandName==='promotion'||i.commandName==='trailmark'){await handleField(i,repositories);return;}
     if(i.commandName==='intel'||i.commandName==='contact'){await handleIntelligence(i,repositories);return;}
     if(i.commandName==='alliance'){await handleBridge(i,repositories);return;}
-    if(['supply','briefing','patrol','reference'].includes(i.commandName)){await handleOptional(i,repositories);return;}
+    if(i.commandName==='supply'){await handleSupply(i,repositories);return;}
+    if(['briefing','patrol','reference'].includes(i.commandName)){await handleOptional(i,repositories);return;}
     if(i.commandName==='atlas'){await handleAtlas(i,repositories);return;}
     if(['strongbox','recruit','application','mentorship','vote'].includes(i.commandName)||(i.commandName==='assignment'&&!['set-member','clear-member','sync-roles'].includes(i.options.getSubcommand()))){await handleWorkflows(i,repositories);return;}
     if (i.commandName === 'roster' || i.commandName === config.commandNamespace || (i.commandName === 'assignment' && ['set-member', 'clear-member', 'sync-roles'].includes(i.options.getSubcommand()))) {

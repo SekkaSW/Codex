@@ -1,3 +1,5 @@
+import { restoreNativeDefinitions } from './nativeDefinitions.js';
+import { supplyCommand } from './supplyCommands.js';
 import { SlashCommandBuilder } from "discord.js";
 const subcommands: Record<string, string[]> = {
     advancement: ['setup','eligible','status','open','close','approve','deny','ballots'],
@@ -10,13 +12,14 @@ const subcommands: Record<string, string[]> = {
     contact: ["setup", "repair", "create", "create-group", "edit", "list", "link-member", "unlink-member", "archive"], vote: ["open", "close", "audit"], briefing: ["setup", "send", "settings"],
     assignment: ["open", "claim", "close", "cancel", "set-member", "clear-member", "sync-roles"], patrol: ["suggest", "list", "resolve"], alliance: ["setup", "sync", "status", "group-add", "group-topics", "group-remove", "headquarters-remove"]
 };
-export const genericCommandNames = ["ping", "help", "server", ...Object.keys(subcommands)] as const;
+export const genericCommandNames = ["ping", "help", "server", "promotion", "apprenticeship", ...Object.keys(subcommands)] as const;
 export function commandDefinitions(namespace?: string): unknown[] {
     const commands: any[] = [new SlashCommandBuilder().setName("ping").setDescription("Check Codex availability")];
     if (namespace !== 'help') commands.push(new SlashCommandBuilder().setName('help').setDescription('Open your Codex feature guide'));
     commands.push(new SlashCommandBuilder().setName("server").setDescription("Configure this Codex server").setDefaultMemberPermissions("8").addSubcommand((s: any) => s.setName("setup").setDescription("Start or resume the setup wizard")));
     for (const [name, subs] of Object.entries(subcommands)) {
-        if(['supply','briefing','patrol','reference'].includes(name)){const c=new SlashCommandBuilder().setName(name).setDescription(`${name} operations`);for(const action of [...subs,...(name==='reference'?['edit']:name==='briefing'?['history']:[])])c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(action==='redistribute'){s.addUserOption((o:any)=>o.setName('member').setDescription('Recipient member').setRequired(true));s.addNumberOption((o:any)=>o.setName('quantity').setDescription('Quantity to allocate').setRequired(true).setMinValue(0.0001).setMaxValue(1000000000));}return s;});commands.push(c);continue;}
+        if(name==='supply'){commands.push(supplyCommand());continue;}
+        if(['briefing','patrol','reference'].includes(name)){const c=new SlashCommandBuilder().setName(name).setDescription(`${name} operations`);for(const action of [...subs,...(name==='reference'?['edit']:name==='briefing'?['history']:[])])c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(action==='redistribute'){s.addUserOption((o:any)=>o.setName('member').setDescription('Recipient member').setRequired(true));s.addNumberOption((o:any)=>o.setName('quantity').setDescription('Quantity to allocate').setRequired(true).setMinValue(0.0001).setMaxValue(1000000000));}return s;});commands.push(c);continue;}
         if(['strongbox','recruit','application','mentorship','vote'].includes(name)){commands.push(workflowCommand(name));continue;}
         if(name==='alliance'){const c=new SlashCommandBuilder().setName(name).setDescription('Authorized cross-server intelligence bridges');for(const action of [...subs,'archive-category'])c.addSubcommand((s:any)=>{s.setName(action).setDescription(action.replaceAll('-',' '));if(action==='archive-category')s.addChannelOption((o:any)=>o.setName('category').setDescription('Legacy category to retain with staff-only access').setRequired(true).addChannelTypes(4));if(action==='setup'){for(const key of ['name','remote'])s.addStringOption((o:any)=>o.setName(key).setDescription(key==='name'?'Remote organization name':'Remote Discord server ID').setRequired(true).setMaxLength(100));s.addStringOption((o:any)=>o.setName('protocol').setDescription('Bridge protocol').setRequired(true).addChoices({name:'Native Codex',value:'codex-v1'},{name:'Legacy intake',value:'legacy-wayfinder'}));s.addChannelOption((o:any)=>o.setName('intake').setDescription('Legacy intake text channel').addChannelTypes(0));s.addUserOption((o:any)=>o.setName('sender').setDescription('Trusted legacy bot sender'));}return s;});commands.push(c);continue;}
         if(name==='intel'||name==='contact'){commands.push(intelligenceCommand(name));continue;}
@@ -47,11 +50,11 @@ export function commandDefinitions(namespace?: string): unknown[] {
         commands.push(command);
     }
     if (namespace) {
-        if (namespace !== 'help' && genericCommandNames.includes(namespace as any))
+        if (!['help','promotion','apprenticeship'].includes(namespace) && genericCommandNames.includes(namespace as any))
             throw new Error('Organization namespace conflicts with a core command');
         commands.push(memberCommand(namespace));
     }
-    return commands.map(command => {
+    return restoreNativeDefinitions(commands.map(command => {
         const json = command.toJSON();
         if (json.options?.some((o: any) => o.type === 1) && json.name !== 'server') {
             const existing = json.options.find((o: any) => o.name === 'panel');
@@ -59,7 +62,7 @@ export function commandDefinitions(namespace?: string): unknown[] {
             else json.options.unshift({ type: 1, name: 'panel', description: 'Open your feature dashboard' });
         }
         return json;
-    });
+    }), namespace);
 }
 function workflowCommand(name:string):any {
  const names:Record<string,string[]>={strongbox:['setup','submit','drop','history','review','process','reject'],recruit:['invite','welcome'],application:['setup','apply','withdraw','list','review','approve','deny'],mentorship:['looking-for','withdraw-looking','propose','sponsor','assign','end','info','requests'],vote:['open','cast','close','audit','list']};

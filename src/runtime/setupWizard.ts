@@ -208,7 +208,7 @@ export class SetupWizard {
             else if (section === 'namespace') {
                 if (!/^[a-z0-9_-]{1,32}$/.test(name))
                     throw new Error('Use 1–32 lowercase letters, digits, underscores or hyphens');
-                if ((await import('./commands.js')).genericCommandNames.includes(name as any) && !(name === 'help' && d.config.commandNamespace === 'help'))
+                if ((await import('./commands.js')).genericCommandNames.includes(name as any) && !(['help','promotion','apprenticeship'].includes(name) && d.config.commandNamespace === name))
                     throw new Error('Choose a namespace that does not replace a core command');
                 d.config.commandNamespace = name;
             }

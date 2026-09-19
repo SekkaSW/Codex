@@ -1,0 +1,2690 @@
+{
+  "source": "lcbmann/keizaal-wayfinder",
+  "revision": "1bf76065ffa323838bd71c4657dced65a4923415",
+  "commands": [
+    {
+      "file": "src/commands/alliance.ts",
+      "name": "alliance",
+      "description": "Manage the Ranger Alliance intel bridge.",
+      "options": [
+        {
+          "type": 1,
+          "name": "setup",
+          "description": "Create allied HQ Trailmarks and private intel sections."
+        },
+        {
+          "type": 1,
+          "name": "sync",
+          "description": "Repair configured HQ channels without backfilling reports."
+        },
+        {
+          "type": 1,
+          "name": "status",
+          "description": "Show Ranger Alliance bridge status."
+        },
+        {
+          "type": 1,
+          "name": "group-add",
+          "description": "Create an Alliance group, HQ Trailmark, and selected report channels.",
+          "options": [
+            {
+              "type": 3,
+              "name": "key",
+              "description": "Short unique key, such as dawnguard.",
+              "required": true,
+              "max_length": 40
+            },
+            {
+              "type": 3,
+              "name": "order",
+              "description": "Group name shown on reports.",
+              "required": true,
+              "max_length": 80
+            },
+            {
+              "type": 8,
+              "name": "role",
+              "description": "Alliance role allowed to see this group's reports.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "headquarters",
+              "description": "Name of the group's HQ location.",
+              "required": true,
+              "max_length": 80
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Hold where the HQ Trailmark is located.",
+              "required": true,
+              "max_length": 80
+            },
+            {
+              "type": 3,
+              "name": "description",
+              "description": "In-world description of the HQ cache.",
+              "required": true,
+              "max_length": 1000
+            },
+            {
+              "type": 3,
+              "name": "topics",
+              "description": "Comma-separated topic names, slugs, or all.",
+              "required": true,
+              "max_length": 500
+            },
+            {
+              "type": 3,
+              "name": "submit_emoji",
+              "description": "Unicode emoji for the report intake channel, such as 📜.",
+              "max_length": 20
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "group-topics",
+          "description": "Change which intel topics an Alliance group can see.",
+          "options": [
+            {
+              "type": 3,
+              "name": "key",
+              "description": "Alliance group key.",
+              "required": true,
+              "max_length": 40
+            },
+            {
+              "type": 3,
+              "name": "topics",
+              "description": "Comma-separated topic names, slugs, or all.",
+              "required": true,
+              "max_length": 500
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "group-remove",
+          "description": "Deactivate an Alliance group, HQ Trailmark, and report section.",
+          "options": [
+            {
+              "type": 3,
+              "name": "key",
+              "description": "Alliance group key.",
+              "required": true,
+              "max_length": 40
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "headquarters-remove",
+          "description": "Deactivate an Alliance group's headquarters and report section.",
+          "options": [
+            {
+              "type": 3,
+              "name": "key",
+              "description": "Alliance group key.",
+              "required": true,
+              "max_length": 40
+            }
+          ]
+        }
+      ],
+      "services": [
+        "allianceIntelService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/application.ts",
+      "name": "application",
+      "description": "Apply for Corps duties or leadership consideration.",
+      "options": [
+        {
+          "type": 1,
+          "name": "apply",
+          "description": "Open a Corps duty or leadership application.",
+          "options": [
+            {
+              "type": 3,
+              "name": "position",
+              "description": "Position you are applying for.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...APPLICATION_TARGETS.map((target) => ({ name: target, value: target }))"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "withdraw",
+          "description": "Withdraw one of your pending applications.",
+          "options": [
+            {
+              "type": 3,
+              "name": "application",
+              "description": "Your pending application.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "list",
+          "description": "Marshal+: list pending Corps applications you can review."
+        },
+        {
+          "type": 1,
+          "name": "setup",
+          "description": "Commander: configure private leadership application review channels.",
+          "options": [
+            {
+              "type": 7,
+              "name": "marshal_channel",
+              "description": "Private Marshal+ channel for reviewing Marshal applications.",
+              "required": true,
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildText"
+                }
+              ]
+            },
+            {
+              "type": 7,
+              "name": "captain_channel",
+              "description": "Private Captain+ channel for reviewing Captain applications.",
+              "required": true,
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildText"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "services": [
+        "applicationService.js",
+        "applicationFormService.js",
+        "rangerService.js"
+      ],
+      "hasAutocomplete": true
+    },
+    {
+      "file": "src/commands/apprenticeship.ts",
+      "name": "apprenticeship",
+      "description": "Find, establish, and manage Ranger apprenticeships.",
+      "options": [
+        {
+          "type": 1,
+          "name": "looking-for",
+          "description": "Post a notice that you are looking for a mentor or Apprentice.",
+          "options": [
+            {
+              "type": 3,
+              "name": "type",
+              "description": "What you are looking for.",
+              "required": true,
+              "choices": [
+                {
+                  "name": "A mentor",
+                  "value": "Mentor"
+                },
+                {
+                  "name": "An apprentice",
+                  "value": "Apprentice"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "note",
+              "description": "Optional preferences or introduction.",
+              "max_length": 1500
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "withdraw-looking",
+          "description": "Remove your apprenticeship matching request."
+        },
+        {
+          "type": 1,
+          "name": "propose",
+          "description": "Propose a pairing between an existing Ranger and Apprentice.",
+          "options": [
+            {
+              "type": 6,
+              "name": "member",
+              "description": "The proposed mentor or Apprentice.",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "sponsor",
+          "description": "Sponsor a new Discord member as your Apprentice for Marshal review.",
+          "options": [
+            {
+              "type": 6,
+              "name": "recruit",
+              "description": "The new recruit already in the Discord.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "reason",
+              "description": "Why they would make a good Ranger.",
+              "required": true,
+              "max_length": 2000
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "assign",
+          "description": "Marshal+: directly pair an existing Ranger and Apprentice.",
+          "options": [
+            {
+              "type": 6,
+              "name": "mentor",
+              "description": "Ranger or higher who will mentor.",
+              "required": true
+            },
+            {
+              "type": 6,
+              "name": "apprentice",
+              "description": "Existing Apprentice.",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "end",
+          "description": "End your apprenticeship, or Marshal+: end another pairing.",
+          "options": [
+            {
+              "type": 6,
+              "name": "member",
+              "description": "A participant in the pairing. Leave blank for your own."
+            },
+            {
+              "type": 3,
+              "name": "reason",
+              "description": "Optional reason.",
+              "max_length": 1000
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "info",
+          "description": "Show a current apprenticeship.",
+          "options": [
+            {
+              "type": 6,
+              "name": "member",
+              "description": "Participant to inspect. Leave blank for yourself."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "requests",
+          "description": "Marshal+: list matching requests and current pairings."
+        }
+      ],
+      "services": [
+        "apprenticeshipService.js",
+        "assignmentBoardService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/assignment.ts",
+      "name": "assignment",
+      "description": "Create and manage Ranger Corps assignments.",
+      "options": [
+        {
+          "type": 1,
+          "name": "setup",
+          "description": "Marshal+: connect Wayfinder to the Assignments Forum.",
+          "options": [
+            {
+              "type": 7,
+              "name": "forum",
+              "description": "The existing Assignments Forum channel.",
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildForum"
+                }
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "create",
+          "description": "Ranger+: post a new assignment to the Corps board.",
+          "options": [
+            {
+              "type": 3,
+              "name": "minimum_rank",
+              "description": "Choose who may join. The default is Apprentice+.",
+              "choices": [
+                {
+                  "name": "Apprentice+",
+                  "value": "Apprentice"
+                },
+                {
+                  "name": "Ranger+",
+                  "value": "Ranger"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Primary Hold, if the assignment is regional.",
+              "choices": [
+                {
+                  "expression": "...HOLDS.map((hold) => ({ name: hold, value: hold }))"
+                },
+                {
+                  "name": "Cross-Skyrim",
+                  "value": "Cross-Skyrim"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "services": [
+        "managedAssignmentService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/atlas.ts",
+      "name": "atlas",
+      "description": "Connect the Field Atlas to your Ranger Trailmarks.",
+      "options": [
+        {
+          "type": 1,
+          "name": "link",
+          "description": "Create a temporary code to link your Atlas device to Discord."
+        }
+      ],
+      "services": [
+        "atlasTrailmarkAccessService.js",
+        "atlasDiscordProfileService.js",
+        "medalService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/briefing.ts",
+      "name": "briefing",
+      "description": "Collect your briefing or send a Headquarters dispatch.",
+      "options": [
+        {
+          "type": 1,
+          "name": "setup",
+          "description": "Marshal+: place the Dispatch Desk in a channel.",
+          "options": [
+            {
+              "type": 7,
+              "name": "channel",
+              "description": "The channel where members collect their briefings.",
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildText"
+                }
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "send",
+          "description": "Marshal+: send a dispatch or short OOC note.",
+          "options": [
+            {
+              "type": 3,
+              "name": "audience",
+              "description": "Who receives this in their next briefing.",
+              "required": true,
+              "choices": [
+                {
+                  "name": "All Corps Members",
+                  "value": "apprentice_plus"
+                },
+                {
+                  "name": "Ranger+",
+                  "value": "ranger_plus"
+                },
+                {
+                  "name": "Marshal+",
+                  "value": "marshal_plus"
+                },
+                {
+                  "name": "Captain+",
+                  "value": "captain_plus"
+                },
+                {
+                  "name": "One Corps Member",
+                  "value": "individual"
+                }
+              ]
+            },
+            {
+              "type": 6,
+              "name": "recipient",
+              "description": "Choose a member when the audience is One Corps Member."
+            },
+            {
+              "type": 3,
+              "name": "kind",
+              "description": "Send an in-character dispatch or a short OOC note.",
+              "choices": [
+                {
+                  "name": "In-character dispatch",
+                  "value": "ic"
+                },
+                {
+                  "name": "OOC note",
+                  "value": "ooc"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "settings",
+          "description": "Choose whether Wayfinder sends your briefing by DM.",
+          "options": [
+            {
+              "type": 5,
+              "name": "dm_enabled",
+              "description": "Turn this off to read briefings in the private reply instead.",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "services": [
+        "briefingService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/contact.ts",
+      "name": "contact",
+      "description": "Maintain the Ranger Corps contact records.",
+      "options": [
+        {
+          "type": 1,
+          "name": "setup",
+          "description": "Marshal+: create or repair the Contacts Forum.",
+          "options": [
+            {
+              "type": 7,
+              "name": "category",
+              "description": "Optional category for the Contacts Forum.",
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildCategory"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "create",
+          "description": "Apprentice+: create a record for an individual contact.",
+          "options": [
+            {
+              "type": 3,
+              "name": "name",
+              "description": "The contact's name.",
+              "required": true,
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "race",
+              "description": "The contact's race.",
+              "required": true,
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "sex",
+              "description": "The contact's sex.",
+              "required": true,
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "occupation",
+              "description": "Occupation, such as Alchemist or Merchant.",
+              "required": true,
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Primary Hold or region.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...holdChoices"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "faction",
+              "description": "Faction or organization.",
+              "max_length": 150
+            },
+            {
+              "type": 3,
+              "name": "usual_locations",
+              "description": "Places where this person is usually found.",
+              "max_length": 500
+            },
+            {
+              "type": 3,
+              "name": "commentary",
+              "description": "Additional notes about the contact.",
+              "max_length": 1500
+            },
+            {
+              "type": 5,
+              "name": "high_priority",
+              "description": "Mark important contacts such as leaders or high-ranking officials."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "create-group",
+          "description": "Apprentice+: create a record for a known group.",
+          "options": [
+            {
+              "type": 3,
+              "name": "name",
+              "description": "The group's known name.",
+              "required": true,
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "category",
+              "description": "What kind of group this is.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...groupCategoryChoices"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Primary Hold or region.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...holdChoices"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "estimated_size",
+              "description": "Estimated numbers or strength.",
+              "max_length": 200
+            },
+            {
+              "type": 3,
+              "name": "identifying_features",
+              "description": "Clothing, symbols, appearance, or other identifying signs.",
+              "max_length": 700
+            },
+            {
+              "type": 3,
+              "name": "weapons_capabilities",
+              "description": "Known weapons, magic, creatures, or other capabilities.",
+              "max_length": 700
+            },
+            {
+              "type": 3,
+              "name": "tactics",
+              "description": "Known tactics, behavior, or patterns.",
+              "max_length": 700
+            },
+            {
+              "type": 3,
+              "name": "usual_locations",
+              "description": "Territory, camps, routes, or usual locations.",
+              "max_length": 500
+            },
+            {
+              "type": 3,
+              "name": "faction",
+              "description": "Larger faction or known affiliation.",
+              "max_length": 150
+            },
+            {
+              "type": 3,
+              "name": "commentary",
+              "description": "Additional intelligence or notes.",
+              "max_length": 1500
+            },
+            {
+              "type": 5,
+              "name": "high_priority",
+              "description": "Mark a particularly important or dangerous group."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "edit",
+          "description": "Apprentice+: edit a person or group record.",
+          "options": [
+            {
+              "type": 3,
+              "name": "contact",
+              "description": "Person or group to edit.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "name",
+              "description": "Replace the record's name.",
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "race",
+              "description": "Replace the contact's race.",
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "sex",
+              "description": "Replace the contact's sex.",
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "occupation",
+              "description": "Replace the occupation.",
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Replace the primary Hold or region.",
+              "choices": [
+                {
+                  "expression": "...holdChoices"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "faction",
+              "description": "Replace the faction or organization.",
+              "max_length": 150
+            },
+            {
+              "type": 3,
+              "name": "usual_locations",
+              "description": "Replace usual locations.",
+              "max_length": 500
+            },
+            {
+              "type": 3,
+              "name": "commentary",
+              "description": "Replace the commentary.",
+              "max_length": 1500
+            },
+            {
+              "type": 3,
+              "name": "group_category",
+              "description": "Group records only: replace the category.",
+              "choices": [
+                {
+                  "expression": "...groupCategoryChoices"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "estimated_size",
+              "description": "Group records only: replace estimated size.",
+              "max_length": 200
+            },
+            {
+              "type": 3,
+              "name": "identifying_features",
+              "description": "Group records only: replace identifying signs.",
+              "max_length": 700
+            },
+            {
+              "type": 3,
+              "name": "weapons_capabilities",
+              "description": "Group records only: replace arms or capabilities.",
+              "max_length": 700
+            },
+            {
+              "type": 3,
+              "name": "tactics",
+              "description": "Group records only: replace tactics or behavior.",
+              "max_length": 700
+            },
+            {
+              "type": 5,
+              "name": "high_priority",
+              "description": "Set whether this is a high-priority contact."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "list",
+          "description": "List active people and groups, optionally filtered.",
+          "options": [
+            {
+              "type": 3,
+              "name": "type",
+              "description": "Only people or groups.",
+              "choices": [
+                {
+                  "name": "People",
+                  "value": "Person"
+                },
+                {
+                  "name": "Groups",
+                  "value": "Group"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Only contacts in this Hold or region.",
+              "choices": [
+                {
+                  "expression": "...holdChoices"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "occupation",
+              "description": "Only contacts with this occupation.",
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "group_category",
+              "description": "Only groups in this category.",
+              "choices": [
+                {
+                  "expression": "...groupCategoryChoices"
+                }
+              ]
+            },
+            {
+              "type": 5,
+              "name": "high_priority",
+              "description": "Only show high-priority contacts."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "link-member",
+          "description": "Apprentice+: link a person contact as a known member of a group.",
+          "options": [
+            {
+              "type": 3,
+              "name": "group",
+              "description": "Group contact record.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "person",
+              "description": "Person contact record to add as a member.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "unlink-member",
+          "description": "Apprentice+: remove a person's membership link from a group.",
+          "options": [
+            {
+              "type": 3,
+              "name": "group",
+              "description": "Group contact record.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "person",
+              "description": "Person contact record to unlink.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "archive",
+          "description": "Marshal+: archive a contact without deleting its history.",
+          "options": [
+            {
+              "type": 3,
+              "name": "contact",
+              "description": "Contact to archive.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "reason",
+              "description": "Why the contact is being archived.",
+              "max_length": 500
+            }
+          ]
+        }
+      ],
+      "services": [
+        "contactService.js"
+      ],
+      "hasAutocomplete": true
+    },
+    {
+      "file": "src/commands/duty.ts",
+      "name": "duty",
+      "description": "Manage active Ranger Corps duties. Use /application apply to volunteer.",
+      "options": [
+        {
+          "type": 1,
+          "name": "assign",
+          "description": "Marshal+: directly assign a Corps duty.",
+          "options": [
+            {
+              "type": 6,
+              "name": "member",
+              "description": "Ranger receiving the duty.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "duty",
+              "description": "Duty to assign.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...dutyChoices"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "warden_position",
+              "description": "Required when assigning Warden.",
+              "choices": [
+                {
+                  "name": "Hold Warden (appointed as Ranger of the Hold)",
+                  "value": "hold_primary"
+                },
+                {
+                  "name": "Local Warden",
+                  "value": "local_range"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Parent Hold for a Warden appointment.",
+              "choices": [
+                {
+                  "expression": "...HOLDS.map((hold) => ({ name: hold, value: hold }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "range_or_specialty",
+              "description": "Local Warden Range or optional Craftsman specialty.",
+              "max_length": 200
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "remove",
+          "description": "Marshal+: remove a Corps duty.",
+          "options": [
+            {
+              "type": 6,
+              "name": "member",
+              "description": "Ranger losing the duty.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "duty",
+              "description": "Duty to remove.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...dutyChoices"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "warden_position",
+              "description": "Use when the Ranger has multiple Warden appointments.",
+              "choices": [
+                {
+                  "name": "Hold Warden (appointed as Ranger of the Hold)",
+                  "value": "hold_primary"
+                },
+                {
+                  "name": "Local Warden",
+                  "value": "local_range"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Parent Hold of the Warden appointment.",
+              "choices": [
+                {
+                  "expression": "...HOLDS.map((hold) => ({ name: hold, value: hold }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "range",
+              "description": "Named local Range to remove.",
+              "max_length": 200
+            },
+            {
+              "type": 3,
+              "name": "reason",
+              "description": "Optional removal reason.",
+              "max_length": 500
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "list",
+          "description": "List current Corps duty holders.",
+          "options": [
+            {
+              "type": 3,
+              "name": "duty",
+              "description": "Limit the list to one duty.",
+              "choices": [
+                {
+                  "expression": "...dutyChoices"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "setup",
+          "description": "Marshal+: create or repair Corps duty roles."
+        }
+      ],
+      "services": [
+        "dutyService.js",
+        "assignmentBoardService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/funds.ts",
+      "name": "funds",
+      "description": "Corps fund transaction logging.",
+      "options": [
+        {
+          "type": 1,
+          "name": "deposit",
+          "description": "Record a Corps fund donation.",
+          "options": [
+            {
+              "type": 6,
+              "name": "member",
+              "description": "Member who donated.",
+              "required": true
+            },
+            {
+              "type": 4,
+              "name": "amount",
+              "description": "Amount in Septims.",
+              "required": true,
+              "min_value": 1
+            },
+            {
+              "type": 3,
+              "name": "note",
+              "description": "Optional note."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "spend",
+          "description": "Record Corps fund spending.",
+          "options": [
+            {
+              "type": 4,
+              "name": "amount",
+              "description": "Amount in Septims.",
+              "required": true,
+              "min_value": 1
+            },
+            {
+              "type": 3,
+              "name": "note",
+              "description": "What the funds were spent on.",
+              "required": true
+            },
+            {
+              "type": 6,
+              "name": "paid_to",
+              "description": "Optional member who received the funds."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "set-balance",
+          "description": "Set the current Corps fund total with a balancing adjustment.",
+          "options": [
+            {
+              "type": 4,
+              "name": "amount",
+              "description": "Current total in Septims.",
+              "required": true,
+              "min_value": 0
+            },
+            {
+              "type": 3,
+              "name": "note",
+              "description": "Adjustment note."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "refresh-summary",
+          "description": "Move the Corps fund summary to the bottom."
+        },
+        {
+          "type": 1,
+          "name": "balance",
+          "description": "Show the current Corps fund balance."
+        },
+        {
+          "type": 1,
+          "name": "history",
+          "description": "Show recent Corps fund transactions.",
+          "options": [
+            {
+              "type": 6,
+              "name": "member",
+              "description": "Filter to one member."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "undo-last",
+          "description": "Undo the latest Corps fund transaction."
+        },
+        {
+          "type": 1,
+          "name": "monthly",
+          "description": "Show a monthly Corps fund summary.",
+          "options": [
+            {
+              "type": 4,
+              "name": "year",
+              "description": "Year.",
+              "required": true,
+              "min_value": 2020
+            },
+            {
+              "type": 4,
+              "name": "month",
+              "description": "Month number.",
+              "required": true,
+              "min_value": 1,
+              "max_value": 12
+            }
+          ]
+        }
+      ],
+      "services": [
+        "corpsFundService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/intel.ts",
+      "name": "intel",
+      "description": "Trailmark intelligence bulletins.",
+      "options": [
+        {
+          "type": 1,
+          "name": "set-hq",
+          "description": "Set the Trailmark used as the HQ delivery point.",
+          "options": [
+            {
+              "type": 3,
+              "name": "trailmark",
+              "description": "HQ Trailmark.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "topic-add",
+          "description": "Create an intel topic and report bulletin.",
+          "options": [
+            {
+              "type": 3,
+              "name": "name",
+              "description": "Topic name.",
+              "required": true,
+              "max_length": 80
+            },
+            {
+              "type": 3,
+              "name": "keywords",
+              "description": "Comma-separated keywords, such as vampire,vampires.",
+              "required": true,
+              "max_length": 500
+            },
+            {
+              "type": 7,
+              "name": "channel",
+              "description": "Existing report channel. If omitted, Wayfinder creates one in Intel.",
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildText"
+                },
+                {
+                  "expression": "ChannelType.GuildAnnouncement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "topic-edit",
+          "description": "Add or replace keywords for an existing intel topic.",
+          "options": [
+            {
+              "type": 3,
+              "name": "topic",
+              "description": "Intel topic to update.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "keywords",
+              "description": "Comma-separated keywords to add or use as the replacement list.",
+              "required": true,
+              "max_length": 500
+            },
+            {
+              "type": 5,
+              "name": "append",
+              "description": "Append to existing keywords. Defaults to yes."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "topic-list",
+          "description": "List intel topics and HQ setup."
+        },
+        {
+          "type": 1,
+          "name": "catchall-set",
+          "description": "Set or create the fallback topic for uncategorized delivered reports.",
+          "options": [
+            {
+              "type": 3,
+              "name": "topic",
+              "description": "Existing intel topic to use as the catchall.",
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "name",
+              "description": "Name for a new catchall topic if topic is omitted.",
+              "max_length": 80
+            },
+            {
+              "type": 7,
+              "name": "channel",
+              "description": "Existing report channel for a new catchall topic. If omitted, Wayfinder creates one.",
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildText"
+                },
+                {
+                  "expression": "ChannelType.GuildAnnouncement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "catchall-clear",
+          "description": "Disable future uncategorized intel capture."
+        },
+        {
+          "type": 1,
+          "name": "refresh",
+          "description": "Rebuild a topic bulletin from delivered reports.",
+          "options": [
+            {
+              "type": 3,
+              "name": "topic",
+              "description": "Intel topic to rebuild.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "repair-reporters",
+          "description": "Repair existing report embeds and reporter names in place without reposting messages.",
+          "options": [
+            {
+              "type": 3,
+              "name": "topic",
+              "description": "Topic to repair. Omit to repair all topics.",
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "backfill",
+          "description": "Scan old Trailmark messages into intel topics.",
+          "options": [
+            {
+              "type": 3,
+              "name": "topic",
+              "description": "Topic to backfill. Omit for all topics.",
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "mode",
+              "description": "How to handle historical delivery.",
+              "choices": [
+                {
+                  "name": "Historical delivery",
+                  "value": "historical-delivery"
+                },
+                {
+                  "name": "Pending only",
+                  "value": "pending-only"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "after",
+              "description": "Only scan messages on or after YYYY-MM-DD."
+            },
+            {
+              "type": 4,
+              "name": "limit_per_trailmark",
+              "description": "Maximum messages to scan per Trailmark.",
+              "min_value": 1,
+              "max_value": 5000
+            }
+          ]
+        }
+      ],
+      "services": [
+        "intelService.js",
+        "trailmarkService.js",
+        "allianceIntelService.js"
+      ],
+      "hasAutocomplete": true
+    },
+    {
+      "file": "src/commands/patrol.ts",
+      "name": "patrol",
+      "description": "Ask Wayfinder for a patrol route.",
+      "options": [
+        {
+          "type": 1,
+          "name": "suggest",
+          "description": "Cycle through patrol ideas favoring less-recently visited Trailmarks.",
+          "options": [
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Choose a Hold or leave blank for your assigned Hold.",
+              "choices": [
+                {
+                  "expression": "...HOLDS.map((hold) => ({ name: hold, value: hold }))"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "services": [
+        "patrolSuggestionService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/ping.ts",
+      "name": "ping",
+      "description": "Check whether the Wayfinder bot is awake.",
+      "services": [],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/promotion.ts",
+      "name": "promotion",
+      "description": "Promotion eligibility and voting.",
+      "options": [
+        {
+          "type": 1,
+          "name": "setup",
+          "description": "Marshal+: configure the Ranger-only promotion channel.",
+          "options": [
+            {
+              "type": 7,
+              "name": "channel",
+              "description": "Channel where promotion votes and discussion threads are posted.",
+              "required": true,
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildText"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "eligible",
+          "description": "Show promotion readiness, field-trial, and hold statuses."
+        },
+        {
+          "type": 1,
+          "name": "status",
+          "description": "Set an Apprentice's promotion progress.",
+          "options": [
+            {
+              "type": 6,
+              "name": "candidate",
+              "description": "Apprentice.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "progress",
+              "description": "Current promotion progress.",
+              "required": true,
+              "choices": [
+                {
+                  "name": "In Field Trial",
+                  "value": "field_trial"
+                },
+                {
+                  "name": "On Hold",
+                  "value": "on_hold"
+                },
+                {
+                  "name": "Clear status",
+                  "value": "clear"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "open",
+          "description": "Open a promotion vote.",
+          "options": [
+            {
+              "type": 6,
+              "name": "candidate",
+              "description": "Candidate.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "target_rank",
+              "description": "Target rank.",
+              "choices": [
+                {
+                  "expression": "...MAIN_RANKS.map((rank) => ({ name: rank, value: rank }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "reason",
+              "description": "Optional reason or context."
+            },
+            {
+              "type": 8,
+              "name": "mentions",
+              "description": "Optional role to mention on the vote post."
+            },
+            {
+              "type": 8,
+              "name": "mentions_2",
+              "description": "Optional additional role to mention."
+            },
+            {
+              "type": 8,
+              "name": "mentions_3",
+              "description": "Optional additional role to mention."
+            },
+            {
+              "type": 8,
+              "name": "mentions_4",
+              "description": "Optional additional role to mention."
+            },
+            {
+              "type": 8,
+              "name": "mentions_5",
+              "description": "Optional additional role to mention."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "close",
+          "description": "Close a promotion vote and show results.",
+          "options": [
+            {
+              "type": 3,
+              "name": "vote",
+              "description": "Open vote ID.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "approve",
+          "description": "Approve a vote and promote the candidate.",
+          "options": [
+            {
+              "type": 3,
+              "name": "vote",
+              "description": "Open or closed vote ID.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "deny",
+          "description": "Deny a promotion vote.",
+          "options": [
+            {
+              "type": 3,
+              "name": "vote",
+              "description": "Open or closed vote ID.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "ballots",
+          "description": "Show who voted Yes, No, or Abstain on a promotion vote.",
+          "options": [
+            {
+              "type": 3,
+              "name": "vote",
+              "description": "Vote ID.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        }
+      ],
+      "services": [
+        "promotionService.js",
+        "rangerService.js",
+        "assignmentBoardService.js"
+      ],
+      "hasAutocomplete": true
+    },
+    {
+      "file": "src/commands/ranger.ts",
+      "name": "ranger",
+      "description": "Roster and Ranger Corps member tools.",
+      "options": [
+        {
+          "type": 1,
+          "name": "info",
+          "description": "Show a Ranger roster entry.",
+          "options": [
+            {
+              "type": 6,
+              "name": "user",
+              "description": "Member to inspect."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "briefing",
+          "description": "Collect dispatches waiting for you at Headquarters."
+        },
+        {
+          "type": 1,
+          "name": "assignments",
+          "description": "Post Ranger leadership and hold assignments."
+        },
+        {
+          "type": 1,
+          "name": "audit",
+          "description": "Check roster and Discord role drift."
+        },
+        {
+          "type": 1,
+          "name": "inactive-review",
+          "description": "Show Rangers with old or missing tracked activity.",
+          "options": [
+            {
+              "type": 4,
+              "name": "days",
+              "description": "Activity age threshold.",
+              "min_value": 1,
+              "max_value": 365
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "sync-member",
+          "description": "Refresh one member from Discord roles and display name.",
+          "options": [
+            {
+              "type": 6,
+              "name": "user",
+              "description": "Member to sync."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "sync-all",
+          "description": "Sync all members with Ranger rank roles."
+        },
+        {
+          "type": 1,
+          "name": "sync-join-history",
+          "description": "Marshal+: sync exact Corps entry times from a welcome channel.",
+          "options": [
+            {
+              "type": 7,
+              "name": "channel",
+              "description": "Channel containing Discord member-join messages.",
+              "channel_types": [
+                {
+                  "expression": "ChannelType.GuildText"
+                }
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "status",
+          "description": "Set a Ranger status.",
+          "options": [
+            {
+              "type": 6,
+              "name": "user",
+              "description": "Member to update.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "status",
+              "description": "New status.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...statuses.map((status) => ({ name: status, value: status }))"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "retire-left",
+          "description": "Mark a roster entry Retired after the Discord user has left.",
+          "options": [
+            {
+              "type": 3,
+              "name": "discord_user_id",
+              "description": "Discord user ID from the roster.",
+              "required": true,
+              "min_length": 17,
+              "max_length": 20
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "clear-hold",
+          "description": "Captain+: remove a Hold Warden appointment, including for departed members.",
+          "options": [
+            {
+              "type": 3,
+              "name": "discord_user_id",
+              "description": "Discord user ID from the roster.",
+              "required": true,
+              "min_length": 17,
+              "max_length": 20
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "set-hold",
+          "description": "Captain+: appoint a Hold Warden as the Ranger of that Hold.",
+          "options": [
+            {
+              "type": 6,
+              "name": "user",
+              "description": "Ranger to appoint.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Hold they will represent and coordinate.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...HOLDS.map((hold) => ({ name: hold, value: hold }))"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "sync-hold-roles",
+          "description": "Create and sync assigned hold roles for the current roster."
+        },
+        {
+          "type": 1,
+          "name": "note",
+          "description": "Set or append roster notes.",
+          "options": [
+            {
+              "type": 6,
+              "name": "user",
+              "description": "Member to update.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "note",
+              "description": "Note text.",
+              "required": true
+            },
+            {
+              "type": 5,
+              "name": "append",
+              "description": "Append instead of replacing notes."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "promote",
+          "description": "Manually promote or assign a main Ranger rank.",
+          "options": [
+            {
+              "type": 6,
+              "name": "user",
+              "description": "Member to promote.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "rank",
+              "description": "Target main rank.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...MAIN_RANKS.map((rank) => ({ name: rank, value: rank }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "reason",
+              "description": "Reason for rank history."
+            }
+          ]
+        }
+      ],
+      "services": [
+        "rangerService.js",
+        "holdRoleService.js",
+        "assignmentBoardService.js",
+        "dutyService.js",
+        "fieldNameService.js",
+        "atlasDiscordProfileService.js",
+        "medalService.js",
+        "promotionService.js",
+        "briefingService.js",
+        "runecloakService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/recruit.ts",
+      "name": "recruit",
+      "description": "Recruitment support.",
+      "options": [
+        {
+          "type": 1,
+          "name": "invite",
+          "description": "Create an onboarding invite."
+        },
+        {
+          "type": 1,
+          "name": "welcome",
+          "description": "Send a recruit onboarding checklist.",
+          "options": [
+            {
+              "type": 6,
+              "name": "user",
+              "description": "Recruit to welcome.",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "services": [],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/reference.ts",
+      "name": "reference",
+      "description": "Privately archive external rules, rulings and evidence (Marshal+).",
+      "options": [
+        {
+          "type": 1,
+          "name": "add",
+          "description": "Open a private form to preserve verbatim source material.",
+          "options": [
+            {
+              "type": 3,
+              "name": "title",
+              "description": "Short reference title.",
+              "required": true,
+              "max_length": 150
+            },
+            {
+              "type": 3,
+              "name": "category",
+              "description": "Type of source.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...REFERENCE_CATEGORIES.map((v) => ({ name: v, value: v }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "source-url",
+              "description": "Original message, ticket, document or image link.",
+              "required": true,
+              "max_length": 2000
+            },
+            {
+              "type": 3,
+              "name": "authority",
+              "description": "Your classification, not automatic verification. Default: unverified.",
+              "choices": [
+                {
+                  "expression": "...REFERENCE_AUTHORITIES.map((v) => ({ name: v, value: v }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "context",
+              "description": "IC/OOC context, if known.",
+              "choices": [
+                {
+                  "expression": "...REFERENCE_CONTEXTS.map((v) => ({ name: v, value: v }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "confidentiality",
+              "description": "Handling label; archive remains private. Default: marshal_plus.",
+              "choices": [
+                {
+                  "expression": "...REFERENCE_CONFIDENTIALITIES.map((v) => ({ name: v, value: v }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "posted-at",
+              "description": "Original timestamp with timezone, e.g. 2026-09-07T18:30:00Z. Omit if unknown."
+            },
+            {
+              "type": 3,
+              "name": "attachment-links",
+              "description": "Supporting http(s) links, separated by whitespace.",
+              "max_length": 2000
+            },
+            {
+              "type": 3,
+              "name": "supersedes",
+              "description": "ID of an earlier reference this replaces (the original is preserved)."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "view",
+          "description": "Retrieve a private reference by ID.",
+          "options": [
+            {
+              "type": 3,
+              "name": "id",
+              "description": "Full archived reference ID.",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "services": [
+        "referenceService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/roster.ts",
+      "name": "roster",
+      "description": "Roster exports.",
+      "options": [
+        {
+          "type": 1,
+          "name": "export",
+          "description": "Export the Ranger roster as CSV."
+        }
+      ],
+      "services": [
+        "rosterExportService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/strongbox.ts",
+      "name": "strongbox",
+      "description": "Leave private reports for Ranger Marshal or higher.",
+      "options": [
+        {
+          "type": 1,
+          "name": "drop",
+          "description": "Leave a private message in the HQ Strongbox.",
+          "options": [
+            {
+              "type": 3,
+              "name": "message",
+              "description": "Message for Ranger Marshal or higher.",
+              "required": true,
+              "max_length": 4000
+            },
+            {
+              "type": 11,
+              "name": "attachment",
+              "description": "Optional supporting image or file."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "setup",
+          "description": "Create or repair the Marshal+ HQ Strongbox channel."
+        }
+      ],
+      "services": [
+        "strongboxService.js"
+      ],
+      "hasAutocomplete": false
+    },
+    {
+      "file": "src/commands/supply.ts",
+      "name": "supply",
+      "description": "Create and track Ranger Corps supply assignments.",
+      "options": [
+        {
+          "type": 1,
+          "name": "create",
+          "description": "Create an auto-updating supply assignment board.",
+          "options": [
+            {
+              "type": 3,
+              "name": "name",
+              "description": "Assignment name.",
+              "required": true,
+              "max_length": 100
+            },
+            {
+              "type": 3,
+              "name": "client",
+              "description": "Client receiving the supplies.",
+              "required": true,
+              "max_length": 100
+            },
+            {
+              "type": 10,
+              "name": "sale_price",
+              "description": "Septims paid by the client per item.",
+              "required": true,
+              "min_value": 0
+            },
+            {
+              "type": 10,
+              "name": "ranger_rate",
+              "description": "Septims paid to Rangers per item.",
+              "required": true,
+              "min_value": 0
+            },
+            {
+              "type": 3,
+              "name": "item_1",
+              "description": "First item.",
+              "required": true,
+              "max_length": 100
+            },
+            {
+              "type": 4,
+              "name": "quota_1",
+              "description": "First item quota.",
+              "required": true,
+              "min_value": 1
+            },
+            {
+              "type": 3,
+              "name": "item_2",
+              "description": "Second item.",
+              "max_length": 100
+            },
+            {
+              "type": 4,
+              "name": "quota_2",
+              "description": "Second item quota.",
+              "min_value": 1
+            },
+            {
+              "type": 3,
+              "name": "item_3",
+              "description": "Third item.",
+              "max_length": 100
+            },
+            {
+              "type": 4,
+              "name": "quota_3",
+              "description": "Third item quota.",
+              "min_value": 1
+            },
+            {
+              "type": 3,
+              "name": "item_4",
+              "description": "Fourth item.",
+              "max_length": 100
+            },
+            {
+              "type": 4,
+              "name": "quota_4",
+              "description": "Fourth item quota.",
+              "min_value": 1
+            },
+            {
+              "type": 6,
+              "name": "organizer",
+              "description": "Ranger organizing the assignment."
+            },
+            {
+              "type": 3,
+              "name": "notes",
+              "description": "Optional instructions or storage location.",
+              "max_length": 1000
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "log",
+          "description": "Log items contributed to an active assignment.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "item",
+              "description": "Item contributed.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 4,
+              "name": "quantity",
+              "description": "Quantity contributed.",
+              "required": true,
+              "min_value": 1
+            },
+            {
+              "type": 3,
+              "name": "item_2",
+              "description": "Optional second item.",
+              "autocomplete": true
+            },
+            {
+              "type": 4,
+              "name": "quantity_2",
+              "description": "Second item quantity.",
+              "min_value": 1
+            },
+            {
+              "type": 3,
+              "name": "item_3",
+              "description": "Optional third item.",
+              "autocomplete": true
+            },
+            {
+              "type": 4,
+              "name": "quantity_3",
+              "description": "Third item quantity.",
+              "min_value": 1
+            },
+            {
+              "type": 3,
+              "name": "item_4",
+              "description": "Optional fourth item.",
+              "autocomplete": true
+            },
+            {
+              "type": 4,
+              "name": "quantity_4",
+              "description": "Fourth item quantity.",
+              "min_value": 1
+            },
+            {
+              "type": 6,
+              "name": "member",
+              "description": "Marshal+: log for another Ranger."
+            },
+            {
+              "type": 3,
+              "name": "note",
+              "description": "Optional contribution note.",
+              "max_length": 500
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "undo-last",
+          "description": "Undo your latest contribution to an assignment.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 6,
+              "name": "member",
+              "description": "Marshal+: undo another Ranger's latest entry."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "redistribute",
+          "description": "Redistribute one contributor's entries before a cutoff time.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "source_id",
+              "description": "Former contributor's Discord ID or mention.",
+              "required": true,
+              "max_length": 30
+            },
+            {
+              "type": 3,
+              "name": "before",
+              "description": "ISO cutoff. Entries before it are moved.",
+              "required": true,
+              "max_length": 40
+            },
+            {
+              "type": 3,
+              "name": "method",
+              "description": "How the credit is divided among other contributors.",
+              "required": true,
+              "choices": [
+                {
+                  "name": "Weighted by contribution",
+                  "value": "weighted"
+                },
+                {
+                  "name": "Evenly",
+                  "value": "even"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "reason",
+              "description": "Optional audit reason.",
+              "max_length": 500
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "status",
+          "description": "View a supply assignment.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "contributors",
+          "description": "View contribution and payout totals.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "refresh",
+          "description": "Refresh an assignment board.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "close",
+          "description": "Close an assignment as completed.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "reopen",
+          "description": "Reopen a completed or cancelled assignment.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "cancel",
+          "description": "Cancel an assignment.",
+          "options": [
+            {
+              "type": 3,
+              "name": "assignment",
+              "description": "Supply assignment code.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        }
+      ],
+      "services": [
+        "supplyAssignmentService.js"
+      ],
+      "hasAutocomplete": true
+    },
+    {
+      "file": "src/commands/trailmark.ts",
+      "name": "trailmark",
+      "description": "Trailmark cache access and administration.",
+      "options": [
+        {
+          "type": 1,
+          "name": "panel",
+          "description": "Post a Trailmark access panel."
+        },
+        {
+          "type": 1,
+          "name": "leave",
+          "description": "Leave your current Trailmark."
+        },
+        {
+          "type": 1,
+          "name": "list",
+          "description": "List active Trailmarks."
+        },
+        {
+          "type": 1,
+          "name": "sessions",
+          "description": "Show active Trailmark access sessions."
+        },
+        {
+          "type": 1,
+          "name": "report",
+          "description": "Open a standardized report form for the Trailmark you are visiting.",
+          "options": [
+            {
+              "type": 3,
+              "name": "type",
+              "description": "Report format.",
+              "required": true,
+              "choices": [
+                {
+                  "name": "General report",
+                  "value": "General"
+                },
+                {
+                  "name": "Incident report",
+                  "value": "Incident"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "contact",
+              "description": "Optional person or group involved.",
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "contact_2",
+              "description": "Optional additional person or group.",
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "contact_3",
+              "description": "Optional additional person or group.",
+              "autocomplete": true
+            },
+            {
+              "type": 6,
+              "name": "participant",
+              "description": "Another Ranger who participated."
+            },
+            {
+              "type": 6,
+              "name": "participant_2",
+              "description": "Another participating Ranger."
+            },
+            {
+              "type": 6,
+              "name": "participant_3",
+              "description": "Another participating Ranger."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "create",
+          "description": "Create a private Trailmark channel.",
+          "options": [
+            {
+              "type": 3,
+              "name": "name",
+              "description": "Trailmark name.",
+              "required": true
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "Hold or range.",
+              "required": true,
+              "choices": [
+                {
+                  "expression": "...HOLDS.map((hold) => ({ name: hold, value: hold }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "location_description",
+              "description": "In-character location description.",
+              "required": true
+            },
+            {
+              "type": 11,
+              "name": "screenshot",
+              "description": "Optional location screenshot."
+            },
+            {
+              "type": 3,
+              "name": "atlas_location_id",
+              "description": "Optional future Atlas location UUID."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "edit",
+          "description": "Edit an existing Trailmark.",
+          "options": [
+            {
+              "type": 3,
+              "name": "trailmark",
+              "description": "Trailmark to edit.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "name",
+              "description": "New Trailmark name."
+            },
+            {
+              "type": 3,
+              "name": "hold",
+              "description": "New hold or range.",
+              "choices": [
+                {
+                  "expression": "...HOLDS.map((hold) => ({ name: hold, value: hold }))"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "location_description",
+              "description": "New in-character location description.",
+              "max_length": 4000
+            },
+            {
+              "type": 11,
+              "name": "screenshot",
+              "description": "Replace the location screenshot."
+            },
+            {
+              "type": 5,
+              "name": "clear_screenshot",
+              "description": "Remove the current screenshot."
+            },
+            {
+              "type": 3,
+              "name": "atlas_location_id",
+              "description": "Set or replace the Atlas location UUID."
+            },
+            {
+              "type": 5,
+              "name": "clear_atlas",
+              "description": "Remove the Atlas location UUID."
+            },
+            {
+              "type": 5,
+              "name": "pinned",
+              "description": "Pin or unpin this Trailmark at the top of the panel."
+            },
+            {
+              "type": 3,
+              "name": "patrol_primary",
+              "description": "Primary Trailmark this one shares patrol activity with.",
+              "autocomplete": true
+            },
+            {
+              "type": 5,
+              "name": "clear_patrol_primary",
+              "description": "Stop sharing patrol activity with another Trailmark."
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "deactivate",
+          "description": "Deactivate a Trailmark without deleting channel history.",
+          "options": [
+            {
+              "type": 3,
+              "name": "trailmark",
+              "description": "Trailmark to deactivate.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "set-atlas",
+          "description": "Set or replace a Trailmark Atlas location UUID.",
+          "options": [
+            {
+              "type": 3,
+              "name": "trailmark",
+              "description": "Trailmark to update.",
+              "required": true,
+              "autocomplete": true
+            },
+            {
+              "type": 3,
+              "name": "atlas_location_id",
+              "description": "Atlas location UUID.",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "clear-atlas",
+          "description": "Remove a Trailmark Atlas location UUID.",
+          "options": [
+            {
+              "type": 3,
+              "name": "trailmark",
+              "description": "Trailmark to update.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        }
+      ],
+      "services": [
+        "trailmarkService.js",
+        "contactService.js",
+        "structuredTrailmarkReportService.js"
+      ],
+      "hasAutocomplete": true
+    },
+    {
+      "file": "src/commands/vote.ts",
+      "name": "vote",
+      "description": "Open, close, or audit a channel vote.",
+      "options": [
+        {
+          "type": 1,
+          "name": "open",
+          "description": "Open an auditable binary or multiple-choice vote in this channel.",
+          "options": [
+            {
+              "type": 3,
+              "name": "format",
+              "description": "Use a standard vote or open a form for multiple choices.",
+              "choices": [
+                {
+                  "name": "Yes / No / Abstain",
+                  "value": "binary"
+                },
+                {
+                  "name": "Multiple choice",
+                  "value": "choice"
+                }
+              ]
+            },
+            {
+              "type": 3,
+              "name": "question",
+              "description": "The issue being decided. Multiple-choice votes can enter this in the form.",
+              "max_length": 300
+            },
+            {
+              "type": 3,
+              "name": "context",
+              "description": "Optional background or terms for the vote.",
+              "max_length": 1000
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "close",
+          "description": "Close a vote in this channel and preserve its final tally.",
+          "options": [
+            {
+              "type": 3,
+              "name": "vote",
+              "description": "Vote ID.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "audit",
+          "description": "Privately export every ballot cast in a channel vote.",
+          "options": [
+            {
+              "type": 3,
+              "name": "vote",
+              "description": "Vote ID.",
+              "required": true,
+              "autocomplete": true
+            }
+          ]
+        }
+      ],
+      "services": [
+        "generalVoteService.js"
+      ],
+      "hasAutocomplete": true
+    }
+  ]
+}

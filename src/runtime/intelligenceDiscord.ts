@@ -3,10 +3,10 @@ import { DurableDelivery, IntelligencePipeline, type ContactRow, type DurablePub
 import type { Registry, ManagedResource } from '../resources.js';
 export class DiscordDurablePublisher implements DurablePublisher {
  constructor(private readonly guild:any){}
- async edit(channelId:string,messageId:string,body:string):Promise<boolean>{try{const channel=await this.guild.channels.fetch(channelId);if(!channel)return false;const message=await channel.messages.fetch(messageId);if(message.author.id!==this.guild.client.user.id)throw new Error('Stored summary is not owned by this bot');await message.edit({content:'',embeds:[{description:body.slice(0,4096)}],allowedMentions:{parse:[]}});return true;}catch(error){if([10003,10008].includes((error as {code:number}).code))return false;throw error;}}
+ async edit(channelId:string,messageId:string,body:string):Promise<boolean>{try{const channel=await this.guild.channels.fetch(channelId);if(!channel)return false;const message=await channel.messages.fetch(messageId);if(message.author.id!==this.guild.client.user.id)throw new Error('Stored summary is not owned by this bot');await message.edit({content:'',attachments:[],...(body.length>4096?{files:[{attachment:Buffer.from(body),name:'details.txt'}]}:{}),embeds:[{description:body.slice(0,4096)}],allowedMentions:{parse:[]}});return true;}catch(error){if([10003,10008].includes((error as {code:number}).code))return false;throw error;}}
  async send(channelId:string,key:string,body:string):Promise<string>{
   const channel=await this.guild.channels.fetch(channelId);if(!channel)throw new Error('Delivery destination is missing');
-  const payload={embeds:[{description:body.slice(0,4096),footer:{text:`codex-delivery:${key}`}}],allowedMentions:{parse:[]}};
+  const payload={...(body.length>4096?{files:[{attachment:Buffer.from(body),name:'details.txt'}]}:{}),embeds:[{description:body.slice(0,4096),footer:{text:`codex-delivery:${key}`}}],allowedMentions:{parse:[]}};
   if(channel.type===ChannelType.GuildForum){const thread=await channel.threads.create({name:body.split('\n')[0]!.slice(0,100),message:payload});return thread.id;}
   if(!channel.isTextBased()||!('send'in channel))throw new Error('Delivery requires a text channel or forum');
   return (await channel.send(payload)).id;
@@ -27,7 +27,7 @@ export class DiscordIntelligence implements IntelligenceDestinations {
  constructor(private readonly guild:any,private readonly store:IntelligenceStore&Registry){this.delivery=new DurableDelivery(store,new DiscordDurablePublisher(guild));this.pipeline=new IntelligencePipeline(store,this.delivery,this);}
  async resource(key:ManagedResource['key'],name:string,forum=false,restricted=false):Promise<string>{
   const records=await this.store.list(this.guild.id),record=records.find(r=>r.key===key);let channel=record?await this.fetch(record.discordId):null;
-  if(channel){if(channel.type!==(forum?ChannelType.GuildForum:ChannelType.GuildText))throw new Error('Stored Intelligence destination has the wrong channel type');return channel.id;}
+  if(channel){if((forum?channel.type!==ChannelType.GuildForum:![ChannelType.GuildText,ChannelType.GuildAnnouncement].includes(channel.type)))throw new Error('Stored Intelligence destination has the wrong channel type');return channel.id;}
   const token=`codex-resource:${this.guild.id}:${key}`,matches=(await this.guild.channels.fetch()).filter((c:any)=>c?.topic===token);
   if(matches.size>1)throw new Error('Duplicate Intelligence resource tokens require administrator repair');channel=matches.first();
   if(!channel){const parent=records.find(r=>r.key==='INTELLIGENCE_CATEGORY');channel=await this.guild.channels.create({name:name.slice(0,100),type:forum?ChannelType.GuildForum:ChannelType.GuildText,topic:token,...(restricted?{permissionOverwrites:[{id:this.guild.id,deny:[PermissionFlagsBits.ViewChannel]},{id:this.guild.client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.SendMessages]}]}:{}),...(parent?{parent:parent.discordId}:{})});}
@@ -35,7 +35,7 @@ export class DiscordIntelligence implements IntelligenceDestinations {
  }
  topic(topic?:TopicRow):Promise<string>{return topic?this.resource(`REPORT_TOPIC:${topic.id}`,`reports-${topic.name}`):this.resource('REPORT_CATCHALL','reports-general');}
  async contact(contact:ContactRow):Promise<string>{
-  if(contact.kind!=='CONTACT'||!contact.active)throw new Error('Contact is not active');
+  if(!contact.active)throw new Error('Contact is not active');
   if(contact.forum_thread_id){const thread=await this.fetch(contact.forum_thread_id);if(thread){if(!thread.isThread())throw new Error('Stored contact destination is not a thread');if(thread.archived)await thread.setArchived(false);return thread.id;}}
   const forum=await this.resource('CONTACTS','contacts',true);
   const key=`contact-create:${contact.id}:${contact.forum_thread_id??'initial'}`;

@@ -142,7 +142,7 @@ export class MessageSetupWizard extends SetupWizard {
         // Text submission is exclusively via the bound message route, never a forged modal/select.
         if (i.isModalSubmit() || ['save-text', 'create'].includes(i.customId.split(':')[2]) ||
             (b.answerAction && (i.customId.endsWith(':guide-answer') || i.customId.endsWith(':refine-answer')))) throw new Error('Reply to the current setup question with your answer.');
-        await i.deferUpdate();
+        if (!i.deferred && !i.replied) await i.deferUpdate();
         if (i.customId.endsWith(':keep')) {
             const value = currentSetupText(d);
             if (!b.answerAction || b.answerAction === 'create' || !value) throw new Error('There is no current value to keep.');

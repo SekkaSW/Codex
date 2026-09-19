@@ -1,3 +1,4 @@
+import { interactionUuid } from '../interactions.js';
 import { PermissionFlagsBits, type ChatInputCommandInteraction } from "discord.js";
 import { satisfies, type PermissionRole } from "../../domain.js";
 import { FundsService, type LedgerStore } from "../../services.js";
@@ -18,21 +19,21 @@ export async function handleFunds(interaction: ChatInputCommandInteraction, repo
     const actorId = interaction.user.id;
     const summary=async()=>{if(refreshSummary)try{await refreshSummary();}catch{throw new Error('The ledger operation completed, but the public summary needs recovery. Use /funds refresh-summary after checking the configured Funds destination.');}};
     if (subcommand === "deposit" || subcommand === "spend") {
-        const amount = interaction.options.getNumber("amount", true);
-        const note = interaction.options.getString("note", true).trim();
+        const amount = (interaction.options.get?.("amount")?.type === 4 ? interaction.options.getInteger("amount",true) : interaction.options.getNumber("amount", true));
+        const note = (interaction.options.getString("note") ?? (subcommand==='deposit'?'Donation to the organization fund.':'')).trim();
         if (amount <= 0)
             throw new Error("Amount must be greater than zero.");
         if (!note)
             throw new Error("A transaction note is required.");
-        const entry = await funds.record(guildId, amount, actorId, note, subcommand === "deposit" ? "DEPOSIT" : "SPEND");
+        const entry = await funds.record(guildId, amount, actorId, note, subcommand === "deposit" ? "DEPOSIT" : "SPEND", {operation:interactionUuid(interaction.id), ...(interaction.options.getUser?.(subcommand==='deposit'?'member':'paid_to')?.id?{memberId:interaction.options.getUser(subcommand==='deposit'?'member':'paid_to')!.id}:{})});
         const balance = await funds.balance(guildId);
         await summary();
         await interaction.editReply({ content: `${subcommand === "deposit" ? "Deposited" : "Spent"} **${money.format(Math.abs(entry.amount))}**. New balance: **${money.format(balance)}**.\nReference: \`${entry.id}\`` });
         return;
     }
     if (subcommand === "set-balance") {
-        const target = interaction.options.getNumber("amount", true);
-        const note = interaction.options.getString("note", true).trim();
+        const target = interaction.options.get?.("amount")?.type === 4 ? interaction.options.getInteger("amount",true) : interaction.options.getNumber("amount", true);
+        const note = (interaction.options.getString("note") ?? 'Recorded balance adjustment.').trim();
         const entry = await funds.setBalance(guildId, target, actorId, note);
         await summary();
         await interaction.editReply({ content: entry ? `Balance adjusted to **${money.format(target)}**.\nReference: \`${entry.id}\`` : `Balance is already **${money.format(target)}**; no ledger entry was created.` });
@@ -52,7 +53,8 @@ export async function handleFunds(interaction: ChatInputCommandInteraction, repo
     }
     if (subcommand === "history") {
         const limit = interaction.options.getInteger("limit") ?? 10;
-        const rows = repositories.recentHistory?await repositories.recentHistory(guildId,limit):(await repositories.history(guildId)).slice(-limit).reverse();
+        const filter=interaction.options.getUser?.('member')?.id;
+        const rows = filter ? (await repositories.history(guildId)).filter(r=>r.memberId===filter).slice(-limit).reverse() : repositories.recentHistory?await repositories.recentHistory(guildId,limit):(await repositories.history(guildId)).slice(-limit).reverse();
         const content = rows.length ? rows.map(row => `• <t:${Math.floor(Date.parse(row.createdAt) / 1000)}:d> **${signed(row.amount)}** — ${row.note} (<@${row.actorId}>)`).join("\n") : "No fund transactions have been recorded.";
         await interaction.editReply(content.length>1900?{content:"Fund history is attached.",files:[{attachment:Buffer.from(content),name:"fund-history.txt"}],allowedMentions:{parse:[]}}:{content,allowedMentions:{parse:[]}});
         return;

@@ -2,7 +2,7 @@
 
 ## Supabase
 
-Apply migrations `001` through `012` in order. Migration `003` adds durable drafts and authored notes. Migration `004` adds member versions, historical managed-role ownership, operation receipts, additional resource specifications, and atomic administration RPCs. It enables RLS on administrative tables and restricts administration RPCs to `service_role`. Existing Atlas RPC contracts are unchanged. Codex must use `SUPABASE_SERVICE_ROLE_KEY` only on the server. Browser-facing Atlas access belongs behind separately audited RPCs—never expose the service key.
+Apply migrations `001` through `014` in order. Migration `003` adds durable drafts and authored notes. Migration `004` adds member versions, historical managed-role ownership, operation receipts, additional resource specifications, and atomic administration RPCs. It enables RLS on administrative tables and restricts administration RPCs to `service_role`. Existing Atlas RPC contracts are unchanged. Codex must use `SUPABASE_SERVICE_ROLE_KEY` only on the server. Browser-facing Atlas access belongs behind separately audited RPCs—never expose the service key.
 
 The repository adapter performs real table upserts/selects and invokes the compatibility RPC names for link codes, access requests, and Field Drops. Migration 010 implements the bot-side Atlas contracts with restricted execute grants and atomic leased claims; migration 011 completes grants and integration hardening. Verify companion signatures against ATLAS_COMPATIBILITY.md before rollout.
 
@@ -10,7 +10,7 @@ The repository adapter performs real table upserts/selects and invokes the compa
 
 Set `DISCORD_TOKEN`, `DISCORD_APPLICATION_ID`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`, build, and run `npm start`. Enable Guilds, Guild Members, Guild Messages, and Message Content intents. Invite Codex with application-command and Manage Channels/Roles permissions.
 
-Run `npm run deploy:commands` to install global commands. During development, `DISCORD_GUILD_ID` installs them immediately in one guild. `ORGANIZATION_NAMESPACE` adds the configured organization-management namespace. Discord application commands are registered command trees rather than arbitrary runtime aliases, so a configuration change must trigger controlled guild-command synchronization with that guild's validated namespace.
+Run `npm run deploy:commands` with DISCORD_GUILD_ID and ORGANIZATION_NAMESPACE unset to upsert global core commands. For an organization root, set both to the selected guild and its exact configured namespace; only that root is upserted at guild scope. The script never bulk-replaces unrelated commands. A namespace without a guild, or a guild without a namespace, is rejected. Discord application commands are registered command trees rather than arbitrary runtime aliases, so a configuration change must trigger controlled guild-command synchronization with that guild's validated namespace.
 
 Optional commands reject use when their module is disabled. Atlas poll work is selected per configured guild; there is no global guild ID in job processing. Briefing and Atlas resources are absent when disabled.
 
@@ -139,3 +139,11 @@ Creating duty roles requires **Manage Roles** and a bot role above the managed r
 Disabling Trailmarks closes current temporary member sessions during explicit confirmation, before stopping the workers. It retains the sessions as history and keeps channels/staff permissions. Failed revocation leaves the session retryable and prevents completing the disable. Very large guilds close at most 1,000 sessions per confirmation attempt; confirm again to finish. Re-enabling uses the same stored resource IDs. Intelligence disable retains reports, Contacts, topics and bridge state and blocks transfer into disabled peers. Atlas may stay enabled for linking/map use, but Trailmark queues and associated polling stop.
 
 Staging is still required: verify the six screens in Discord desktop/mobile; literal message replies and private-thread fallback; long lists and review attachments; two-role selectors and per-rank controls; managed duty creation under the actual hierarchy; interrupted creation with/without audit-log access; channel/Forum types; disable/re-enable with active sessions and queued reports; two-guild bridge gating; and Atlas status while Trailmarks is disabled. These are staging needs, not claims of a live test or deployment.
+
+## Native restoration rollout
+
+Review the explicit compatibility gaps in WAYFINDER_COMMAND_PARITY.md before rollout. Additive canonical migrations `013_native_supply_workflows.sql` and `014_native_workflow_contracts.sql` have matching deployment copies `20260919144046_native_supply_workflows.sql` and `20260919145259_native_workflow_contracts.sql`. Apply only pending migrations through the established migration process after review. Existing migration files 001–012 are unchanged. Historical scalar Supply rows and older reference entries are retained separately. RLS and service-only RPC grants protect all new persistence.
+
+Then build, register global definitions and each affected guild root, and restart the bot. Registration does not automatically delete older guild-local copies of core commands; inspect those explicitly because Discord guild definitions can shadow new global definitions. Existing organization aliases take precedence in their guild; new setup reserves promotion/apprenticeship. Setup’s controlled guild-root synchronization remains in place.
+
+No database migrations, Discord registration, bot login, restart, push or deployment were performed during local implementation. See WAYFINDER_RESTORATION_REPORT.md for local evidence and the staging checklist.

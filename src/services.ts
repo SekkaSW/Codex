@@ -64,14 +64,15 @@ export class BridgeService {
   }
 }
 
-export interface LedgerEntry { id: string; guildId: string; amount: number; kind: "DEPOSIT" | "SPEND" | "ADJUSTMENT"; actorId: string; note: string; createdAt: string; reversedEntryId?: string }
+export interface LedgerEntry { id: string; guildId: string; amount: number; kind: "DEPOSIT" | "SPEND" | "ADJUSTMENT"; actorId: string; note: string; createdAt: string; reversedEntryId?: string; memberId?: string }
 export interface LedgerStore { history(guildId: string): Promise<LedgerEntry[]>; append(entry: LedgerEntry): Promise<void>;balanceTotal?(guildId:string):Promise<number>;recentHistory?(guildId:string,limit:number):Promise<LedgerEntry[]> }
 export class FundsService {
   constructor(private readonly store: LedgerStore, private readonly clock: Clock = systemClock) {}
   async balance(guildId: string): Promise<number> { if(this.store.balanceTotal)return this.store.balanceTotal(guildId);return (await this.store.history(guildId)).reduce((sum, row) => sum + row.amount, 0); }
-  async record(guildId: string, amount: number, actorId: string, note: string, kind: LedgerEntry["kind"]): Promise<LedgerEntry> {
+  async record(guildId: string, amount: number, actorId: string, note: string, kind: LedgerEntry["kind"], attribution: {memberId?:string; operation?:string} = {}): Promise<LedgerEntry> {
     if (!Number.isFinite(amount) || amount === 0) throw new Error("Amount must be non-zero");
-    const entry = { id: crypto.randomUUID(), guildId, amount: kind === "SPEND" ? -Math.abs(amount) : amount, kind, actorId, note, createdAt: this.clock.now().toISOString() };
+    if(attribution.operation){const existing=(await this.store.history(guildId)).find(e=>e.id===attribution.operation);if(existing){if(existing.actorId!==actorId||existing.memberId!==attribution.memberId||existing.note!==note||existing.amount!==(kind==='SPEND'?-Math.abs(amount):amount))throw new Error('This ledger operation has different recorded inputs');return existing;}}
+    const entry = { id: attribution.operation ?? crypto.randomUUID(), ...(attribution.memberId?{memberId:attribution.memberId}:{}), guildId, amount: kind === "SPEND" ? -Math.abs(amount) : amount, kind, actorId, note, createdAt: this.clock.now().toISOString() };
     await this.store.append(entry); return entry;
   }
   async undoLast(guildId: string, actorId: string): Promise<LedgerEntry> {

@@ -23,7 +23,7 @@ async function discordMember(guild: any, id: string): Promise<any | undefined> {
         throw error;
     }
 }
-function roleAdapter(member: any, roles: any, desired: Set<string>): RoleMember {
+export function roleAdapter(member: any, roles: any, desired: Set<string>): RoleMember {
     for (const id of desired)
         if (!roles.has(id))
             throw new Error(`Configured role ${id} was deleted; update configuration before syncing`);
@@ -41,7 +41,7 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
     if (component && parts[1] !== i.user.id)
         throw new Error('Only the administrator who opened this panel may use it');
     const sub = component ? parts[2]! : i.options.getSubcommand();
-    const memberId = component ? parts[3]! : i.options.getUser('member')?.id;
+    const memberId = component ? parts[3]! : i.options.getUser('user')?.id??i.options.getUser('member')?.id??(['info','sync-member'].includes(sub)?i.user.id:undefined);
     if (['info', 'export', 'inactive-review'].includes(sub) && !memberId) {
         let rows = await store.members(i.guildId);
         if (sub === 'inactive-review')
@@ -102,14 +102,15 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
     if (sub === 'note') {
         if (!before)
             throw new Error('Synchronize the member before adding notes');
-        const body = i.options.getString('body', true).trim();
+        if(i.options.getBoolean?.('append')===false)throw new Error('Replacing authored notes is not supported; omit append or choose true to preserve history');
+        const body = (i.options.getString('note')??i.options.getString('body', true)).trim();
         if (!body || body.length > 2000)
             throw new Error('Note must contain 1–2000 characters');
         await store.addNote(i.guildId, memberId, i.user.id, body, i.options.getString('visibility') ?? 'ADMIN');
         await i.editReply({ content: 'Authored note saved and audited.', ephemeral: true });
         return;
     }
-    if (['promote', 'rank', 'set-member', 'clear-member'].includes(sub) && (!component || parts[4] === 'page')) {
+    if (['promote', 'rank', 'set-member', 'clear-member'].includes(sub) && (!component || parts[4] === 'page') && !(!component&&sub==='promote'&&i.options.getString('rank'))) {
         const page = component ? Number(i.values[0]) : 0;
         const options = sub === 'promote' ? (after.rankId ? advancementOptions(after.rankId, c.edges, c.ranks) : []) : sub === 'rank' ? c.ranks : c.entries.filter(e => sub !== 'clear-member' || after!.entryIds.includes(e.id)).map(e => ({ ...e, name: `${c.groups.find(g => g.id === e.groupId)?.name}: ${e.name}` }));
         if (!options.length)
@@ -120,7 +121,7 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
     }
     let action = 'MEMBER_SYNCHRONIZED';
     if (sub === 'promote') {
-        after = service.promote(after, c, i.values[0]);
+        after = service.promote(after, c, i.options?.getString?.('rank')??i.values[0]);
         action = 'MEMBER_PROMOTED';
     }
     else if (sub === 'rank') {
@@ -134,7 +135,7 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
         action = sub === 'set-member' ? 'MEMBER_ASSIGNED' : 'MEMBER_ASSIGNMENT_REMOVED';
     }
     else if (sub === 'status') {
-        after.status = i.options.getString('value', true);
+        after.status = (i.options.getString('status')??i.options.getString('value', true)).toUpperCase();
         if (!live && after.status !== 'LEFT' && after.status !== 'RETIRED')
             throw new Error('Absent members must remain LEFT or RETIRED');
         action = 'MEMBER_STATUS_CHANGED';

@@ -61,3 +61,7 @@ Member notes and Phase 4 audits are complete: notes retain author/visibility/tim
 | Review / Edit / Repair | Readable summaries/attachments, targeted edits, optional-feature-aware non-destructive repair. |
 
 Validated locally, with Discord boundaries simulated and real SQL migrations/RPCs exercised in PGlite. See SERVER_SETUP_REFINEMENT.md and DEPLOYMENT.md for test results, migration 012 and required live staging.
+
+## Native Wayfinder command restoration
+
+Native slash arguments now supersede the mandatory dashboard-first plan. Optional feature panels remain shortcuts; original meaningful forms, access panels and ballots remain. Setup selection reviews use one Confirm & Next transition and paired rank inputs. New persistence is in migrations 013–014; rebuild, reviewed migration application, command registration and restart are required. See [command guide](COMMANDS.md), [parity inventory](WAYFINDER_COMMAND_PARITY.md), and [implementation report](WAYFINDER_RESTORATION_REPORT.md). Compatibility gaps are explicit; this is not a claim of full original Alliance or historical Discord-message import parity.

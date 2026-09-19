@@ -306,7 +306,7 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
         }
         if (s === 'namespace') {
             const name = answer.replace(/^\//, '');
-            if (!/^[a-z0-9_-]{1,32}$/.test(name) || (genericCommandNames.includes(name as any) && !(name === 'help' && d.config.commandNamespace === 'help')))
+            if (!/^[a-z0-9_-]{1,32}$/.test(name) || (genericCommandNames.includes(name as any) && !(['help','promotion','apprenticeship'].includes(name) && d.config.commandNamespace === name)))
                 throw new Error('Choose a lowercase command of 1–32 letters, digits, hyphens or underscores. This name must not conflict with a core command.');
             d.config.commandNamespace = name;
             g.index = 0;

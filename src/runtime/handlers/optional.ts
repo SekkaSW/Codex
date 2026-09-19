@@ -1,7 +1,7 @@
 import { requireFeature } from '../features.js';
 import type {WorkflowRepositories} from './workflows.js';import {workflowDestination} from './workflows.js';
 import {choices,interactionUuid,replyText,requireTier,textModal,recordView} from '../interactions.js';import {DurableDelivery} from '../../intelligence.js';import {DurableSummary} from '../../workflows.js';import {DiscordDurablePublisher} from '../intelligenceDiscord.js';
-export interface OptionalRepositories extends WorkflowRepositories {optional<T=any>(guild:string,system:string,action:string,actor:string,id?:string,data?:Record<string,unknown>):Promise<T>}
+export interface OptionalRepositories extends WorkflowRepositories {supply?: import('../supply.js').SupplyCall;optional<T=any>(guild:string,system:string,action:string,actor:string,id?:string,data?:Record<string,unknown>):Promise<T>}
 export async function handleOptional(i:any,store:OptionalRepositories):Promise<void>{
  const component=!!i.customId,p=component?i.customId.split(':'):[],actor=i.user.id,guild=i.guildId;
  if(component&&p[1]!==actor)throw new Error('This optional-system panel belongs to another user');
@@ -15,7 +15,7 @@ export async function handleOptional(i:any,store:OptionalRepositories):Promise<v
  if(!component&&system==='briefing'&&['setup','send'].includes(action)){await i.showModal(textModal(`${base}:${action}-save:new`,action==='setup'?'Briefing settings':'Send briefing',action==='setup'?[{id:'heading',label:'Default heading',max:100}]:[{id:'title',label:'Title',max:200},{id:'body',label:'Briefing',max:3500,paragraph:true}]));return;}
  if(component&&system==='supply'&&action==='log-form'){await i.showModal(textModal(`${base}:log-save:${context}`,'Log contribution',[{id:'quantity',label:'Quantity',max:20}]));return;}
  await i.deferReply({ephemeral:true});const publisher=new DiscordDurablePublisher(i.guild),summary=new DurableSummary(store,publisher),delivery=new DurableDelivery(store,publisher);
- const publish=async(record:any)=>{if(system==='supply')await summary.refresh(guild,`supply:${record.id}`,await workflowDestination(i,store,'ASSIGNMENTS'),`${record.title}\n${record.status}\nAvailable: ${record.stock}`);if(system==='briefing')await delivery.deliver(guild,`briefing:${record.id}`,await workflowDestination(i,store,'DISPATCH_DESK'),`${record.title}\n${record.body}`);};
+ const publish=async(record:any)=>{if(system==='supply')await summary.refresh(guild,`supply:${record.id}`,await workflowDestination(i,store,'ASSIGNMENTS'),`${record.title}\n${record.status}\nAvailable: ${record.stock}`);if(system==='briefing'&&action==='send-save'&&(!record.audience||record.audience==='apprentice_plus'))await delivery.deliver(guild,`briefing:${record.id}`,await workflowDestination(i,store,'DISPATCH_DESK'),`${record.title}\n${record.body}`);};
  if(i.isModalSubmit()){
   let record;const id=interactionUuid(i.id);
   if(action==='create-save')record=await call('create',id,{title:i.fields.getTextInputValue('title')});
@@ -31,8 +31,8 @@ export async function handleOptional(i:any,store:OptionalRepositories):Promise<v
   if(system==='supply'&&action==='log'){await i.editReply({content:'Log a contribution.',components:[{type:1,components:[{type:2,style:1,label:'Enter quantity',custom_id:`${base}:log-form:${selected}`}]}]});return;}
   const data:Record<string,unknown>={operation:interactionUuid(i.id)};
   if(system==='supply'&&action==='redistribute'){const [recipient,quantity]=context.split('~');await i.guild.members.fetch(recipient);data.recipient=recipient;data.quantity=Number(quantity);}
-  const record=await call(['get','list','history'].includes(action)?'get':action,selected,data);if(!record)throw new Error('Record no longer exists');await publish(record);await i.editReply(recordView(system,record));return;
+  const record=await call(['get','list','history'].includes(action)?'get':action,selected,data);if(system==='briefing'&&record?.audience){if(record.audience==='individual'){if(record.recipient_id!==actor)throw new Error('This dispatch belongs to another member');}else await requireTier(i,store,({apprentice_plus:'BASELINE',ranger_plus:'LEVEL_1',marshal_plus:'LEVEL_3',captain_plus:'LEVEL_4'} as const)[record.audience as 'apprentice_plus']);}if(!record)throw new Error('Record no longer exists');await publish(record);await i.editReply(recordView(system,record));return;
  }
  const extra=system==='supply'&&action==='redistribute'?component?context:`${i.options.getUser('member',true).id}~${i.options.getNumber('quantity',true)}`:undefined;
- const rows=await call('list',undefined,{page});await i.editReply(choices(`${base}:${action}${extra?`:${extra}`:''}`,rows.map((r:any)=>({id:r.id,name:r.title??r.key??`${r.status}: ${r.created_at}`})),page,rows.length===25));
+ let rows=await call('list',undefined,{page});if(system==='briefing'){const allowed:any[]=[];for(const record of rows){if(record.audience==='individual'){if(record.recipient_id===actor)allowed.push(record);}else try{await requireTier(i,store,({apprentice_plus:'BASELINE',ranger_plus:'LEVEL_1',marshal_plus:'LEVEL_3',captain_plus:'LEVEL_4'} as const)[(record.audience??'apprentice_plus') as 'apprentice_plus']);allowed.push(record);}catch{}}rows=allowed;}await i.editReply(choices(`${base}:${action}${extra?`:${extra}`:''}`,rows.map((r:any)=>({id:r.id,name:r.title??r.key??`${r.status}: ${r.created_at}`})),page,rows.length===25));
 }

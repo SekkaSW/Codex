@@ -2,6 +2,8 @@ import { AdministrationRepository } from './administration.js';
 import { PersistenceUncertainError, type MemberState } from '../administration.js';
 import type { AdvancementCase, FieldStore, FieldTrailmark } from '../field.js';
 export class FieldRepository extends AdministrationRepository implements FieldStore {
+ native<T=any>(guild:string,action:string,actor:string,id?:string,data:Record<string,unknown>={}):Promise<T>{return this.rpc('codex_native',{p_guild:guild,p_action:action,p_actor:actor,p_id:id??null,p_data:data});}
+ supply<T=any>(guild:string,action:string,actor:string,key?:string,operation?:string,data:Record<string,unknown>={}):Promise<T>{return this.rpc('codex_supply',{p_guild:guild,p_action:action,p_actor:actor,p_key:key??null,p_operation:operation??null,p_data:data});}
  optional<T=any>(guild:string,system:string,action:string,actor:string,id?:string,data:Record<string,unknown>={}):Promise<T>{return this.rpc('codex_optional',{p_guild:guild,p_system:system,p_action:action,p_actor:actor,p_id:id??null,p_data:data});}
  atlasRpc<T=any>(name:string,args:Record<string,unknown>):Promise<T>{return this.rpc(name,args);}
  workflow<T=any>(guild:string,system:string,action:string,actor:string,id?:string,data:Record<string,unknown>={}):Promise<T>{return this.rpc('codex_workflow',{p_guild:guild,p_system:system,p_action:action,p_actor:actor,p_id:id??null,p_data:data});}

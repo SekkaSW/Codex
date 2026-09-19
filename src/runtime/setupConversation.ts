@@ -131,7 +131,7 @@ export async function answerConversation(d: Draft, action: string, i: any): Prom
         if (typeof name !== 'string' || !name.trim() || name.length > 100) throw new Error('Enter a name between 1 and 100 characters.');
         if (s === 'identity') { d.config.organizationName = name; next('namespace', `Organization Name set to **${name}**.`); }
         else if (s === 'namespace') {
-            if (!/^[a-z0-9_-]{1,32}$/.test(name) || ((await import('./commands.js')).genericCommandNames.includes(name as any) && !(name === 'help' && d.config.commandNamespace === 'help'))) throw new Error('Choose 1–32 lowercase letters, digits, hyphens or underscores, without using a core command name.');
+            if (!/^[a-z0-9_-]{1,32}$/.test(name) || ((await import('./commands.js')).genericCommandNames.includes(name as any) && !(['help','promotion','apprenticeship'].includes(name) && d.config.commandNamespace === name))) throw new Error('Choose 1–32 lowercase letters, digits, hyphens or underscores, without using a core command name.');
             d.config.commandNamespace = name; g.index = 0; next('permissions', `Command namespace set to **/${name}**.`);
         } else if (s === 'integration') { d.config.confidentialityMarker = name; next('atlas', `Confidentiality marker set to **${name}**.`); }
         else if (s === 'resource-name') {

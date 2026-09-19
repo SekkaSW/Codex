@@ -73,3 +73,7 @@ Apply migration 008 for Strongbox, duty applications, mentorship, general voting
 ## Optional systems and Atlas
 
 Apply migrations 009 and 010. Enable Supply, Briefings, Patrol or Atlas using /server setup. Supply records contributions, undo and allocations on the assignments resource. Briefings use dispatch-desk; Patrol suggests configured active Trailmarks without provisioning another channel. Reference entries support /reference edit/get/list. Atlas links expire in ten minutes and guild-scoped workers run approximately every five seconds. See ATLAS_COMPATIBILITY.md for exact bot RPCs, service-role security, browser limitations and unchanged Skyrim protocol.
+
+## Native Wayfinder command restoration
+
+Native slash arguments now supersede the mandatory dashboard-first plan. Optional feature panels remain shortcuts; original meaningful forms, access panels and ballots remain. Setup selection reviews use one Confirm & Next transition and paired rank inputs. New persistence is in migrations 013–014; rebuild, reviewed migration application, command registration and restart are required. See [command guide](docs/COMMANDS.md), [parity inventory](docs/WAYFINDER_COMMAND_PARITY.md), and [implementation report](docs/WAYFINDER_RESTORATION_REPORT.md). Compatibility gaps are explicit; this is not a claim of full original Alliance or historical Discord-message import parity.

@@ -20,7 +20,7 @@ const member = (): MemberState => ({ guildId: 'g', memberId: 'm', displayName: '
 
 test('Funds production routing still writes the existing persistent ledger', async () => {
     const f=runtimeFixture(), rows:LedgerEntry[]=[];
-    const i:any=f.interaction('deposit',{note:'Supplies'});i.options.getNumber=()=>25;
+    const i:any=f.interaction('deposit',{note:'Supplies'});i.id='synthetic-funds-operation';i.options.getNumber=()=>25;
     await handleFunds(i,{permissionRoles:f.store.permissionRoles,async history(){return rows;},async append(row){rows.push(row);}});
     assert.equal(rows.length,1);assert.equal(rows[0]!.amount,25);assert.equal(rows[0]!.note,'Supplies');assert.match(f.response.content,/Deposited/);
 });

@@ -24,16 +24,20 @@ function dashboardLabel(system: string, action: string): string {
 
 /** UI visibility mirrors, but never replaces, the authorization in production handlers. */
 export function panelRequirement(system: string, action: string, namespace?: string): Requirement | 'ANY' {
+    if(system===namespace)return action==='briefing'?'LEVEL_1':['rank','notes'].includes(action)?'ADMIN':'LEVEL_3';
+    if(system==='apprenticeship')system='mentorship';
+    if(system==='promotion')system='advancement';
     if (system === 'funds') return ['deposit', 'spend', 'set-balance', 'undo-last', 'refresh-summary'].includes(action) ? 'LEVEL_2' : 'ANY';
     if (system === 'trailmark') return action === 'leave' ? 'ANY' : ['panel', 'list', 'report', 'my-access'].includes(action) ? 'BASELINE' : 'LEVEL_3';
-    if (system === 'advancement') return action === 'setup' ? 'ADMIN' : ['open', 'close', 'approve', 'deny'].includes(action) ? 'LEVEL_3' : 'BASELINE';
+    if (system === 'advancement') return action === 'setup' ? 'ADMIN' : ['open', 'close', 'approve', 'deny', 'status', 'refresh'].includes(action) ? 'LEVEL_3' : 'BASELINE';
     if (system === 'intel') return ['reports', 'deliver', 'link-report'].includes(action) ? 'BASELINE' : 'LEVEL_3';
     if (system === 'atlas') return 'BASELINE';
     if (system === 'alliance') return 'LEVEL_3';
+    if(system===namespace&&action==='briefing')return 'LEVEL_1';
     if (system === 'roster' || system === namespace) return ['rank', 'notes'].includes(action) ? 'ADMIN' : 'LEVEL_3';
     if (['duty', 'contact', 'recruit'].includes(system)) return 'LEVEL_3';
     if (['supply', 'briefing', 'patrol', 'reference'].includes(system)) return ['create', 'setup', 'edit', 'send', 'redistribute', 'close', 'reopen', 'cancel', 'resolve'].includes(action) ? 'LEVEL_3' : system === 'briefing' ? 'LEVEL_1' : 'BASELINE';
-    if (['strongbox', 'application', 'mentorship', 'assignment', 'vote'].includes(system)) return ['setup', 'review', 'process', 'reject', 'approve', 'deny', 'assign', 'close', 'cancel', 'audit', 'open', 'set-member', 'clear-member', 'sync-roles'].includes(action) ? 'LEVEL_3' : 'BASELINE';
+    if (['strongbox', 'application', 'mentorship', 'assignment', 'vote'].includes(system)) return ['setup', 'review', 'process', 'reject', 'approve', 'deny', 'assign', 'close', 'cancel', 'audit', 'open', 'set-member', 'clear-member', 'sync-roles', 'create', 'refresh'].includes(action) ? 'LEVEL_3' : 'BASELINE';
     return 'ADMIN';
 }
 async function currentAccess(i: any, store: RuntimeRepositories): Promise<(need: Requirement | 'ANY') => boolean> {
@@ -88,7 +92,7 @@ export async function openPanel(i: any, store: RuntimeRepositories, system: stri
         for (const c of commandDefinitions(config.commandNamespace) as any[]) if (c.options?.some((s: any) => s.name === 'panel') && (c.name === config.commandNamespace || (await availableActions(i, store, config, c.name, access)).length)) features.push({ label: c.name === config.commandNamespace ? config.organizationName.slice(0, 100) : actionLabel(c.name), value: c.name });
         if (features.length) components.push(row({ type: 3, custom_id: `${base}:open`, placeholder: 'Choose a feature', options: features.slice(0, 25) }));
         if (i.memberPermissions?.has(PermissionFlagsBits.Administrator)) components.push(row(button(`${base}:setup`, 'Server Setup')));
-        await respond(i, { content: '**Your Codex guide**\nChoose a feature to open its dashboard. Each dashboard shows the actions available to you. You can also use `/feature panel` directly.', components }); return;
+        await respond(i, { content: `**Your Codex guide**\nType a slash command to choose an action and enter its arguments directly. Discord shows required inputs and available choices.\n${features.map(f=>'`/'+f.value+'`').join(' · ')}\nApplications, ballots, reports and dispatches retain their specialized forms or controls. The menu below offers optional shortcuts.`, components }); return;
     }
     const disabled = disabledFeature(config, system); if (disabled) throw new Error(disabled);
     const actions = await availableActions(i, store, config, system, access);

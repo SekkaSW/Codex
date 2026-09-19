@@ -1,3 +1,5 @@
+import { promotionBoard } from '../nativePromotion.js';
+import type { WorkflowRepositories } from './workflows.js';
 import { requireFeature } from '../features.js';
 import { AdvancementService, TrailmarkLifecycle, type AccessSession, type AdvancementCase, type FieldStore, type FieldTrailmark } from '../../field.js';
 import type { MemberRepositories } from './members.js';
@@ -11,12 +13,13 @@ export type FieldRepositories=FieldStore&MemberRepositories&Registry;
 export async function handleField(i:any,store:FieldRepositories):Promise<void>{
  const parts:string[]=i.customId?.split(':')??[];const component=parts.length>0;
  if(component&&parts[1]!==i.user.id)throw new Error('Open your own command panel to use this action');
- const system=component?parts[2]!:i.commandName==='advancement'?'adv':'trail';
- if(system==='trail')await requireFeature(store,i.guildId,'trailmark');
+ const system=component?parts[2]!:['advancement','promotion'].includes(i.commandName)?'adv':'trail';
+ if(system==='trail'&&(component?parts[3]:i.options.getSubcommand())!=='leave')await requireFeature(store,i.guildId,'trailmark');
  const action=component?parts[3]!:i.options.getSubcommand();
- const context=component?parts[4]??'':i.options.getUser('member')?.id??'';
+ const context=component?parts[4]??'':i.options.getUser('candidate')?.id??i.options.getUser('member')?.id??'';
  const page=parts[5]==='page'?Number(parts[6]):0;
- const selected=component&&i.values?i.values[0]:undefined;
+ let selected=component&&i.values?i.values[0]:undefined;
+ if(!component){if(system==='adv'&&action==='open')selected=i.options.getString('target_rank')??undefined;else{const id=i.options.getString(system==='adv'?'vote':'trailmark');if(id){const r=system==='adv'?await store.advancement(i.guildId,'get',i.user.id,id):await store.trailmark(i.guildId,'get',i.user.id,id);selected=`${r.id}/${r.revision}`;}}}
  const prefix=`field:${i.user.id}:${system}:${action}:${context}`;
  if(system==='trail'&&['create','report-form','edit-form','atlas-form','minutes-form'].includes(action)&&!i.isModalSubmit()){
   await requireTier(i,store,action==='report-form'?'BASELINE':'LEVEL_3');
@@ -32,7 +35,7 @@ export async function handleField(i:any,store:FieldRepositories):Promise<void>{
   }
   await requireTier(i,store,['open','close','approve','deny'].includes(action)?'LEVEL_3':'BASELINE');
   if(action==='eligible'||action==='open'){
-   if(!context)throw new Error('Select a candidate');const options=await service.eligible(i.guildId,context);
+   if(!context&&action==='eligible'){const members=await store.members(i.guildId);const lines=[];for(const m of members){const next=await service.eligible(i.guildId,m.memberId);if(next.length)lines.push(`${m.displayName}: ${next.map(r=>r.name).join(', ')}`);}await i.editReply(replyText(lines.join('\n')||'No eligible transitions.'));return;}if(!context)throw new Error('Select a candidate');const options=await service.eligible(i.guildId,context);
    if(action==='eligible'){await i.editReply(replyText(`Eligible next ranks: ${options.map(x=>x.name).join(', ')||'none'}`));return;}
    if(!selected){await i.editReply(choices(prefix,options.slice(page*25,page*25+25),page,(page+1)*25<options.length));return;}
    if(!options.some(x=>x.id===selected))throw new Error('That advancement edge is no longer valid');
@@ -57,7 +60,7 @@ export async function handleField(i:any,store:FieldRepositories):Promise<void>{
    await service.approve(i.guildId,record.id,i.user.id,{roles:new Set<string>(member.roles.cache.keys()),async add(id){await member.roles.add(id,'Advancement approval');},async remove(id){if(roles.has(id))await member.roles.remove(id,'Advancement approval');}});
   }else if(action==='close'||action==='deny')await store.advancement(i.guildId,action,i.user.id,record.id,{revision:record.revision,reason:'Reviewer decision'});
   else if(action!=='status')throw new Error('Unknown advancement operation');
-  const current=await store.advancement(i.guildId,'get',i.user.id,record.id);await i.editReply(replyText(`Case ${current.id}: ${current.status}. Yes ${current.yes}, no ${current.no}. Candidate ${current.candidate_id}.`));return;
+  const current=await store.advancement(i.guildId,'get',i.user.id,record.id);if(['approve','deny','close'].includes(action))try{await promotionBoard(i,store as WorkflowRepositories,current.id);}catch{await i.editReply(replyText('Decision saved; use /promotion refresh to recover the board.'));return;}await i.editReply(replyText(`Case ${current.id}: ${current.status}. Yes ${current.yes}, no ${current.no}. Candidate ${current.candidate_id}.`));return;
  }
  const adapter=new DiscordTrailmarkAccess(i.guild,store),lifecycle=new TrailmarkLifecycle(store,adapter);
  if(action!=='leave')await requireTier(i,store,['create','edit','edit-form','deactivate','set-atlas','clear-atlas','hq','sessions','repair','configure','atlas-form','rules-form','minutes-form','tier'].includes(action)?'LEVEL_3':'BASELINE');

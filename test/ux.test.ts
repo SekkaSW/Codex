@@ -165,15 +165,10 @@ test('UX hidden actions cannot bypass authorization after role or module changes
     f.roles.clear(); await assert.rejects(handlePanel(f.interaction('ux:actor:action:funds:deposit'), f.store, dispatch, async () => {}), /no longer available/);
     f.config.modules.supply = false; await assert.rejects(handlePanel(f.interaction('ux:actor:action:supply:create'), f.store, dispatch, async () => {}), /no longer available/); assert.equal(calls, 0);
 });
-test('UX command inputs use user selectors and single-value forms, validate values, and dispatch only after Continue', async () => {
-    const f = panelFixture('LEVEL_3'); let received: any; const dispatch = async (i: any) => { received = i; };
-    const send = async (id: string, values?: string[], text?: string) => handlePanel(f.interaction(id, values, text), f.store, dispatch, async () => {});
-    await send('ux:actor:action:supply:redistribute'); const memberInput = f.response.components[0].components[0]; assert.equal(memberInput.type, 5); await send(memberInput.custom_id, ['recipient']);
-    const textButton = f.response.components[0].components[0].custom_id; await send(textButton); assert.equal(f.response.components.length, 1); const modal = f.response.custom_id;
-    await assert.rejects(send(modal, undefined, '-10'), /allowed range/); await send(modal, undefined, '10'); assert.equal(received, undefined);
-    await send(f.response.components[0].components[0].custom_id); assert.equal((received as any).options.getUser('member').id, 'recipient'); assert.equal((received as any).options.getNumber('quantity'), 10); assert.equal((received as any).isModalSubmit(), false);
-    await send(modal, undefined, '10'); assert.match(f.response.content, /outdated or expired/);
+test('Optional dashboard Supply shortcut exposes the same native contract without auto-submission',async()=>{
+ const f=panelFixture('LEVEL_3');let dispatched=false;await handlePanel(f.interaction('ux:actor:action:supply:log'),f.store,async()=>{dispatched=true;},async()=>{});assert.equal(dispatched,false);assert.match(f.response.content,/assignment/i);
 });
+
 test('UX confirmations are owner/guild-bound, cancellable, single-use and re-run production authorization', async () => {
     const f = panelFixture('LEVEL_2'); const original = commandInteraction(f.interaction(), 'funds', 'undo-last', {}); assert.equal(needsConfirmation(original), true); await askConfirmation(original);
     const id = f.response.components[0].components[0].custom_id; let count = 0;
@@ -189,9 +184,9 @@ test('UX destructive record selections preserve context through confirmation and
     await handlePanel(f.interaction('uxform:missing:0:run'), f.store, async () => { throw new Error('must not dispatch'); }, async () => {}); assert.match(f.response.content, /expired/);
 });
 test('UX command registration retains every compatibility operation, adds help/panels and respects command limits', () => {
-    const commands = commandDefinitions('example') as any[]; assert.equal(commands.length, 23); assert.ok(commands.some(c => c.name === 'help' && !c.options?.length));
-    for (const c of commands) { assert.ok((c.options?.length ?? 0) <= 25); if (!['help', 'server', 'ping'].includes(c.name)) assert.ok(c.options.some((o: any) => o.name === 'panel')); }
-    assert.ok(commands.find(c => c.name === 'funds').options.some((o: any) => o.name === 'deposit' && o.options.length === 2));
+    const commands = commandDefinitions('example') as any[]; assert.equal(new Set(commands.map(c=>c.name)).size, commands.length); assert.ok(commands.some(c => c.name === 'help' && !c.options?.length));
+    for (const c of commands) { assert.ok((c.options?.length ?? 0) <= 25); if (!['help', 'server', 'ping', 'apprenticeship', 'promotion'].includes(c.name)) assert.ok(c.options.some((o: any) => o.name === 'panel')); }
+    assert.ok(commands.find(c => c.name === 'funds').options.some((o: any) => o.name === 'deposit' && o.options.some((v:any)=>v.name==='amount') && o.options.some((v:any)=>v.name==='member')));
     assert.ok(commands.find(c => c.name === 'example').options.some((o: any) => o.name === 'rank'));
 });
 test('UX friendly errors hide database internals and explain stale-panel recovery', () => {
