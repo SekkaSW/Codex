@@ -1,3 +1,4 @@
+import { assertContactCreationContext, contactRequirement } from './contactPermissions.js';
 import type { RuntimeRepositories } from './bot.js';
 import { requireTier } from './interactions.js';
 import { requireFeature } from './features.js';
@@ -20,7 +21,8 @@ export async function autocompleteNative(i: any, store: RuntimeRepositories): Pr
         const need = panelRequirement(system, i.options.getSubcommand(), config.commandNamespace);
         if (need !== 'ANY')
             await requireTier(i, store, need);
-        const key = i.options.getFocused(true), q = String(key.value).toLowerCase();
+        const focused=i.options.getFocused(true);if(system==='contact'&&contactRequirement(i.options.getSubcommand())==='LEVEL_1'){assertContactCreationContext(i);if(focused.name!=='assignment'){await i.respond([]);return;}}
+        const key = focused, q = String(key.value).toLowerCase();
         let rows: Array<{
             id: string;
             name: string;

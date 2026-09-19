@@ -65,3 +65,8 @@ Validated locally, with Discord boundaries simulated and real SQL migrations/RPC
 ## Native Wayfinder command restoration
 
 Native slash arguments now supersede the mandatory dashboard-first plan. Optional feature panels remain shortcuts; original meaningful forms, access panels and ballots remain. Setup selection reviews use one Confirm & Next transition and paired rank inputs. New persistence is in migrations 013–014; rebuild, reviewed migration application, command registration and restart are required. See [command guide](COMMANDS.md), [parity inventory](WAYFINDER_COMMAND_PARITY.md), and [implementation report](WAYFINDER_RESTORATION_REPORT.md). Compatibility gaps are explicit; this is not a claim of full original Alliance or historical Discord-message import parity.
+
+
+## Contact and Funds correction — 2026-09-19
+
+Contact creation (individual and group) is available to Member / LEVEL_1 and higher through native commands and compatibility forms. Other Contact operations retain Advisors / LEVEL_3 authorization. Funds mutations retain Advanced Member / LEVEL_2; read access is unchanged. See [correction report](CONTACT_PERMISSION_CORRECTION.md) for regression coverage and rollout.

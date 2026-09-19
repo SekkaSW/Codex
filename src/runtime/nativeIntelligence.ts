@@ -1,3 +1,4 @@
+import { contactRequirement, assertContactCreationContext, requireContactPermission } from './contactPermissions.js';
 import type { WorkflowRepositories } from './handlers/workflows.js';
 import { requireFeature } from './features.js';
 import { requireTier, interactionUuid, replyText } from './interactions.js';
@@ -23,7 +24,8 @@ export async function handleNativeIntelligence(i: any, store: WorkflowRepositori
     const action = i.options.getSubcommand();
     if (i.commandName === 'intel' && !['topic-add', 'topic-edit', 'catchall-set', 'set-hq', 'refresh', 'repair-reporters', 'backfill'].includes(action))
         return false;
-    await requireTier(i, store, 'LEVEL_3');
+    if(i.commandName==='contact')await requireContactPermission(i,store,action);else await requireTier(i,store,'LEVEL_3');
+    if(i.commandName==='contact'&&contactRequirement(action)==='LEVEL_1')assertContactCreationContext(i);
     const discord = new DiscordIntelligence(i.guild, store), actor = i.user.id, guild = i.guildId;
     if (i.commandName === 'contact') {
         if (!['setup', 'create', 'create-group', 'edit', 'list', 'link-member', 'unlink-member', 'archive'].includes(action))

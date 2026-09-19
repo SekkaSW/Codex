@@ -1,3 +1,4 @@
+import { contactRequirement } from './contactPermissions.js';
 import { disabledFeature } from './features.js';
 import { PermissionFlagsBits } from 'discord.js';
 import { satisfies, type Requirement, type ServerConfig } from '../domain.js';
@@ -35,7 +36,8 @@ export function panelRequirement(system: string, action: string, namespace?: str
     if (system === 'alliance') return 'LEVEL_3';
     if(system===namespace&&action==='briefing')return 'LEVEL_1';
     if (system === 'roster' || system === namespace) return ['rank', 'notes'].includes(action) ? 'ADMIN' : 'LEVEL_3';
-    if (['duty', 'contact', 'recruit'].includes(system)) return 'LEVEL_3';
+    if(system==='contact')return contactRequirement(action);
+    if (['duty', 'recruit'].includes(system)) return 'LEVEL_3';
     if (['supply', 'briefing', 'patrol', 'reference'].includes(system)) return ['create', 'setup', 'edit', 'send', 'redistribute', 'close', 'reopen', 'cancel', 'resolve'].includes(action) ? 'LEVEL_3' : system === 'briefing' ? 'LEVEL_1' : 'BASELINE';
     if (['strongbox', 'application', 'mentorship', 'assignment', 'vote'].includes(system)) return ['setup', 'review', 'process', 'reject', 'approve', 'deny', 'assign', 'close', 'cancel', 'audit', 'open', 'set-member', 'clear-member', 'sync-roles', 'create', 'refresh'].includes(action) ? 'LEVEL_3' : 'BASELINE';
     return 'ADMIN';

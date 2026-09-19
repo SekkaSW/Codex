@@ -78,3 +78,8 @@ All mutation paths still use the original services/repositories, audit, operatio
 - The current single-writer-per-guild deployment and prior Atlas/legacy-bridge compatibility limits still apply. See [deployment and smoke tests](DEPLOYMENT.md), [Atlas compatibility](ATLAS_COMPATIBILITY.md), and [bridge compatibility](BRIDGE_COMPATIBILITY.md).
 
 The pre-commit review scanned 87 tracked/nonignored files and found no credential patterns, environment files or generated-output paths to commit. Existing ignored `.env`, `dist/`, `node_modules/` and `supabase/.temp/` are left untouched and excluded. No implementation files are intentionally left uncommitted. The final working-tree status and resulting commit SHA are reported after the commit.
+
+
+## Contact and Funds correction — 2026-09-19
+
+Contact creation (individual and group) is available to Member / LEVEL_1 and higher through native commands and compatibility forms. Other Contact operations retain Advisors / LEVEL_3 authorization. Funds mutations retain Advanced Member / LEVEL_2; read access is unchanged. See [correction report](CONTACT_PERMISSION_CORRECTION.md) for regression coverage and rollout.

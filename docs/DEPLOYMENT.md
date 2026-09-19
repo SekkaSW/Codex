@@ -147,3 +147,48 @@ Review the explicit compatibility gaps in WAYFINDER_COMMAND_PARITY.md before rol
 Then build, register global definitions and each affected guild root, and restart the bot. Registration does not automatically delete older guild-local copies of core commands; inspect those explicitly because Discord guild definitions can shadow new global definitions. Existing organization aliases take precedence in their guild; new setup reserves promotion/apprenticeship. Setup’s controlled guild-root synchronization remains in place.
 
 No database migrations, Discord registration, bot login, restart, push or deployment were performed during local implementation. See WAYFINDER_RESTORATION_REPORT.md for local evidence and the staging checklist.
+
+## Contact permission correction rollout — 2026-09-19
+
+This correction needs no SQL migration. Latest canonical migration remains 014; a hosted project at 012 has exactly these pending pairs (apply canonical or mirror through the established process, never both):
+
+| Canonical | Deployment mirror |
+| --- | --- |
+| `migrations/013_native_supply_workflows.sql` | `supabase/migrations/20260919144046_native_supply_workflows.sql` |
+| `migrations/014_native_workflow_contracts.sql` | `supabase/migrations/20260919145259_native_workflow_contracts.sql` |
+
+The two Contact creation descriptions now say Member+. Command options and Discord permission defaults are unchanged; Codex tiers are enforced by the runtime. The broader native restoration still requires command registration. The following commands match current `src/runtime/deploy.ts` and `registrationPlan`: no CLI scope flags exist. Scope is selected solely by `DISCORD_GUILD_ID` and `ORGANIZATION_NAMESPACE`; authentication uses `DISCORD_TOKEN` and `DISCORD_APPLICATION_ID`, supplied securely in the process environment. The script does not load `.env` itself.
+
+Global core definitions:
+
+```powershell
+Set-Location 'C:\Users\elija\OneDrive\Desktop\SekkaSWCodex'
+# DISCORD_TOKEN and DISCORD_APPLICATION_ID must already be set securely.
+npm.cmd run build
+Remove-Item Env:DISCORD_GUILD_ID -ErrorAction SilentlyContinue
+Remove-Item Env:ORGANIZATION_NAMESPACE -ErrorAction SilentlyContinue
+npm.cmd run deploy:commands
+```
+
+Configured organization root; repeat for each affected guild, using its saved namespace without a slash:
+
+```powershell
+$env:DISCORD_GUILD_ID = '<guild-id>'
+$env:ORGANIZATION_NAMESPACE = '<configured-namespace>'
+npm.cmd run deploy:commands
+```
+
+Registration uses individual POST upserts and preserves unrelated commands. Before rollout, inspect older guild-local core definitions that can shadow globals. These commands only GET definitions; they do not delete or register anything:
+
+```powershell
+$env:DISCORD_GUILD_ID = '<guild-id>'
+$commandHeaders = @{ Authorization = "Bot $env:DISCORD_TOKEN" }
+$commandBase = "https://discord.com/api/v10/applications/$env:DISCORD_APPLICATION_ID"
+$globalCommands = Invoke-RestMethod -Method Get -Headers $commandHeaders -Uri "$commandBase/commands"
+$guildCommands = Invoke-RestMethod -Method Get -Headers $commandHeaders -Uri "$commandBase/guilds/$env:DISCORD_GUILD_ID/commands"
+$guildCommands | Select-Object id, name, description
+$guildCommands | Where-Object { $_.name -in $globalCommands.name } | Select-Object id, name, description
+Remove-Variable commandHeaders
+```
+
+Review overlapping names and each command's options against current generated definitions; preserve configured organization roots and unrelated registrations. Removal, if needed, is a separate explicitly scoped operator action. None of these live commands was executed during this correction. Older open compatibility creation forms must be reopened because new forms bind their guild explicitly. See [the correction report](CONTACT_PERMISSION_CORRECTION.md) for local evidence and limits.

@@ -76,6 +76,6 @@ async function requireLevel(interaction: ChatInputCommandInteraction, repositori
     const liveRoles = await interaction.guild?.roles.fetch();
     const mappings = (await repositories.permissionRoles(interaction.guildId!)).filter(mapping => liveRoles?.has(mapping.roleId));
     if (!satisfies(roleIds, tier, mappings, administrator))
-        throw new Error(`${tier} permission or Discord Administrator is required.`);
+        throw new Error('Advanced Member permission or Discord Administrator is required.');
 }
 function signed(amount: number): string { return `${amount >= 0 ? "+" : "−"}${money.format(Math.abs(amount))}`; }

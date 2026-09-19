@@ -4,7 +4,7 @@ Native slash arguments supersede the earlier mandatory dashboard-first plan. Use
 
 /organization below means the configured guild root, such as /order. /promotion aliases /advancement; /apprenticeship aliases /mentorship. Existing organization roots with those names take precedence. New setup reserves the aliases.
 
-Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Officer, LEVEL_3 = Advisors, LEVEL_4 = Leader. Fresh authorization, record ownership, minimum rank and snapshotted ballot rules still apply. Autocomplete does not grant permission.
+Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Advanced Member, LEVEL_3 = Advisors, LEVEL_4 = Leader. Fresh authorization, record ownership, minimum rank and snapshotted ballot rules still apply. Autocomplete does not grant permission.
 
 ## Direct examples
 
@@ -141,14 +141,14 @@ Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Officer, LEVEL_3 = 
 | /mentorship requests |  | BASELINE |
 | /mentorship panel |  | BASELINE |
 | /contact setup | `category` | LEVEL_3 |
-| /contact create | `name!`, `race!`, `sex!`, `occupation!`, `assignment!` (autocomplete), `faction`, `usual_locations`, `commentary`, `high_priority` | LEVEL_3 |
-| /contact create-group | `name!`, `category!`, `assignment!` (autocomplete), `estimated_size`, `identifying_features`, `weapons_capabilities`, `tactics`, `usual_locations`, `faction`, `commentary`, `high_priority` | LEVEL_3 |
+| /contact create | `name!`, `race!`, `sex!`, `occupation!`, `assignment!` (autocomplete), `faction`, `usual_locations`, `commentary`, `high_priority` | LEVEL_1 |
+| /contact create-group | `name!`, `category!`, `assignment!` (autocomplete), `estimated_size`, `identifying_features`, `weapons_capabilities`, `tactics`, `usual_locations`, `faction`, `commentary`, `high_priority` | LEVEL_1 |
 | /contact edit | `contact!` (autocomplete), `name`, `race`, `sex`, `occupation`, `assignment` (autocomplete), `faction`, `usual_locations`, `commentary`, `group_category`, `estimated_size`, `identifying_features`, `weapons_capabilities`, `tactics`, `high_priority` | LEVEL_3 |
 | /contact list | `type`, `assignment` (autocomplete), `occupation`, `group_category`, `high_priority` | LEVEL_3 |
 | /contact link-member | `group!` (autocomplete), `person!` (autocomplete) | LEVEL_3 |
 | /contact unlink-member | `group!` (autocomplete), `person!` (autocomplete) | LEVEL_3 |
 | /contact archive | `contact!` (autocomplete), `reason` | LEVEL_3 |
-| /contact panel |  | LEVEL_3 |
+| /contact panel |  | Available actions: Member creation; Advisors administration |
 | /contact repair | `page` | LEVEL_3 |
 | /contact group-members |  | LEVEL_3 |
 | /vote open | `format`, `question`, `context` | LEVEL_3 |
@@ -225,4 +225,4 @@ Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Officer, LEVEL_3 = 
 | /apprenticeship info | `member` | BASELINE |
 | /apprenticeship requests |  | BASELINE |
 
-Reference add/view require Advisors; Leader-labeled references require Leader. Supply management and other-member credits require Advisors. Briefing access remains Member+. Contacts and member administration remain Advisors. Alliance keeps its reciprocal bridge contract. Native historical Intel backfill scans persisted records, not unrecognized legacy Discord messages. Old scalar Supply and shared reference records remain available separately. See DEPLOYMENT.md before migration/registration.
+Reference add/view require Advisors; Leader-labeled references require Leader. Supply management and other-member credits require Advisors. Briefing access remains Member+. Contact individual/group creation requires Member; Contact administration and member administration remain Advisors. Alliance keeps its reciprocal bridge contract. Native historical Intel backfill scans persisted records, not unrecognized legacy Discord messages. Old scalar Supply and shared reference records remain available separately. See DEPLOYMENT.md before migration/registration.

@@ -91,7 +91,7 @@ Source: `src/commands/briefing.ts`; services: `src/services/briefingService.ts`.
 
 ### /contact
 
-Native create/edit/list/group membership/archive use Contacts with additive detail metadata; individual and group Forum threads recover through durable delivery. Names, descriptions, classifications and priority persist. Current Advisors-only policy is retained, even though original creation allowed lower ranks. Assessment buttons persist and audit Confirmed/Cold/Not found/MIA/Archive-proposed (with group wording); proposing archive does not archive automatically. Complete original Forum tags are not restored.
+Native create/edit/list/group membership/archive use Contacts with additive detail metadata; individual and group Forum threads recover through durable delivery. Names, descriptions, classifications and priority persist. Contact individual/group creation requires Member (LEVEL_1); setup, repair, listing, editing, archive, assessment and existing-group membership remain Advisors (LEVEL_3). Creation autocomplete exposes configured assignments only, not existing Contacts. Funds mutations retain LEVEL_2, displayed as Advanced Member. Assessment buttons persist and audit Confirmed/Cold/Not found/MIA/Archive-proposed (with group wording); proposing archive does not archive automatically. Complete original Forum tags are not restored.
 
 Source: `src/commands/contact.ts`; services: `src/services/contactService.ts`.
 

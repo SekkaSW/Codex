@@ -66,3 +66,8 @@ Staging checklist:
 12. Exercise representative applications, Strongbox, Funds, Contacts/assessments, Intel, Trailmarks/reports, votes, assignments, mentorship, promotion, Briefings, Patrol, Atlas, member commands and current Alliance bridges. Include denied permissions, disabled features, stale controls, DM failure and board recovery.
 
 No reference repository modifications, hosted database changes, live Discord actions, push, merge or deployment occurred. Final Git SHA and working-tree status are provided with delivery.
+
+
+## Dated correction — 2026-09-19
+
+The follow-up [Contact permission correction](CONTACT_PERMISSION_CORRECTION.md) supersedes the earlier retained Advisors-only Contact creation exception and the historical Officer label. Individual/group creation now requires Member / LEVEL_1; other Contact administration remains Advisors. Funds mutations still require LEVEL_2, correctly displayed as Advanced Member. Earlier historical findings above are retained as recorded. This follow-up changes no migration or command option/default. The two creation descriptions now say Member+.

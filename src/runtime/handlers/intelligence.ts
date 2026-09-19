@@ -1,3 +1,4 @@
+import { contactRequirement, assertContactCreationContext, requireContactPermission } from '../contactPermissions.js';
 import { requireFeature } from '../features.js';
 import type { IntelligenceStore,ContactRow,ReportRow,TopicRow } from '../../intelligence.js';
 import type { FieldRepositories } from './field.js';
@@ -9,10 +10,11 @@ export async function handleIntelligence(i:any,store:IntelligenceRepositories):P
  const component=!!i.customId,parts=component?i.customId.split(':'):[],owner=parts[1];
  if(component&&owner!==i.user.id)throw new Error('This panel belongs to another user');
  const family=component?parts[2]:i.commandName,action=component?parts[3]:i.options.getSubcommand();
- await requireTier(i,store,family==='contact'||!['reports','deliver','link-report','report-links','report-options'].includes(action)?'LEVEL_3':'BASELINE');
+ if(family==='contact')await requireContactPermission(i,store,action);else await requireTier(i,store,!['reports','deliver','link-report','report-links','report-options'].includes(action)?'LEVEL_3':'BASELINE');
+ if(family==='contact'&&contactRequirement(action)==='LEVEL_1'){assertContactCreationContext(i);if(component&&parts[4]!==`new~${i.guildId}`)throw new Error('This creation form belongs to another server or is stale; reopen it');}
  const guild=i.guildId,actor=i.user.id,base=`intel:${actor}:${family}`,discord=new DiscordIntelligence(i.guild,store);
  const selected=i.values?.[0]??parts[4],page=parts.includes('page')?Number(parts.at(-1)):0;
- const modal=(name:string,id?:string)=>textModal(`${base}:${name}:${id??'new'}`,name.startsWith('topic')?'Report topic':'Contact details',name.startsWith('topic')?[{id:'name',label:'Name',max:100},{id:'keywords',label:'Comma-separated keywords',max:1000},{id:'priority',label:'Priority (lowest first)',value:'0',max:8}]:[{id:'name',label:'Name',max:100},{id:'description',label:'Details',paragraph:true,max:2000,optional:true}]);
+ const modal=(name:string,id?:string)=>textModal(`${base}:${name}:${id??(family==='contact'&&contactRequirement(name)==='LEVEL_1'?`new~${guild}`:'new')}`,name.startsWith('topic')?'Report topic':'Contact details',name.startsWith('topic')?[{id:'name',label:'Name',max:100},{id:'keywords',label:'Comma-separated keywords',max:1000},{id:'priority',label:'Priority (lowest first)',value:'0',max:8}]:[{id:'name',label:'Name',max:100},{id:'description',label:'Details',paragraph:true,max:2000,optional:true}]);
  if(!component&&['topic-add','create','create-group'].includes(action)){await i.showModal(modal(action));return;}
  if(component&&action==='edit-form'){const [id,revision]=selected.split('~');const row=family==='contact'?await store.intelligence<ContactRow>(guild,'contact-get',actor,id):(await store.intelligence<TopicRow[]>(guild,'topics',actor)).find(t=>t.id===id);if(!row||row.revision!==Number(revision))throw new Error('Record changed; reopen the editor');const form=modal(family==='contact'?'save-contact':'topic-save',selected);form.components[0].components[0].value=row.name;if('description'in row&&row.description)form.components[1].components[0].value=row.description;if('keywords'in row){form.components[1].components[0].value=row.keywords.join(', ');form.components[2].components[0].value=String(row.priority);}await i.showModal(form);return;}
  await i.deferReply({ephemeral:true});
@@ -28,7 +30,7 @@ export async function handleIntelligence(i:any,store:IntelligenceRepositories):P
  if(i.isModalSubmit()){
   const name=i.fields.getTextInputValue('name').trim(),[id,revision]=(selected??'new').split('~');
   if(action.startsWith('topic')){const keywords=i.fields.getTextInputValue('keywords').split(',').map((s:string)=>s.trim()).filter(Boolean),priority=Number(i.fields.getTextInputValue('priority'));if(!Number.isSafeInteger(priority)||Math.abs(priority)>100000)throw new Error('Priority must be an integer from -100000 to 100000');await store.intelligence(guild,'topic-save',actor,id==='new'?undefined:id,{name,keywords,priority,revision:Number(revision)});await discord.refresh();}
-  else {const description=i.fields.getTextInputValue('description');const contact=await store.intelligence<ContactRow>(guild,action==='save-contact'?'contact-edit':'contact-create',actor,id==='new'?interactionUuid(i.id):id,{name,description,kind:action==='create-group'?'GROUP':'CONTACT',revision:Number(revision)});if(contact.kind==='CONTACT')await discord.contact(contact);}
+  else {const description=i.fields.getTextInputValue('description');const contact=await store.intelligence<ContactRow>(guild,action==='save-contact'?'contact-edit':'contact-create',actor,id==='new'?interactionUuid(i.id):id,{name,description,kind:action==='create-group'?'GROUP':'CONTACT',revision:Number(revision)});await discord.contact(contact);}
   await i.editReply(replyText('Saved.'));return;
  }
  if(!component){

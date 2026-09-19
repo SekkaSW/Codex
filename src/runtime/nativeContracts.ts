@@ -347,7 +347,7 @@ export const nativeContracts = [
       {
         "type": 1,
         "name": "create",
-        "description": "Recruit+: create a record for an individual contact.",
+        "description": "Member+: create a record for an individual contact.",
         "options": [
           {
             "type": 3,
@@ -412,7 +412,7 @@ export const nativeContracts = [
       {
         "type": 1,
         "name": "create-group",
-        "description": "Recruit+: create a record for a known group.",
+        "description": "Member+: create a record for a known group.",
         "options": [
           {
             "type": 3,
