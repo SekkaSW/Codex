@@ -12,6 +12,7 @@ export class AdministrationRepository implements AdministrationStore {
     }
     organization(guildId: string): Promise<OrganizationConfig> { return this.rpc('codex_organization', { p_guild: guildId }); }
     saveOrganization(config: ServerConfig, organization: OrganizationConfig, actorId: string): Promise<void> { return this.rpc('codex_save_organization', { p_config: config, p_organization: organization, p_actor: actorId }); }
+    managedDuty(guildId: string, id: string, action: string, actor: string, data: Record<string, unknown>): Promise<any> { return this.rpc('codex_managed_duty', { p_guild: guildId, p_id: id, p_action: action, p_actor: actor, p_data: data }); }
     members(guildId: string): Promise<MemberState[]> { return this.rpc('codex_members', { p_guild: guildId }); }
     async member(guildId: string, memberId: string): Promise<MemberState | undefined> { return (await this.rpc<MemberState[]>('codex_members', { p_guild: guildId, p_member: memberId }))[0]; }
     async commitMember(before: MemberState | undefined, after: MemberState, actorId: string, action: string, reason: string): Promise<void> {

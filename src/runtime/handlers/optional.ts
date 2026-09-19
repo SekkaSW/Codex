@@ -1,3 +1,4 @@
+import { requireFeature } from '../features.js';
 import type {WorkflowRepositories} from './workflows.js';import {workflowDestination} from './workflows.js';
 import {choices,interactionUuid,replyText,requireTier,textModal,recordView} from '../interactions.js';import {DurableDelivery} from '../../intelligence.js';import {DurableSummary} from '../../workflows.js';import {DiscordDurablePublisher} from '../intelligenceDiscord.js';
 export interface OptionalRepositories extends WorkflowRepositories {optional<T=any>(guild:string,system:string,action:string,actor:string,id?:string,data?:Record<string,unknown>):Promise<T>}
@@ -5,6 +6,7 @@ export async function handleOptional(i:any,store:OptionalRepositories):Promise<v
  const component=!!i.customId,p=component?i.customId.split(':'):[],actor=i.user.id,guild=i.guildId;
  if(component&&p[1]!==actor)throw new Error('This optional-system panel belongs to another user');
  const system=component?p[2]:i.commandName,action=component?p[3]:i.options.getSubcommand(),context=p[4],selected=i.values?.[0]??context,base=`optional:${actor}:${system}`,page=p.includes('page')?Number(p.at(-1)):0;
+ await requireFeature(store,guild,system);
  const config=await store.load(guild),module=system==='briefing'?'briefings':system==='patrol'?'patrols':system;if(system!=='reference'&&!config?.modules[module as keyof typeof config.modules])throw new Error('This optional module is disabled');
  await requireTier(i,store,['create','create-save','setup','setup-save','edit','edit-save','send','send-save','redistribute','redistribute-save','close','reopen','cancel','resolve'].includes(action)?'LEVEL_3':system==='briefing'?'LEVEL_1':'BASELINE');
  const call=(action:string,id?:string,data:Record<string,unknown>={})=>store.optional(guild,system,action,actor,id,data);

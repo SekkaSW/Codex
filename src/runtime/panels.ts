@@ -1,3 +1,4 @@
+import { disabledFeature } from './features.js';
 import { PermissionFlagsBits } from 'discord.js';
 import { satisfies, type Requirement, type ServerConfig } from '../domain.js';
 import type { RuntimeRepositories } from './bot.js';
@@ -41,6 +42,7 @@ async function currentAccess(i: any, store: RuntimeRepositories): Promise<(need:
     return need => need === 'ANY' || satisfies(member.roles.cache.keys(), need, mappings, member.permissions.has(PermissionFlagsBits.Administrator));
 }
 export async function availableActions(i: any, store: RuntimeRepositories, config: ServerConfig, system: string, access?: (need: Requirement | 'ANY') => boolean): Promise<any[]> {
+    if (disabledFeature(config, system)) return [];
     if (modules[system] && !config.modules[modules[system]!]) return [];
     const can = access ?? await currentAccess(i, store);
     const command = (commandDefinitions(config.commandNamespace) as any[]).find(c => c.name === system);
@@ -88,6 +90,7 @@ export async function openPanel(i: any, store: RuntimeRepositories, system: stri
         if (i.memberPermissions?.has(PermissionFlagsBits.Administrator)) components.push(row(button(`${base}:setup`, 'Server Setup')));
         await respond(i, { content: '**Your Codex guide**\nChoose a feature to open its dashboard. Each dashboard shows the actions available to you. You can also use `/feature panel` directly.', components }); return;
     }
+    const disabled = disabledFeature(config, system); if (disabled) throw new Error(disabled);
     const actions = await availableActions(i, store, config, system, access);
     if (system === config.commandNamespace && page === 0) {
         const destinations = ['trailmark', 'advancement', 'application', 'mentorship', 'assignment', 'atlas'];

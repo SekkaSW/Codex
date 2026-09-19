@@ -2,12 +2,16 @@ export const permissionTiers = ["BASELINE", "LEVEL_1", "LEVEL_2", "LEVEL_3", "LE
 export type PermissionTier = typeof permissionTiers[number];
 export type Requirement = PermissionTier | "ADMIN";
 export type ModuleKey = "briefings" | "patrols" | "supply" | "atlas";
+export type FeatureSettings = Record<ModuleKey, boolean> & Partial<Record<'intelligence' | 'trailmarks', boolean>>;
+export const permissionLabels = { BASELINE: 'Recruit', LEVEL_1: 'Member', LEVEL_2: 'Advanced Member', LEVEL_3: 'Advisors', LEVEL_4: 'Leader' } as const;
+/** Missing flags mean enabled for configurations saved before the refinement. */
+export function featureEnabled(config: Pick<ServerConfig, 'modules'>, feature: 'intelligence' | 'trailmarks'): boolean { return config.modules[feature] !== false; }
 export interface ServerConfig {
     guildId: string;
     organizationName: string;
     commandNamespace: string;
     confidentialityMarker: string;
-    modules: Record<ModuleKey, boolean>;
+    modules: FeatureSettings;
 }
 export interface PermissionRole {
     guildId: string;

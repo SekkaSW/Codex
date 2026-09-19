@@ -1,5 +1,6 @@
 import { ApplicationFlagsBitField, ChannelType, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';
 import type { StoredSetupDraft } from '../setup.js';
+import { refinementText, setupTextLimit, humanSetupCopy } from './setupRefinement.js';
 import { SetupWizard } from './setupWizard.js';
 import { conversationResources } from './setupConversation.js';
 import { friendlyError } from './confirmation.js';
@@ -7,6 +8,7 @@ import { friendlyError } from './confirmation.js';
 type Binding = NonNullable<StoredSetupDraft['messageConversation']>;
 const safe = { parse: [] };
 export function currentSetupText(d: StoredSetupDraft): string | undefined {
+    if (d.editor?.refinement) return refinementText(d);
     const e = d.editor!, g = e.conversation, c = d.organization!;
     switch (g?.step ?? e.section) {
         case 'identity': return d.config.organizationName;
@@ -110,9 +112,9 @@ export class MessageSetupWizard extends SetupWizard {
             b.channelId !== m.channelId || !b.answerAction || b.question !== this.question(d) || Date.parse(d.expiresAt) <= Date.now()) return;
         const permissions = await this.admin(m.guild, m.author.id);
         const content = m.content?.trim();
-        if (!content || content.length > 100) {
+        if (!content || content.length > setupTextLimit(d)) {
             const payload = b.textPrompt ? this.textPrompt(d, b.textPrompt.content) : this.render(d);
-            payload.content = 'Reply with 1–100 characters of text. If Codex cannot read your replies, enable Message Content Intent in the Developer Portal and restart the bot.\n\n' + payload.content;
+            payload.content = `Reply with 1–${setupTextLimit(d)} characters of text. If Codex cannot read your replies, enable Message Content Intent in the Developer Portal and restart the bot.\n\n` + payload.content;
             await this.publish(d.guildId, m.channel, payload, b.textPrompt?.action);
             return;
         }
@@ -131,7 +133,7 @@ export class MessageSetupWizard extends SetupWizard {
             throw new Error('This setup question is stale. Run /server setup to resume your saved answers.');
         // Text submission is exclusively via the bound message route, never a forged modal/select.
         if (i.isModalSubmit() || ['save-text', 'create'].includes(i.customId.split(':')[2]) ||
-            (b.answerAction && i.customId.endsWith(':guide-answer'))) throw new Error('Reply to the current setup question with your answer.');
+            (b.answerAction && (i.customId.endsWith(':guide-answer') || i.customId.endsWith(':refine-answer')))) throw new Error('Reply to the current setup question with your answer.');
         await i.deferUpdate();
         if (i.customId.endsWith(':keep')) {
             const value = currentSetupText(d);
@@ -140,7 +142,7 @@ export class MessageSetupWizard extends SetupWizard {
                 customId: `setup:${d.revision}:${b.answerAction}`, isModalSubmit: () => true, fields: { getTextInputValue: () => value } }, d, true);
         } else await this.execute(i, d, false);
     }
-    private question(d: StoredSetupDraft): string { return JSON.stringify([d.editor?.section, d.editor?.conversation?.step, d.editor?.selected, d.editor?.conversation?.index, d.editor?.conversation?.group, d.editor?.conversation?.branch]); }
+    private question(d: StoredSetupDraft): string { return JSON.stringify([d.editor?.refinement && [d.editor.refinement.step,d.editor.refinement.index,d.editor.refinement.group,d.editor.refinement.branch,d.editor.refinement.source,d.editor.refinement.page], d.editor?.section, d.editor?.conversation?.step, d.editor?.selected, d.editor?.conversation?.index, d.editor?.conversation?.group, d.editor?.conversation?.branch]); }
 
     private textPrompt(d: StoredSetupDraft, content: string): any {
         return { content, components: [{ type: 1, components: [
@@ -178,7 +180,7 @@ export class MessageSetupWizard extends SetupWizard {
             const latest = await this.store.loadSetupDraft(before.guildId);
             if (!latest) throw error;
             payload = this.render(latest);
-            if (message && latest.revision === before.revision && before.messageConversation?.answerAction !== 'guide-answer') {
+            if (message && latest.revision === before.revision && !['guide-answer','refine-answer'].includes(before.messageConversation?.answerAction ?? '')) {
                 answerAction = before.messageConversation?.answerAction;
                 payload = this.textPrompt(latest, before.messageConversation?.textPrompt?.content ?? '**Reply with the corrected value.**');
             }
@@ -187,7 +189,7 @@ export class MessageSetupWizard extends SetupWizard {
         }
         const latest = await this.store.loadSetupDraft(before.guildId);
         if (latest && !latest.messageConversation) { latest.messageConversation = { channelId: before.messageConversation!.channelId, privateThread: before.messageConversation!.privateThread, threadAttempted: true }; await this.save(latest); }
-        if (message && latest && latest.revision > before.revision && !before.editor?.conversation && payload) payload.content = `Value set to **${i.fields.getTextInputValue('name').trim()}** in the draft.\n\n${payload.content}`;
+        if (message && latest && latest.revision > before.revision && !before.editor?.conversation && !before.editor?.refinement && payload) payload.content = `Value set to **${i.fields.getTextInputValue('name').trim()}** in the draft.\n\n${payload.content}`;
         if (payload) await this.publish(before.guildId, i.channel, payload, answerAction, !['progress', 'restart', 'view', 'repair', 'repair-confirm'].includes(action));
         if (!latest && before.messageConversation?.privateThread) await i.channel.setArchived(true).catch(() => undefined);
     }
@@ -195,6 +197,7 @@ export class MessageSetupWizard extends SetupWizard {
     private async publish(guildId: string, channel: any, source: any, explicitAction?: string, clearText = false): Promise<void> {
         const d = await this.store.loadSetupDraft(guildId);
         const payload = { ...source, allowedMentions: safe }; delete payload.ephemeral;
+        if (d?.refinedSetup && payload.content) payload.content = humanSetupCopy(payload.content);
         if (!d?.messageConversation) { await channel.send(payload); return; }
         this.active.delete(guildId);
         const b = d.messageConversation;
@@ -207,12 +210,13 @@ export class MessageSetupWizard extends SetupWizard {
         const revision = d.revision + 1;
         let answerAction = explicitAction;
         payload.components = (source.components ?? []).map((r: any) => ({ ...r, components: r.components.filter((c: any) => {
+            if (c.custom_id?.endsWith(':refine-text')) { answerAction = 'refine-answer'; return false; }
             if (c.custom_id?.endsWith(':guide-text')) { answerAction = 'guide-answer'; return false; }
             return true;
-        }).map((c: any) => ({ ...c, custom_id: c.custom_id?.replace(/^setup:\d+:/, `setup:${revision}:`) })) })).filter((r: any) => r.components.length);
+        }).map((c: any) => ({ ...c, ...(d.refinedSetup && c.label ? {label: humanSetupCopy(c.label)} : {}), ...(d.refinedSetup && c.options ? {options: c.options.map((o:any) => ({...o,label:humanSetupCopy(o.label)}))} : {}), custom_id: c.custom_id?.replace(/^setup:\d+:/, `setup:${revision}:`) })) })).filter((r: any) => r.components.length);
         if (answerAction) {
             const value = answerAction !== 'create' ? currentSetupText(d) : undefined;
-            payload.content += `${value ? `\nCurrent value: **${value}**` : ''}\n${b.privateThread ? 'Send your answer here.' : 'Use Discord Reply on this question to answer.'}`;
+            payload.content += `${value ? `\nCurrent value: **${value.length > 600 ? value.slice(0,600) + "…" : value}**` : ''}\n${b.privateThread ? 'Send your answer here.' : 'Use Discord Reply on this question to answer.'}`;
             if (value && payload.components.length < 5) payload.components.unshift({ type: 1, components: [{ type: 2, custom_id: `setup:${revision}:keep`, label: 'Keep Current', style: 2 }] });
         }
         payload.content = payload.content?.slice(0, 2000);

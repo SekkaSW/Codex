@@ -1,5 +1,7 @@
 # Setup message conversation correction
 
+Current setup flow: [Server setup refinement](SERVER_SETUP_REFINEMENT.md). This report describes its earlier implementation checkpoint.
+
 Focused follow-up to the completed Discord dashboard UX overhaul, September 18, 2026.
 
 1. **Starting branch/HEAD:** clean `main` at `06942e95d8b58f49efbf96944868a4d169b087ff` (`Improve Discord setup and interaction UX`). Completed phases and that commit were preserved.

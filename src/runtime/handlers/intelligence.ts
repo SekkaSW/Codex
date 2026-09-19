@@ -1,9 +1,11 @@
+import { requireFeature } from '../features.js';
 import type { IntelligenceStore,ContactRow,ReportRow,TopicRow } from '../../intelligence.js';
 import type { FieldRepositories } from './field.js';
 import { choices,interactionUuid,replyText,requireTier,textModal } from '../interactions.js';
 import { DiscordIntelligence } from '../intelligenceDiscord.js';
 export type IntelligenceRepositories=FieldRepositories&IntelligenceStore;
 export async function handleIntelligence(i:any,store:IntelligenceRepositories):Promise<void>{
+ await requireFeature(store,i.guildId,'intel');
  const component=!!i.customId,parts=component?i.customId.split(':'):[],owner=parts[1];
  if(component&&owner!==i.user.id)throw new Error('This panel belongs to another user');
  const family=component?parts[2]:i.commandName,action=component?parts[3]:i.options.getSubcommand();

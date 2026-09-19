@@ -1,11 +1,14 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import { emptyOrganization, validateOrganization, type AdministrationStore } from '../administration.js';
-import { permissionTiers, type ServerConfig } from '../domain.js';
+import { permissionLabels, permissionTiers, type ServerConfig } from '../domain.js';
 import { configuredResources } from '../resources.js';
 import { DiscordProvisioner } from './discordProvisioner.js';
 import { beginSetup, preview, validateForConfirmation, type StoredSetupDraft } from '../setup.js';
 import { answerConversation, beginConversation, conversationView } from './setupConversation.js';
+import { beginRefinement, answerRefinement, refinementView, refinementSummary } from './setupRefinement.js';
+import { provisionDuties, type DutyCreationStore } from './dutyProvisioning.js';
 export interface SetupStore extends AdministrationStore {
+    managedDuty?: DutyCreationStore['managedDuty'];
     load(guildId: string): Promise<ServerConfig | undefined>;
     loadSetupDraft(guildId: string): Promise<StoredSetupDraft | undefined>;
     saveSetupDraft(draft: StoredSetupDraft): Promise<void>;
@@ -17,7 +20,7 @@ const button = (id: string, label: string, style = 2) => ({ type: 2, custom_id: 
 const option = (label: string, value: string) => ({ label: label.slice(0, 100), value });
 const select = (id: string, placeholder: string, options: any[], max = 1, min = 1) => ({ type: 3, custom_id: id, placeholder, options, max_values: max, min_values: min });
 export class SetupWizard {
-    constructor(protected readonly store: SetupStore, private readonly provision: (config: ServerConfig, actorId: string) => Promise<string>) { }
+    constructor(protected readonly store: SetupStore, private readonly provision: (config: ServerConfig, actorId: string) => Promise<string>, protected readonly refined = false, private readonly beforeApply?: (draft: StoredSetupDraft, guild: any) => Promise<void>) { }
     async start(guildId: string, ownerId: string): Promise<any> {
         let d = await this.store.loadSetupDraft(guildId);
         let resumed = !!d;
@@ -34,7 +37,7 @@ export class SetupWizard {
             d.config.guildId = guildId;
             d.config.modules ??= { briefings: false, patrols: false, supply: false, atlas: false };
             d.config.confidentialityMarker ??= '[CONFIDENTIAL]';
-            beginConversation(d, existing ? 'sections' : 'identity');
+            if (this.refined) { d.refinedSetup = true; beginRefinement(d, !!existing); } else beginConversation(d, existing ? 'sections' : 'identity');
             await this.store.saveSetupDraft(d);
         }
         if (!d.organization || !d.editor) {
@@ -43,6 +46,7 @@ export class SetupWizard {
             d.revision++;
             await this.store.saveSetupDraft(d);
         }
+        if (this.refined && !d.refinedSetup) { d.refinedSetup = true; beginRefinement(d, !!existing); d.editor!.refinement!.step = 'sections'; d.revision++; await this.store.saveSetupDraft(d); }
         if (resumed) return { content: `You have an unfinished setup from ${Math.max(0, Math.floor((Date.now() - Date.parse(d.updatedAt)) / 60000))} minutes ago. Your answers are saved.`, components: [row(button(`setup:${d.revision}:resume`, 'Resume', 1), button(`setup:${d.revision}:restart`, 'Start Over'), button(`setup:${d.revision}:progress`, 'View Progress'), button(`setup:${d.revision}:cancel`, 'Cancel', 4))], ephemeral: true };
         return { ...this.render(d), ephemeral: true };
     }
@@ -85,6 +89,13 @@ export class SetupWizard {
             await this.store.deleteSetupDraft(d.guildId, d.ownerId);
             const payload = await this.start(d.guildId, d.ownerId); delete payload.ephemeral; await i.update(payload); return;
         }
+        if (action.startsWith('refine-')) {
+            if (!e.refinement) throw new Error('Run /server setup to refresh this conversation.');
+            await answerRefinement(d, action.slice(7), i);
+            d.revision++; d.updatedAt = new Date().toISOString(); await this.store.saveSetupDraft(d);
+            if (i.isModalSubmit()) await i.reply(this.render(d)); else await i.update(this.render(d));
+            return;
+        }
         if (action.startsWith('guide-')) {
             if (!e.conversation) beginConversation(d);
             if (e.section === 'preview') e.section = 'identity';
@@ -96,7 +107,8 @@ export class SetupWizard {
             else await i.update(this.render(d));
             return;
         }
-        if (action === 'advanced') { delete e.conversation; e.section = 'identity'; d.revision++; await this.store.saveSetupDraft(d); await i.update(this.render(d)); return; }
+        if (action === 'guided' && d.refinedSetup) { beginRefinement(d, !!(await this.store.load(d.guildId))); d.editor!.refinement!.step = 'sections'; d.revision++; await this.store.saveSetupDraft(d); await i.update(this.render(d)); return; }
+        if (action === 'advanced') { delete e.refinement; delete e.conversation; e.section = 'identity'; d.revision++; await this.store.saveSetupDraft(d); await i.update(this.render(d)); return; }
         if (action === 'cancel') {
             await this.store.deleteSetupDraft(d.guildId, d.ownerId);
             await i.update({ content: 'Setup draft cancelled.', components: [] });
@@ -105,7 +117,7 @@ export class SetupWizard {
         if (action === 'view') {
             await i.deferReply({ ephemeral: true });
             const saved = await this.store.load(d.guildId);
-            const summary = saved ? { ...d, config: saved, organization: await this.store.organization(d.guildId) } : d;
+            const summary = saved ? { ...d, managedDuties: [], config: saved, organization: await this.store.organization(d.guildId) } : d;
             await i.editReply({ content: this.summary(summary), files: [{ attachment: Buffer.from(this.fullSummary(summary)), name: 'configuration.txt' }], allowedMentions: { parse: [] } });
             return;
         }
@@ -138,11 +150,19 @@ export class SetupWizard {
         if (action === 'confirm') {
             validateForConfirmation(d);
             validateOrganization(d.guildId, c);
+            if (d.refinedSetup && !(await this.store.load(d.guildId)) && (!c.ranks.length || typeof d.config.modules.intelligence !== 'boolean' || typeof d.config.modules.trailmarks !== 'boolean' || ['BOT_COMMANDS','BOT_LOGS'].some(key => !c.resources.some(r => r.key === key) && !c.additionalResources.some(r => r.key === key)))) throw new Error('Complete ranks, command/log destinations, and Intelligence/Trailmark choices before confirming.');
             await i.deferUpdate();
             const stored = await this.store.organization(d.guildId);
             const selectedKeys = new Set(d.resourceSelections ?? []);
             c.resources = [...stored.resources.filter(r => !selectedKeys.has(r.key)), ...c.resources.filter(r => selectedKeys.has(r.key))];
             await this.validateDiscord(i.guild, c, selectedKeys);
+            if (d.managedDuties?.length) {
+                if (!this.store.managedDuty) throw new Error('Setup duty provisioning is unavailable. Apply the setup refinement migration.');
+                await provisionDuties(d, i.guild, { managedDuty: this.store.managedDuty.bind(this.store) });
+                validateOrganization(d.guildId, c);
+                d.revision++; await this.store.saveSetupDraft(d);
+            }
+            await this.beforeApply?.(d, i.guild);
             await this.store.saveOrganization(d.config, c, i.user.id);
             const result = await this.provision(d.config, i.user.id);
             await this.store.deleteSetupDraft(d.guildId, d.ownerId);
@@ -278,7 +298,7 @@ export class SetupWizard {
             c.edges.push(...i.values.map((toRankId: string) => ({ guildId: d.guildId, branchId, fromRankId, toRankId })));
         }
         else if (action === 'modules') {
-            d.config.modules = { briefings: i.values.includes('briefings'), patrols: i.values.includes('patrols'), supply: i.values.includes('supply'), atlas: i.values.includes('atlas') };
+            d.config.modules = { ...d.config.modules, briefings: i.values.includes('briefings'), patrols: i.values.includes('patrols'), supply: i.values.includes('supply'), atlas: i.values.includes('atlas') };
         }
         else if (action === 'channel') {
             const spec = this.specs(d).find(x => x.key === selected);
@@ -338,10 +358,12 @@ export class SetupWizard {
         delete d.editor!.selected;
     }
     private summary(d: StoredSetupDraft): string {
+        if (d.refinedSetup) return refinementSummary(d).slice(0,1900);
         const c = d.organization!;
         return (preview(d) + '\n' + permissionTiers.map(t => `${t}: ${c.permissions.filter(p => p.tier === t).map(p => `<@&${p.roleId}>`).join(', ') || 'none'}`).join('\n') + `\nRanks: ${c.ranks.map(x => x.name).join(', ') || 'none'}\nBranches: ${c.branches.map(x => x.name).join(', ') || 'none'}\nProgression edges: ${c.edges.length}\nDuties: ${c.duties.map(x => x.displayName).join(', ') || 'none'}\nAssignment groups: ${c.groups.map(x => `${x.name} (${x.multiple ? 'multiple' : 'single'}, ${x.required ? 'required' : 'optional'})`).join(', ') || 'none'}\nAssignment entries: ${c.entries.length}\nStored destinations: ${c.resources.length}`).slice(0, 1900);
     }
     render(d: StoredSetupDraft): any {
+        if (d.editor?.refinement) return refinementView(d);
         const c = d.organization!, e = d.editor!, s = e.section, id = (action: string) => `setup:${d.revision}:${action}`;
         if (e.conversation && s !== 'preview') {
             const payload = conversationView(d);
@@ -364,7 +386,7 @@ export class SetupWizard {
             if (s === 'entries')
                 choices = c.entries.map(x => option(`${c.groups.find(g => g.id === x.groupId)?.name}: ${x.name}`, x.id));
             if (s === 'permissions')
-                choices = permissionTiers.map(x => option(x, x));
+                choices = permissionTiers.map(x => option(d.refinedSetup ? permissionLabels[x] : x, x));
             if (s === 'progression')
                 choices = c.branches.flatMap(b => c.ranks.map(r => option(`${b.name}: ${r.name}`, `${b.id}/${r.id}`)));
             if (s === 'resources' || s === 'destinations')
@@ -392,7 +414,7 @@ export class SetupWizard {
                     content += `\nMapped role: ${entity?.roleId ? `<@&${entity.roleId}>` : 'none'}`;
                     components.push(row({ type: 6, custom_id: id('role'), placeholder: 'Discord role (clear for no sync)', min_values: 0, max_values: 1 }));
                     if (s === 'ranks')
-                        components.push(row(select(id('tier'), 'Rank tier (does not grant permissions)', permissionTiers.map(x => ({ ...option(x, x), default: c.ranks.find(r => r.id === e.selected)?.tier === x })))));
+                        components.push(row(select(id('tier'), 'Rank tier (does not grant permissions)', permissionTiers.map(x => ({ ...option(d.refinedSetup ? permissionLabels[x] : x, x), default: c.ranks.find(r => r.id === e.selected)?.tier === x })))));
                     if (s === 'entries' && c.groups.length) {
                         components.push(row(select(id('group'), 'Assignment group', c.groups.slice(e.page * 25, e.page * 25 + 25).map(x => ({ ...option(x.name, x.id), default: c.entries.find(entry => entry.id === e.selected)?.groupId === x.id })))));
                         this.targetPages(components, id, e.page, c.groups.length);
@@ -420,14 +442,14 @@ export class SetupWizard {
             }
         }
         if (components.length < 5)
-            components.push(row(button(id('back'), 'Back'), button(id('view'), 'View saved'), button(id('repair'), 'Repair'), button(id('cancel'), 'Cancel', 4)));
+            components.push(row(button(id('back'), 'Back'), button(id('view'), 'View saved'), button(id('repair'), 'Repair'), button(id('cancel'), 'Cancel', 4), ...(d.refinedSetup ? [button(id('guided'), 'Six Sections')] : [])));
         return { content: content.slice(0, 1900), components, allowedMentions: { parse: [] }, ...(s === 'preview' ? { files: [{ attachment: Buffer.from(this.fullSummary(d)), name: 'configuration-preview.txt' }] } : {}) };
     }
     private targetPages(components: any[], id: (s: string) => string, page: number, total: number): void { const choices = []; if (page > 0)
         choices.push(option('Previous', '-1')); if ((page + 1) * 25 < total)
         choices.push(option('Next', '1')); if (choices.length)
         components.push(row(select(id('target-page'), `Page ${page + 1}`, choices))); }
-    private fullSummary(d: StoredSetupDraft): string { const c = d.organization!; return [preview(d), ...c.permissions.map(p => `Permission ${p.tier}: role ${p.roleId}`), ...c.ranks.map(r => `Rank ${r.name}: ${r.tier}, role ${r.roleId ?? 'none'}`), ...c.edges.map(e => `Progression [${c.branches.find(b => b.id === e.branchId)?.name}]: ${c.ranks.find(r => r.id === e.fromRankId)?.name} -> ${c.ranks.find(r => r.id === e.toRankId)?.name}`), ...c.duties.map(x => `Duty ${x.displayName}: role ${x.roleId}`), ...c.groups.flatMap(g => [`Group ${g.name}: ${g.multiple ? 'multiple' : 'single'}, ${g.required ? 'required' : 'optional'}`, ...c.entries.filter(e => e.groupId === g.id).map(e => `  ${e.name}: role ${e.roleId ?? 'none'}`)]), ...this.specs(d).map(r => `${r.name} (${r.kind}): ${c.resources.find(x => x.key === r.key)?.discordId ?? 'create when enabled'}`)].join('\n'); }
+    private fullSummary(d: StoredSetupDraft): string { if(d.refinedSetup) return refinementSummary(d); const c = d.organization!; return [preview(d), ...c.permissions.map(p => `Permission ${p.tier}: role ${p.roleId}`), ...c.ranks.map(r => `Rank ${r.name}: ${r.tier}, role ${r.roleId ?? 'none'}`), ...c.edges.map(e => `Progression [${c.branches.find(b => b.id === e.branchId)?.name}]: ${c.ranks.find(r => r.id === e.fromRankId)?.name} -> ${c.ranks.find(r => r.id === e.toRankId)?.name}`), ...c.duties.map(x => `Duty ${x.displayName}: role ${x.roleId}`), ...c.groups.flatMap(g => [`Group ${g.name}: ${g.multiple ? 'multiple' : 'single'}, ${g.required ? 'required' : 'optional'}`, ...c.entries.filter(e => e.groupId === g.id).map(e => `  ${e.name}: role ${e.roleId ?? 'none'}`)]), ...this.specs(d).map(r => `${r.name} (${r.kind}): ${c.resources.find(x => x.key === r.key)?.discordId ?? 'create when enabled'}`)].join('\n'); }
     private async validateDiscord(guild: any, c: NonNullable<StoredSetupDraft['organization']>, selectedKeys: Set<string>): Promise<void> {
         const roles = await guild.roles.fetch();
         await guild.members.fetchMe();

@@ -12,6 +12,10 @@ export interface StoredSetupDraft extends SetupDraft {
     expiresAt: string;
     organization?: import('./administration.js').OrganizationConfig;
     resourceSelections?: string[];
+    refinedSetup?: boolean;
+    roleNames?: Record<string, string>;
+    managedDuties?: Array<{ id: string; name: string }>;
+
     messageConversation?: {
         channelId: string;
         privateThread: boolean;
@@ -26,6 +30,7 @@ export interface StoredSetupDraft extends SetupDraft {
         section: string;
         selected?: string;
         page: number;
+        refinement?: import('./runtime/setupRefinement.js').Refinement;
         conversation?: {
             step: string;
             history: Array<{ step: string; selected?: string; group?: string; branch?: string; index: number }>;

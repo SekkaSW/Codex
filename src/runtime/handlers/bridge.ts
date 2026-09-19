@@ -1,3 +1,4 @@
+import { requireFeature } from '../features.js';
 import type {BridgeStore,BridgeRow} from '../../bridge.js';
 import {BridgeCoordinator} from '../../bridge.js';
 import {choices,replyText,requireTier,textModal} from '../interactions.js';
@@ -7,6 +8,7 @@ import {DiscordProvisioner} from '../discordProvisioner.js';
 import type {ServerConfig} from '../../domain.js';
 export type BridgeRepositories=IntelligenceRepositories&BridgeStore&{load(guild:string):Promise<ServerConfig|undefined>;audit(guild:string,actor:string,subject:string,event:string,detail:Record<string,unknown>):Promise<void>};
 export async function handleBridge(i:any,store:BridgeRepositories):Promise<void>{
+ await requireFeature(store,i.guildId,'alliance');
  const component=!!i.customId,p=component?i.customId.split(':'):[],actor=i.user.id,guild=i.guildId;
  if(component&&p[1]!==actor)throw new Error('This bridge panel belongs to another user');await requireTier(i,store,'LEVEL_3');
  const action=component?p[2]:i.options.getSubcommand(),base=`bridge:${actor}`,selected=i.values?.[0]??p[3],page=p.includes('page')?Number(p.at(-1)):0;

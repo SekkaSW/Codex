@@ -59,7 +59,7 @@ export class SupabaseRepositories extends FieldRepository implements Registry, T
         const row = rows[0];
         if (!row)
             return undefined;
-        const modules = { briefings: false, patrols: false, supply: false, atlas: false };
+        const modules = { briefings: false, patrols: false, supply: false, atlas: false, intelligence: true, trailmarks: true };
         for (const module of (row.server_modules as Array<{
             module_key: keyof typeof modules;
             enabled: boolean;

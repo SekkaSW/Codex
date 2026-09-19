@@ -1,3 +1,4 @@
+import { requireFeature } from '../features.js';
 import { AdvancementService, TrailmarkLifecycle, type AccessSession, type AdvancementCase, type FieldStore, type FieldTrailmark } from '../../field.js';
 import type { MemberRepositories } from './members.js';
 import type { Registry } from '../../resources.js';
@@ -11,6 +12,7 @@ export async function handleField(i:any,store:FieldRepositories):Promise<void>{
  const parts:string[]=i.customId?.split(':')??[];const component=parts.length>0;
  if(component&&parts[1]!==i.user.id)throw new Error('Open your own command panel to use this action');
  const system=component?parts[2]!:i.commandName==='advancement'?'adv':'trail';
+ if(system==='trail')await requireFeature(store,i.guildId,'trailmark');
  const action=component?parts[3]!:i.options.getSubcommand();
  const context=component?parts[4]??'':i.options.getUser('member')?.id??'';
  const page=parts[5]==='page'?Number(parts[6]):0;

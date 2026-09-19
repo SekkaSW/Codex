@@ -51,6 +51,7 @@ export async function handleConfirmation(i: any, dispatch: (i: any) => Promise<v
 
 export function friendlyError(error: unknown): string {
     const text = error instanceof Error ? error.message : '';
+    if (/^(Trailmarks are not enabled|Intelligence is not enabled|Duty role creation has an uncertain outcome|A managed duty role was deleted)/.test(text) && text.length <= 1900) return text;
     if (/stale|changed|concurrent|revision|VERSION_CONFLICT/i.test(text)) return 'This panel is outdated. Open /help to refresh, or run /server setup and press Resume to load your saved draft.';
     if (/foreign key|duplicate key|constraint|postgres|postgrest|sql|schema|relation|column|token|credential|api.?key|jwt/i.test(text)) return 'Codex could not save this change. Refresh the panel and check the selected records. If it happens again, ask an administrator to check the bot logs.';
     if (/permission|required.*tier|LEVEL_[1-4]|Administrator|not authorized|access denied/i.test(text)) return 'You do not currently have permission for this action. Open /help to see your available actions, or ask a server administrator.';

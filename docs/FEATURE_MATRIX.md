@@ -43,3 +43,21 @@ Every registered namespace has an executable production handler. Unknown/stale r
 Complete means implemented and locally tested production paths, not a live deployment claim. The runtime uses real Discord.js/Supabase dependencies; tests run real PostgreSQL migrations and RPCs locally and fake Discord boundaries. No live guild or hosted Supabase smoke test has been performed. Operational constraints and crash/uncertain-commit recovery are documented in DEPLOYMENT.md.
 
 Member notes and Phase 4 audits are complete: notes retain author/visibility/time; member mutations and configuration snapshots have transactional durable audit records. Optional log-channel delivery contains operation metadata only. Notes remain administrator-readable even when labelled MEMBER.
+
+
+## Setup refinement
+
+| Capability | Implemented behavior |
+|---|---|
+| Six-section literal-message setup | Group & Permissions; Ranks & Progression; Duties & Assignments; Optional Features; Channels; Review. |
+| Human permission labels | Recruit, Member, Advanced Member, Advisors, Leader; existing authorization semantics retained. |
+| Bulk ranks and progression | Bounded case-insensitive list parsing; same-screen role/level selection; named or simple paths with multiple next ranks and validation. |
+| Managed duties | Safe role creation at final confirmation; durable reservation/ID/audit; exact recovery; manual mappings preserved. |
+| Assignment Groups | Required/as-needed, single/multiple, bulk entries; advanced role synchronization retained. |
+| Intelligence optional | Guild flags gate provisioning, repair, dashboards, direct handlers, background work and SQL; history retained. |
+| Trailmarks optional | Guild flags gate resources, access/UI, workers and SQL; disable closes temporary access without deleting history. |
+| Atlas without Trailmarks | Linking/map integration retained; dependent access/drop/polling unavailable with clear status. |
+| Channels & Categories | Existing/new command/log destinations; ordered bulk creation-name customization; Forum types and stored IDs preserved; Promotions naming. |
+| Review / Edit / Repair | Readable summaries/attachments, targeted edits, optional-feature-aware non-destructive repair. |
+
+Validated locally, with Discord boundaries simulated and real SQL migrations/RPCs exercised in PGlite. See SERVER_SETUP_REFINEMENT.md and DEPLOYMENT.md for test results, migration 012 and required live staging.

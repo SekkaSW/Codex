@@ -1,5 +1,7 @@
 # Discord UX completion report
 
+Current setup flow: [Server setup refinement](SERVER_SETUP_REFINEMENT.md). This report describes its earlier implementation checkpoint.
+
 Historical report for the dashboard overhaul. Setup text modals described below are superseded by [the message conversation correction](SETUP_MESSAGE_CORRECTION.md); feature-panel forms are unchanged.
 
 This pass adds conversational setup and dashboard entry points to the completed Codex implementation. It preserves the production services, existing command operations, authorization, durable receipts, and recovery paths.

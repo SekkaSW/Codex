@@ -1,3 +1,5 @@
+import { prepareFeatureChange } from './featureLifecycle.js';
+import { requireFeature, backgroundFeatures } from './features.js';
 import { Client, Events, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';
 import type { ServerConfig } from '../domain.js';
 import { configuredResources, repairResources, type Registry } from '../resources.js';
@@ -42,7 +44,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
                 await command.delete();
         await repositories.audit(config.guildId, actorId, config.guildId, 'RESOURCES_REPAIRED', result);
         return `Created ${result.created.length}; retained ${result.retained.length}. Organization commands synchronized.`;
-    });
+    }, true, (draft, guild) => prepareFeatureChange(draft, guild, repositories));
     client.once(Events.ClientReady, ready => console.info(`Codex ready as ${ready.user.tag}`));
     // Serialize guild writes in this process, including configuration and member role mutations.
     const pending = new Map<string, Promise<void>>();
@@ -61,7 +63,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
             return;
         }
         const key=message.guildId;
-        const work=(pending.get(key)??Promise.resolve()).then(async()=>{const config=await repositories.load(key);if(!config)return;const id=await new BridgeCoordinator(repositories).ingest(key,message.channelId,message.webhookId??message.author.id,message.id,message.content,config.confidentialityMarker);if(id)await new DiscordIntelligence(message.guild,repositories).pipeline.process(key,id);}).catch(error=>console.error('Bridge intake rejected or requires recovery',key,error instanceof Error?error.message:'Intake failure'));
+        const work=(pending.get(key)??Promise.resolve()).then(async()=>{const config=await repositories.load(key);if(!config || config.modules.intelligence === false)return;const id=await new BridgeCoordinator(repositories).ingest(key,message.channelId,message.webhookId??message.author.id,message.id,message.content,config.confidentialityMarker);if(id)await new DiscordIntelligence(message.guild,repositories).pipeline.process(key,id);}).catch(error=>console.error('Bridge intake rejected or requires recovery',key,error instanceof Error?error.message:'Intake failure'));
         pending.set(key,work);void work.finally(()=>{if(pending.get(key)===work)pending.delete(key);});
     });
     client.once(Events.ClientReady, () => {
@@ -70,15 +72,20 @@ export function createBot(repositories: RuntimeRepositories): Client {
         const runGuild = async (guild: any) => {
             const config = await repositories.load(guild.id);
             if (!config) return;
-            try { await atlasRuntime.poll(guild); }
+            const features = backgroundFeatures(config);
+            try { if (features.atlas) await atlasRuntime.poll(guild); }
             catch (error) { console.error('Atlas recovery requires retry', guild.id, error instanceof Error ? error.message : 'Atlas failed'); }
             if (Date.now() - (lastField.get(guild.id) ?? 0) < 30_000) return;
             lastField.set(guild.id, Date.now());
+            if (features.trailmarks) {
             const result = await new TrailmarkLifecycle(repositories, new DiscordTrailmarkAccess(guild, repositories)).reconcile(guild.id, client.user!.id);
             if (result.failures.length) console.error('Trailmark reconciliation requires retry', guild.id, result.failures);
+            }
+            if (features.intelligence) {
             const intel = await new DiscordIntelligence(guild, repositories).pipeline.batch(guild.id);
             if (intel.failures.length) console.error('Intelligence recovery requires retry', guild.id, intel.failures);
             await new BridgeCoordinator(repositories).drain(guild.id, config.confidentialityMarker);
+            }
         };
         const tick = () => {
             const guilds = [...client.guilds.cache.values()];
@@ -152,6 +159,7 @@ export async function route(i: any, wizard: SetupWizard, repositories: RuntimeRe
     if (i.customId?.startsWith('ux:') || i.customId?.startsWith('uxform:')) {
         await handlePanel(i, repositories, next => route(next, wizard, repositories, true), async () => { if (wizard instanceof MessageSetupWizard) await wizard.startInteraction(i); else await i.reply(await wizard.start(i.guildId, i.user.id)); }); return;
     }
+    if (i.commandName) await requireFeature(repositories, i.guildId, i.commandName);
     if (needsConfirmation(i)) { await askConfirmation(i, repositories); return; }
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('optional:')){await handleOptional(i,repositories);return;}
     if((i.isButton()||i.isAnySelectMenu()||i.isModalSubmit())&&i.customId.startsWith('flow:')){await handleWorkflows(i,repositories);return;}

@@ -1,4 +1,4 @@
-import type { ModuleKey } from "./domain.js";
+import type { FeatureSettings } from "./domain.js";
 export const resourceKeys = ["CORE_CATEGORY", "NOTICE_BOARD", "ROSTER", "FUNDS", "STRONGBOX_DROP", "ASSIGNMENTS", "ORGANIZATION_CATEGORY", "HQ_STRONGBOX", "APPLICATIONS", "ADVANCEMENT", "INTELLIGENCE_CATEGORY", "CONTACTS", "REPORT_CATCHALL", "TRAILMARK_CATEGORY", "TRAILMARK_ACCESS", "BOT_COMMANDS", "BOT_LOGS", "ATLAS", "DISPATCH_DESK"] as const;
 export type ResourceKey = typeof resourceKeys[number];
 export interface ManagedResource {
@@ -16,16 +16,16 @@ export interface ResourceSpec {
     minimumTier?: "LEVEL_1" | "LEVEL_3";
 }
 /** Draft resource preferences override creation defaults; stored Discord IDs still win. */
-export function configuredResources(modules: Record<ModuleKey, boolean>, additional: ResourceSpec[] = []): ResourceSpec[] {
-    return [...new Map([...desiredResources(modules), ...additional].filter(spec => (spec.key !== 'ATLAS' || modules.atlas) && (spec.key !== 'DISPATCH_DESK' || modules.briefings)).map(spec => [spec.key, spec])).values()];
+export function configuredResources(modules: FeatureSettings, additional: ResourceSpec[] = []): ResourceSpec[] {
+    return [...new Map([...desiredResources(modules), ...additional].filter(spec => (spec.key !== 'ATLAS' || modules.atlas) && (spec.key !== 'DISPATCH_DESK' || modules.briefings) && (modules.intelligence !== false || !['INTELLIGENCE_CATEGORY','CONTACTS','REPORT_CATCHALL'].includes(spec.key) && spec.parent !== 'INTELLIGENCE_CATEGORY' && !spec.key.startsWith('REPORT_TOPIC:')) && (modules.trailmarks !== false || !['TRAILMARK_CATEGORY','TRAILMARK_ACCESS'].includes(spec.key) && spec.parent !== 'TRAILMARK_CATEGORY' && !spec.key.startsWith('TRAILMARK:'))).map(spec => [spec.key, spec])).values()];
 }
-export function desiredResources(modules: Record<ModuleKey, boolean>): ResourceSpec[] {
+export function desiredResources(modules: FeatureSettings): ResourceSpec[] {
     const specs: ResourceSpec[] = [
         { key: "CORE_CATEGORY", kind: "CATEGORY", name: "Codex" }, { key: "NOTICE_BOARD", kind: "CHANNEL", name: "notice-board", parent: "CORE_CATEGORY" },
         { key: "ROSTER", kind: "CHANNEL", name: "roster", parent: "CORE_CATEGORY" }, { key: "FUNDS", kind: "CHANNEL", name: "funds", parent: "CORE_CATEGORY" },
         { key: "STRONGBOX_DROP", kind: "CHANNEL", name: "strongbox-drop", parent: "CORE_CATEGORY" }, { key: "ASSIGNMENTS", kind: "CHANNEL", name: "assignments", parent: "CORE_CATEGORY" },
         { key: "ORGANIZATION_CATEGORY", kind: "CATEGORY", name: "Organization", minimumTier: "LEVEL_1" }, { key: "HQ_STRONGBOX", kind: "CHANNEL", name: "hq-strongbox", parent: "ORGANIZATION_CATEGORY", minimumTier: "LEVEL_3" },
-        { key: "APPLICATIONS", kind: "CHANNEL", name: "applications", parent: "ORGANIZATION_CATEGORY", minimumTier: "LEVEL_1" }, { key: "ADVANCEMENT", kind: "CHANNEL", name: "advancement", parent: "ORGANIZATION_CATEGORY", minimumTier: "LEVEL_1" },
+        { key: "APPLICATIONS", kind: "CHANNEL", name: "applications", parent: "ORGANIZATION_CATEGORY", minimumTier: "LEVEL_1" }, { key: "ADVANCEMENT", kind: "CHANNEL", name: "promotions", parent: "ORGANIZATION_CATEGORY", minimumTier: "LEVEL_1" },
         { key: "INTELLIGENCE_CATEGORY", kind: "CATEGORY", name: "Intelligence" }, { key: "CONTACTS", kind: "FORUM", name: "contacts", parent: "INTELLIGENCE_CATEGORY" },
         { key: "REPORT_CATCHALL", kind: "CHANNEL", name: "reports-general", parent: "INTELLIGENCE_CATEGORY" }, { key: "TRAILMARK_CATEGORY", kind: "CATEGORY", name: "Trailmarks" },
         { key: "TRAILMARK_ACCESS", kind: "CHANNEL", name: "trailmark-access", parent: "TRAILMARK_CATEGORY" }
@@ -34,7 +34,7 @@ export function desiredResources(modules: Record<ModuleKey, boolean>): ResourceS
         specs.push({ key: "ATLAS", kind: "CHANNEL", name: "atlas", parent: "CORE_CATEGORY" });
     if (modules.briefings)
         specs.push({ key: "DISPATCH_DESK", kind: "CHANNEL", name: "dispatch-desk", parent: "ORGANIZATION_CATEGORY", minimumTier: "LEVEL_1" });
-    return specs;
+    return specs.filter(spec => (modules.intelligence !== false || !['INTELLIGENCE_CATEGORY','CONTACTS','REPORT_CATCHALL'].includes(spec.key)) && (modules.trailmarks !== false || !['TRAILMARK_CATEGORY','TRAILMARK_ACCESS'].includes(spec.key)));
 }
 export interface Provisioner {
     exists(id: string): Promise<boolean>;
