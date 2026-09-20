@@ -42,7 +42,7 @@ function wizardFixture(existing = false) {
 test('UX setup starts at Organization Name and accepts one-field modals with a saved confirmation', async () => {
     const f = wizardFixture(); await f.start(); assert.match(f.response.content, /Organization Name/);
     await f.act('guide-text'); assert.equal(f.response.components.length, 1); assert.equal(f.response.components[0].components.length, 1);
-    const before = f.saves; await f.act('guide-answer', [], 'Example Guild'); assert.equal(f.saves, before + 1); assert.equal(f.draft.config.organizationName, 'Example Guild'); assert.match(f.response.content, /Organization Name set to/); assert.match(f.response.content, /namespace/);
+    const before = f.saves; await f.act('guide-answer', [], 'Example Guild'); assert.equal(f.saves, before + 1); assert.equal(f.draft.config.organizationName, 'Example Guild'); assert.match(f.response.content, /Organization Name set to/); assert.match(f.response.content, /What do you want your command to be\?/);
     await f.act('guide-answer', [], 'example'); assert.equal(f.draft.config.commandNamespace, 'example'); assert.match(f.response.content, /\/example/); assert.equal(f.draft.editor!.conversation!.step, 'permissions'); assert.equal(f.response.components[0].components[0].type, 6); assert.equal(f.applied, 0);
 });
 test('UX setup rejects reserved namespaces and missing roles without saving invalid answers', async () => {
@@ -81,7 +81,7 @@ test('UX setup Back retains saved values, optional Skip advances, and Cancel onl
 });
 test('UX interrupted setup offers Resume, View Progress and confirmed Start Over across wizard replacement', async () => {
     const f = wizardFixture(); await f.start(); await f.act('guide-answer', [], 'Retained'); const revision = f.draft.revision; f.restart(); await f.start(); assert.match(f.response.content, /unfinished setup/); assert.equal(f.draft.revision, revision);
-    await f.act('progress'); assert.match(f.response.content, /Retained/); await f.act('resume'); assert.match(f.response.content, /namespace/);
+    await f.act('progress'); assert.match(f.response.content, /Retained/); await f.act('resume'); assert.match(f.response.content, /What do you want your command to be\?/);
     await f.act('restart'); assert.equal(f.draft.config.organizationName, 'Retained'); await f.act('restart-confirm'); assert.equal(f.draft.config.organizationName, undefined); assert.equal(f.applied, 0);
 });
 test('UX stale setup has a fresh Resume path while owner, administrator and expiry guards remain enforced', async () => {
@@ -135,6 +135,7 @@ for (const system of ['trailmark', 'advancement', 'application', 'mentorship', '
                 const dispatch = async (i:any) => { assert.equal(i.isChatInputCommand(), true); assert.equal(i.customId, undefined); assert.equal(i.commandName, system); assert.ok(actions.some(a => a.name === i.options.getSubcommand())); dispatched++; };
                 await handlePanel(f.interaction(id), f.store, dispatch, async () => {});
                 const action=actions.find(a=>id.endsWith(`:${a.name}`));
+                if(action?.options?.some((o:any)=>o.type===11)){assert.match(f.response.content,/directly so Discord can collect the file attachment/);continue;}
                 if(action?.options?.length){
                     for(const option of action.options){
                         const controls=f.response.components.flatMap((r:any)=>r.components),skip=controls.find((c:any)=>c.label==='Skip');
@@ -167,6 +168,15 @@ test('UX hidden actions cannot bypass authorization after role or module changes
 });
 test('Optional dashboard Supply shortcut exposes the same native contract without auto-submission',async()=>{
  const f=panelFixture('LEVEL_3');let dispatched=false;await handlePanel(f.interaction('ux:actor:action:supply:log'),f.store,async()=>{dispatched=true;},async()=>{});assert.equal(dispatched,false);assert.match(f.response.content,/assignment/i);
+});
+
+test('optional shortcuts preserve false booleans and explain native attachment inputs',async()=>{
+ const f=panelFixture('LEVEL_3');let value:unknown='not dispatched';const dispatch=async(i:any)=>{value=i.options.getBoolean('dm_enabled');};
+ await handlePanel(f.interaction('ux:actor:action:briefing:settings'),f.store,dispatch,async()=>{});
+ const control=f.response.components[0].components[0];assert.equal(control.options[1].label,'No');
+ await handlePanel(f.interaction(control.custom_id,['false']),f.store,dispatch,async()=>{});
+ await handlePanel(f.interaction(f.response.components[0].components[0].custom_id),f.store,dispatch,async()=>{});assert.equal(value,false);
+ await handlePanel(f.interaction('ux:actor:action:trailmark:create'),f.store,dispatch,async()=>{});assert.match(f.response.content,/Use \/trailmark create directly/);assert.equal(value,false);
 });
 
 test('UX confirmations are owner/guild-bound, cancellable, single-use and re-run production authorization', async () => {

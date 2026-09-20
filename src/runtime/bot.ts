@@ -32,7 +32,7 @@ import {FundsService} from '../services.js';
 import {handleOptional,type OptionalRepositories} from './handlers/optional.js';
 import {AtlasRuntime,handleAtlas,type AtlasRepositories} from './atlas.js';
 import { openPanel, handlePanel } from './panels.js';
-import { askConfirmation, needsConfirmation, handleConfirmation, friendlyError } from './confirmation.js';
+import { askConfirmation, needsConfirmation, handleConfirmation, friendlyError, redactedDiagnostic } from './confirmation.js';
 import { browse } from './browse.js';
 export interface RuntimeRepositories extends Registry, SetupStore, FundsRepositories, DutyRepositories, MemberRepositories,FieldRepositories,IntelligenceRepositories,BridgeRepositories,WorkflowRepositories,OptionalRepositories,AtlasRepositories {
 }
@@ -64,14 +64,14 @@ export function createBot(repositories: RuntimeRepositories): Client {
             if (revision === undefined) return;
             const key = message.guildId;
             const work = (pending.get(key) ?? Promise.resolve()).then(() => wizard.handleMessage(message, revision)).catch(async error => {
-                console.error('Setup reply requires recovery', key, error instanceof Error ? error.message : 'Setup failure');
+                console.error('Setup reply requires recovery', key, redactedDiagnostic(error));
                 await message.channel.send({ content: 'Could not accept that setup reply. Check that you still have Administrator permission, then run /server setup to resume your saved answers.', allowedMentions: { parse: [] } }).catch(() => undefined);
             });
             pending.set(key, work); void work.finally(() => { if (pending.get(key) === work) pending.delete(key); });
             return;
         }
         const key=message.guildId;
-        const work=(pending.get(key)??Promise.resolve()).then(async()=>{const config=await repositories.load(key);if(!config || config.modules.intelligence === false)return;const id=await new BridgeCoordinator(repositories).ingest(key,message.channelId,message.webhookId??message.author.id,message.id,message.content,config.confidentialityMarker);if(id)await new DiscordIntelligence(message.guild,repositories).pipeline.process(key,id);}).catch(error=>console.error('Bridge intake rejected or requires recovery',key,error instanceof Error?error.message:'Intake failure'));
+        const work=(pending.get(key)??Promise.resolve()).then(async()=>{const config=await repositories.load(key);if(!config || config.modules.intelligence === false)return;const id=await new BridgeCoordinator(repositories).ingest(key,message.channelId,message.webhookId??message.author.id,message.id,message.content,config.confidentialityMarker);if(id)await new DiscordIntelligence(message.guild,repositories).pipeline.process(key,id);}).catch(error=>console.error('Bridge intake rejected or requires recovery',key,redactedDiagnostic(error)));
         pending.set(key,work);void work.finally(()=>{if(pending.get(key)===work)pending.delete(key);});
     });
     client.once(Events.ClientReady, () => {
@@ -82,16 +82,16 @@ export function createBot(repositories: RuntimeRepositories): Client {
             if (!config) return;
             const features = backgroundFeatures(config);
             try { if (features.atlas) await atlasRuntime.poll(guild); }
-            catch (error) { console.error('Atlas recovery requires retry', guild.id, error instanceof Error ? error.message : 'Atlas failed'); }
+            catch (error) { console.error('Atlas recovery requires retry', guild.id, redactedDiagnostic(error)); }
             if (Date.now() - (lastField.get(guild.id) ?? 0) < 30_000) return;
             lastField.set(guild.id, Date.now());
             if (features.trailmarks) {
             const result = await new TrailmarkLifecycle(repositories, new DiscordTrailmarkAccess(guild, repositories)).reconcile(guild.id, client.user!.id);
-            if (result.failures.length) console.error('Trailmark reconciliation requires retry', guild.id, result.failures);
+            if (result.failures.length) console.error('Trailmark reconciliation requires retry', guild.id, { failures: result.failures.length });
             }
             if (features.intelligence) {
             const intel = await new DiscordIntelligence(guild, repositories).pipeline.batch(guild.id);
-            if (intel.failures.length) console.error('Intelligence recovery requires retry', guild.id, intel.failures);
+            if (intel.failures.length) console.error('Intelligence recovery requires retry', guild.id, { failures: intel.failures.length });
             await new BridgeCoordinator(repositories).drain(guild.id, config.confidentialityMarker);
             }
         };
@@ -102,7 +102,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
                 const guild = guilds[cursor++ % guilds.length]!;
                 if (pending.has(guild.id)) continue;
                 active++;
-                const work = runGuild(guild).catch(error => console.error('Field recovery failed', guild.id, error));
+                const work = runGuild(guild).catch(error => console.error('Field recovery failed', guild.id, redactedDiagnostic(error)));
                 pending.set(guild.id, work);
                 void work.finally(() => { active--; if (pending.get(guild.id) === work) pending.delete(guild.id); });
             }
@@ -112,12 +112,12 @@ export function createBot(repositories: RuntimeRepositories): Client {
         tick();
     });
     client.on(Events.InteractionCreate, i => {
-        if(i.isAutocomplete()){void (i.commandName==='supply'?autocompleteSupply(i,repositories):autocompleteNative(i,repositories)).catch(console.error);return;}
+        if(i.isAutocomplete()){void (i.commandName==='supply'?autocompleteSupply(i,repositories):autocompleteNative(i,repositories)).catch(error => console.error(redactedDiagnostic(error)));return;}
         const key = i.guildId ?? i.id;
         const setupSelection = i.isAnySelectMenu() && /^setup:\d+:refine-(role|tier)$/.test(i.customId);
         if (pending.has(key) && !setupSelection) {
             if (i.isRepliable())
-                void i.reply({ content: 'A Codex operation is still running for this server. Retry when it finishes.', ephemeral: true }).catch(console.error);
+                void i.reply({ content: 'A Codex operation is still running for this server. Retry when it finishes.', ephemeral: true }).catch(error => console.error(redactedDiagnostic(error)));
             return;
         }
         const acknowledgement = setupSelection ? i.deferUpdate() : Promise.resolve();
@@ -134,14 +134,14 @@ export function createBot(repositories: RuntimeRepositories): Client {
                 if (!channel || !channel.isTextBased() || !('send' in channel))
                     throw new Error('Configured log destination is unavailable');
                 const action = i.isChatInputCommand() ? `/${i.commandName} ${i.options.getSubcommand(false) ?? ''}` : 'administration interaction';
-                await channel.send({ content: `Codex: ${action} completed by ${i.user.id}. Detailed mutation records remain in the private database audit.`, allowedMentions: { parse: [] } });
+                await channel.send({ content: `Codex: ${action} handled for ${i.user.id}. Detailed mutation records remain in the private database audit.`, allowedMentions: { parse: [] } });
             }
             catch (logError) {
-                console.error('Codex log delivery failed', logError);
-                await i.followUp({ content: 'The operation completed, but delivery to the configured log channel failed. An administrator should check its stored destination and bot permissions.', ephemeral: true });
+                console.error('Codex log delivery failed', redactedDiagnostic(logError));
+                await i.followUp({ content: 'Codex responded to your interaction, but its activity-log notice could not be delivered. Your response above describes whether anything was saved. An administrator should check its stored destination and bot permissions.', ephemeral: true });
             }
         }).catch(async (error) => {
-            console.error(error);
+            console.error(redactedDiagnostic(error));
             if (!i.isRepliable())
                 return;
             const payload = { content: friendlyError(error), components: [{ type: 1 as const, components: [{ type: 2 as const, style: 2 as const, label: 'Open Help', custom_id: `ux:${i.user.id}:help` }] }], ephemeral: true, allowedMentions: { parse: [] as never[] } };
@@ -154,7 +154,7 @@ export function createBot(repositories: RuntimeRepositories): Client {
                     await i.reply(payload);
             }
             catch (replyError) {
-                console.error(replyError);
+                console.error(redactedDiagnostic(replyError));
             }
         });
         pending.set(key, run);

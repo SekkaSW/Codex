@@ -10,7 +10,7 @@ export function interactionUuid(id:string):string {const hex=createHash('sha256'
 export function choices(customId:string,items:Array<{id:string;name:string}>,page=0,more=false):any {
  const components:any[]=items.length?[{type:1,components:[{type:3,custom_id:customId,placeholder:'Select an item',options:items.slice(0,25).map(x=>({label:x.name.slice(0,100),value:x.id}))}]}]:[];
  const buttons=[];if(page>0)buttons.push({type:2,style:2,label:'Previous',custom_id:`${customId}:page:${page-1}`});if(more)buttons.push({type:2,style:2,label:'Next',custom_id:`${customId}:page:${page+1}`});if(buttons.length)components.push({type:1,components:buttons});
- return {content:items.length?`Select an item (page ${page+1}).`:'No matching records on this page. Use Previous to go back.',components,allowedMentions:{parse:[]}};
+ return {content:items.length?`Select an item (page ${page+1}).`:page > 0 ? 'No matching records on this page. Use Previous to go back.' : 'No matching records yet. Run this command again after a record is added.',components,allowedMentions:{parse:[]}};
 }
 
 /** A readable record view for routine workflows; raw JSON remains an audit/export tool. */
@@ -30,4 +30,4 @@ export function recordView(system:string,record:any):any {
 export function textModal(customId:string,title:string,fields:Array<{id:string;label:string;value?:string;max?:number;paragraph?:boolean;optional?:boolean}>):any {
  return {custom_id:customId,title:title.slice(0,45),components:fields.map(f=>({type:1,components:[{type:4,custom_id:f.id,label:f.label.slice(0,45),style:f.paragraph?2:1,required:!f.optional,max_length:f.max??100,...(f.value?{value:f.value}:{})}]}))};
 }
-export function replyText(content:string):any{return {content:content.slice(0,1900),components:[],allowedMentions:{parse:[]}};}
+export function replyText(content:string):any{return {content:content.length > 1900 ? 'The full response is attached.' : content,components:[],allowedMentions:{parse:[]},...(content.length > 1900 ? {files:[{attachment:Buffer.from(content),name:'codex-response.txt'}]} : {})};}

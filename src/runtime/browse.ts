@@ -34,7 +34,7 @@ export async function browse(i: any, store: RuntimeRepositories, system?: string
     const nav = [];
     if (page > 0) nav.push({ type: 2, style: 2, label: 'Previous', custom_id: `uxbrowse:${key}:${page - 1}:back` });
     if (rows.length === 25) nav.push({ type: 2, style: 2, label: matches.length ? 'Next' : 'Continue Search', custom_id: `uxbrowse:${key}:${page + 1}:next` });
-    if (!matches.length && !nav.length) payload.content = 'No matching records. Open the feature panel to try another search.';
+    if (!matches.length && rows.length < 25) payload.content = page > 0 ? 'No matching records in this final batch. Use Previous to review earlier results.' : 'No matching records. Open the feature panel to try another search.';
     if (nav.length) payload.components.push({ type: 1, components: nav });
     await i.editReply(payload);
 }

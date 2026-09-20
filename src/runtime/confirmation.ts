@@ -1,3 +1,4 @@
+import { permissionDenied } from './userCopy.js';
 import { commandInteraction, projectInteraction } from './panels.js';
 import { commandDefinitions } from './commands.js';
 import type { RuntimeRepositories } from './bot.js';
@@ -51,12 +52,23 @@ export async function handleConfirmation(i: any, dispatch: (i: any) => Promise<v
 
 export function friendlyError(error: unknown): string {
     const text = error instanceof Error ? error.message : '';
+    const tier = /^(BASELINE|LEVEL_[1-4]|ADMIN) or Discord Administrator permission (?:is required|required)\.?$/.exec(text);
+    if(tier) return permissionDenied(tier[1] as any);
+    if(/^(?:This optional module|Atlas module|Supply|Trailmarks|Applications) (?:is|are) disabled\.?$/.test(text)) return text.replace('module', 'feature').replace(/\.$/, '') + '. Ask an administrator to review /server setup → Optional Features and the relevant system settings.';
+    if(/^item(?:_[1-4])? and (?:quantity|quota)(?:_[1-4])? must be supplied together\.$/.test(text)) return 'Supply both fields in each item/quantity or item/quota pair. Leave both blank to omit an optional pair.';
     if(['Member permission or Discord Administrator is required.','Advanced Member permission or Discord Administrator is required.'].includes(text))return text;
     if (/^(A selected role already belongs to another permission level|Trailmarks are not enabled|Intelligence is not enabled|Duty role creation has an uncertain outcome|A managed duty role was deleted)/.test(text) && text.length <= 1900) return text;
     if (/stale|changed|concurrent|revision|VERSION_CONFLICT/i.test(text)) return 'This panel is outdated. Open /help to refresh, or run /server setup and press Resume to load your saved draft.';
     if (/foreign key|duplicate key|constraint|postgres|postgrest|sql|schema|relation|column|token|credential|api.?key|jwt/i.test(text)) return 'Codex could not save this change. Refresh the panel and check the selected records. If it happens again, ask an administrator to check the bot logs.';
     if (/permission|required.*tier|LEVEL_[1-4]|Administrator|not authorized|access denied/i.test(text)) return 'You do not currently have permission for this action. Open /help to see your available actions, or ask a server administrator.';
     if (/module.*disabled/i.test(text)) return 'This module is disabled. Ask an administrator to enable it in /server setup.';
-    if (/^(Choose|Select|Enter|That |This |Your |You |Only |Open |Run |Use |Start |Setup |Another administrator|Move the bot|A configured|A selected|No |Not |Record |Saved |The ledger|Database response was interrupted|Database commit could not be confirmed|An active|Request access|Configure|Confirm|Complete|Action|Trailmark changed|Each rank|Names must|Rank progression|Name cannot|Duration must|Provide)/i.test(text) && text.length <= 1900) return text;
+    if (/^(Choose|Select|Enter|That |This |Your |You |Only |Open |Run |Use |Start |Setup |Another administrator|Move the bot|A configured|A selected|No |Not |Record |Saved |The ledger|Database response was interrupted|Database commit could not be confirmed|An active|Request access|Configure|Confirm|Complete|Action|Supply quantity|Supply requires|Member payout|Combined report|Amount must|A transaction note|Trailmark changed|Each rank|Names must|Rank progression|Name cannot|Duration must|Provide)/i.test(text) && text.length <= 1900) return text;
     return 'Codex could not complete this action. Open a fresh panel with /help and try again. If it continues, ask an administrator to check the bot logs.';
+}
+
+/** Keep failure categories/codes in logs without printing SQL payloads, tokens or private text. */
+export function redactedDiagnostic(error: unknown): { category: string; code?: string } {
+    const e = error as { name?: unknown; code?: unknown } | null;
+    const code = typeof e?.code === 'string' || typeof e?.code === 'number' ? String(e.code) : undefined;
+    return { category: error instanceof TypeError ? 'TypeError' : error instanceof Error ? 'Error' : 'Unknown failure', ...(code && /^[A-Z0-9_]{1,20}$/.test(code) ? { code } : {}) };
 }

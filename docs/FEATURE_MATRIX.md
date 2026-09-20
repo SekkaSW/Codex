@@ -5,11 +5,11 @@ This matrix distinguishes an executable path from schema or architecture alone.
 | System | Status | Current production path / remaining work |
 |---|---|---|
 | Generalized configuration, permissions, ranks, assignments | Complete | Interactive configuration, normalized atomic persistence, validation, and production member orchestration. |
-| Supabase persistence | Complete for implemented bot paths | Eleven ordered migrations, transactional RPCs, service-role grants, RLS on all Codex tables, guild-reference checks and durable operation/delivery receipts. |
+| Supabase persistence | Complete for implemented bot paths | Fourteen ordered migrations, transactional RPCs, service-role grants, RLS on all Codex tables, guild-reference checks and durable operation/delivery receipts. |
 | Discord runtime and deployment | Complete locally | Every registered command routes to a production handler; all command builders serialize. Guild namespace synchronization and bounded multi-guild workers are executable. Live staging is still required. |
-| `/server setup` | Complete | Owner/revision/expiry-checked durable drafts; role/channel/entity selectors; text modals; paginated choices; full preview; normalized save; retryable provisioning. |
+| `/server setup` | Complete | Owner/revision/expiry-checked durable drafts; role/channel/entity selectors; literal owner text answers; paginated choices; full preview; normalized save; retryable provisioning. |
 | Conversational setup UX | Complete locally | Single-question flow, value confirmations, persisted progress, Resume/Start Over/Back/Skip/Cancel, section editing, full review and final confirmation. Detailed editor retains advanced removal/maintenance paths. |
-| Feature dashboards and help | Complete locally | `/help`, 20 feature panels including the organization hub, native argument prompts, paginated actions and records, reference search and claimed-assignment filter. Existing authorization remains in production handlers. |
+| Feature dashboards and help | Complete locally | `/help`, optional feature panels including the organization hub, direct native arguments, paginated actions and records, reference search and claimed-assignment filter. Existing authorization remains in production handlers. |
 | Confirmation and stale-panel UX | Complete locally | Important mutations confirm; owner/guild/expiry/single-use UI sessions, setup Resume on revision conflicts, original record checks and Funds undo ledger-change guard. Live Discord staging remains required. |
 | Managed resources and repair | Complete | Desired module-aware resources, stored-ID lookup, missing-resource recreation, registry update, and functional overwrite restoration are executable. |
 | Post-setup server configuration | Complete | View with readable export, editing all Phase 4 configuration areas, ID-based Repair, and Cancel. |
@@ -29,7 +29,7 @@ This matrix distinguishes an executable path from schema or architecture alone.
 | Confidentiality | Complete | Case-insensitive detection is local-pipeline-neutral and bridge transfer is denied at the transport boundary. |
 | Cross-server bridge | Native complete; legacy compatibility partial | Reciprocal same-installation guild authorization, private HQ/intake, topic groups/mappings, atomic native receipts, bounded retries, status and explicit category archival. Trusted legacy JSON ingestion works; undocumented deployed Wayfinder envelopes and separate-installation transport are not claimed. |
 | Funds | Complete | Existing ledger behavior preserved; durable public summary IDs, in-place edits, confirmed-deletion recovery and operation receipts. |
-| Strongbox | Complete | Modal submissions, private LEVEL_3 HQ delivery, public receipt, persisted staff review/process/reject and history. |
+| Strongbox | Complete | Modal submissions, private Advisors HQ delivery, public receipt, persisted staff review/process/reject and history. |
 | Recruitment, applications, mentorship, voting, assignment board | Complete | Real Discord forms/selectors and durable RPCs, review metadata, membership/duplicate/cycle checks, eligible ballots, board claims, idempotent welcome/invite behavior and audit. |
 | Reference | Complete | Staff stable-key editor, persisted entries, authorized get/list selectors and bounded output. |
 | Supply, briefings, patrol | Complete | Current-config module gating at interaction and SQL boundaries; durable stock/contribution/allocation lifecycle, dispatch-desk delivery receipts, and configured-Trailmark suggestions. |

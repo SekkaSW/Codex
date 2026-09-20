@@ -49,3 +49,8 @@
 24. **Production data:** No production data was modified.
 25. **External actions:** No push, merge or deployment was performed.
 26. **Working tree:** Verified after the implementation commit and reported with its SHA in the task response. No requested changes are intentionally left uncommitted. Ignored local dependencies/build output remain outside Git.
+
+
+## Wording correction — 2026-09-20
+
+This dated correction supersedes older helper copy and any dashboard-first instructions above. [The command wording audit](COMMAND_WORDING_AUDIT.md) records the current 25 trees / 202 operations, exact command-name prompt, Member Contact creation, Advanced Member Funds mutations and preserved selection confirmations. The earlier namespace investigation tested parsing but did not resolve the wording complaint; the production question and fallback renderers are now corrected, and Order is normalized before validation. Historical source contracts and earlier checkpoint counts remain historical evidence.

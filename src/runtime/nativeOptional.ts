@@ -38,7 +38,7 @@ export async function handleNativeOptional(i: any, store: WorkflowRepositories):
         if (rotations.size > 1000)
             rotations.delete(rotations.keys().next().value!);
         const pool = eligible.slice(0, 6), route = pool.length ? Array.from({ length: Math.min(3, pool.length) }, (_, n) => pool[(cursor + n) % pool.length]) : [];
-        await i.editReply(replyText(`Suggested patrol${assignment ? `: ${org.entries.find(e => e.id === assignment)!.name}` : ''}\n${route.map((t, n) => `${n + 1}. ${t.name} — ${t.last_visit ? 'last visited ' + t.last_visit : 'no recorded visit'}`).join('\n') || 'Take a circuit through your assigned area; no eligible Trailmarks are recorded here.'}\nFavor ground with older recorded activity. Adjust the route as needed and report what you observe. Request access through /trailmark panel.`));
+        await i.editReply(replyText(`Suggested patrol${assignment ? `: ${org.entries.find(e => e.id === assignment)!.name}` : ''}\n${route.map((t, n) => `${n + 1}. ${t.name} — ${t.last_visit ? 'last visited ' + t.last_visit : 'no recorded visit'}`).join('\n') || 'Take a circuit through your assigned area; no eligible Trailmarks are recorded here.'}\nThis is a route suggestion, not a saved assignment. Adjust it as needed and report what you observe. Request access through /trailmark panel.`));
         return true;
     }
     if (action === 'send') {
@@ -113,7 +113,7 @@ export async function handleNativeOptional(i: any, store: WorkflowRepositories):
             await i.editReply(replyText(`Sent ${inbox.dispatches.length} dispatches by DM. Collect again for any remaining dispatches.`));
         }
         catch {
-            await i.editReply({ content: 'DM delivery failed. Your briefing is attached privately.', files: [{ attachment: Buffer.from(text), name: 'briefing.txt' }], allowedMentions: { parse: [] } });
+            await i.editReply({ content: 'Some or all DM deliveries could not be confirmed. Your full briefing is attached privately; check existing DMs before treating them as new dispatches.', files: [{ attachment: Buffer.from(text), name: 'briefing.txt' }], allowedMentions: { parse: [] } });
         }
     }
     else

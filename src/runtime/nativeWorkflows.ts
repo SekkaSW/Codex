@@ -1,3 +1,4 @@
+import { audienceName } from './userCopy.js';
 import { referenceCategories, referenceAuthorities, referenceContexts, referenceConfidentialities } from './nativeConstants.js';
 import type { WorkflowRepositories } from './handlers/workflows.js';
 import { workflowDestination } from './handlers/workflows.js';
@@ -47,7 +48,7 @@ export async function handleNativeWorkflow(i: any, store: WorkflowRepositories):
         if (!choice)
             throw new Error('Choose a listed ballot option');
         const result = await store.workflow(i.guildId, 'vote', 'cast', i.user.id, r.id, { selection: choice });
-        await publishNativeBoard(i, store, 'vote', result);
+        try { await publishNativeBoard(i, store, 'vote', result); } catch { await i.editReply(replyText('Your ballot is recorded, but the public tally could not be refreshed. Do not vote again; ask Advisors to inspect the saved tally with /vote audit.')); return true; }
         await i.editReply(replyText('Your ballot is recorded.'));
         return true;
     }
@@ -67,7 +68,7 @@ export async function handleNativeWorkflow(i: any, store: WorkflowRepositories):
         }
         await i.deferReply({ ephemeral: true });
         const result = await store.workflow(i.guildId, 'assignment', a, i.user.id, r.id);
-        await publishNativeBoard(i, store, 'assignment', result);
+        try { await publishNativeBoard(i, store, 'assignment', result); } catch { await i.editReply(replyText('Your board-task change is saved, but the post could not be refreshed. Inspect /assignment list and ask Advisors to recover the existing post; do not repeat the change.')); return true; }
         await i.editReply(replyText('Assignment updated.'));
         return true;
     }
@@ -77,7 +78,7 @@ export async function handleNativeWorkflow(i: any, store: WorkflowRepositories):
         if (!['accept', 'decline'].includes(parts[3]))
             throw new Error('Choose Accept or Decline');
         const r = await nativeCall(store, i.guildId, `mentorship-${parts[3]}`, i.user.id, parts[2]);
-        await mentorshipBoard(i, store);
+        try { await mentorshipBoard(i, store); } catch { await i.editReply(replyText('Your mentorship response is saved, but the notice board could not be refreshed. Check /apprenticeship info; do not send the response again.')); return true; }
         await i.editReply(replyText(`Mentorship ${r.status.toLowerCase()}.`));
         return true;
     }
@@ -87,7 +88,7 @@ export async function handleNativeWorkflow(i: any, store: WorkflowRepositories):
         await requireTier(i, store, 'LEVEL_3');
         await i.deferReply({ ephemeral: true });
         if (form.result) {
-            await i.editReply(replyText(`Already saved: ${form.result.id}. Use the record’s status/refresh command for delivery recovery.`));
+            await i.editReply(replyText(`Already saved: ${form.result.id}. Inspect /${system === 'reference' ? 'reference view' : system + ' list'} and ask Advisors to recover the existing delivery if needed. Do not create a second record.`));
             return true;
         }
         const input = form.input;
@@ -114,7 +115,7 @@ export async function handleNativeWorkflow(i: any, store: WorkflowRepositories):
                 await publishNativeBoard(i, store, system, record);
         }
         catch {
-            await i.editReply(replyText(`Saved ${record.id}; board delivery needs recovery. Reopen the record to refresh it.`));
+            await i.editReply(replyText(`Saved ${record.id}; board delivery could not be confirmed. Inspect /${system} list and ask Advisors to recover the existing delivery; do not create a second record.`));
             return true;
         }
         await i.editReply(replyText(`Saved ${record.id}.`));
@@ -129,7 +130,7 @@ export async function handleNativeWorkflow(i: any, store: WorkflowRepositories):
             throw new Error('A question is required for a Yes / No / Abstain vote');
         await i.deferReply();
         const r = await nativeCall(store, i.guildId, 'vote-open', i.user.id, interactionUuid(i.id), { title, context: i.options.getString('context'), channel: i.channelId, options: ['Yes', 'No', 'Abstain'], tier: 'BASELINE' });
-        await publishNativeBoard(i, store, 'vote', r);
+        try { await publishNativeBoard(i, store, 'vote', r); } catch { await i.editReply(replyText(`Vote ${r.id} saved, but ballot delivery could not be confirmed. Inspect /vote list and ask Advisors to recover the existing post. Do not open a second vote.`)); return true; }
         await i.editReply(replyText(`Opened ${r.title}. Vote using the posted ballot. Reference: ${r.id}`));
         return true;
     }
@@ -145,8 +146,9 @@ export async function handleNativeWorkflow(i: any, store: WorkflowRepositories):
         if (r.channel_id && r.channel_id !== i.channelId)
             throw new Error('Use this vote in its original channel');
         const result = await store.workflow(i.guildId, 'vote', action, i.user.id, r.id);
-        if (action === 'close')
-            await publishNativeBoard(i, store, 'vote', result);
+        if (action === 'close') {
+            try { await publishNativeBoard(i, store, 'vote', result); } catch { await i.editReply(replyText('Voting is closed and its tally is saved, but the public post could not be refreshed. Use /vote audit to inspect the result; do not close it again.')); return true; }
+        }
         await i.editReply({ ...replyText(`${result.title}: ${result.status}\n${Object.entries(result.counts ?? {}).map(([k, v]) => typeof v === 'object' ? Object.entries(v as Record<string, unknown>).map(([field, value]) => `${field}: ${value}`).join('\n') : `${k}: ${v}`).join('\n')}`), ...(action === 'audit' ? { files: [{ attachment: Buffer.from(JSON.stringify(result.ballots, null, 2)), name: 'ballot-audit.json' }] } : {}) });
         return true;
     }
@@ -186,7 +188,7 @@ export async function handleNativeWorkflow(i: any, store: WorkflowRepositories):
                 throw new Error('Reference not found in this server');
             if (r.metadata.confidentiality === 'captain_plus')
                 await requireTier(i, store, 'LEVEL_4');
-            await i.editReply({ ...replyText(r.title), files: [{ attachment: Buffer.from(`${r.title}\n${Object.entries(r.metadata).filter(([, v]) => v != null).map(([k, v]) => `${k}: ${v}`).join('\n')}\n\n${r.body}`), name: 'reference.txt' }] });
+            await i.editReply({ ...replyText(r.title), files: [{ attachment: Buffer.from(`${r.title}\n${Object.entries(r.metadata).filter(([, v]) => v != null).map(([k, v]) => `${k}: ${typeof v === 'string' && k === 'confidentiality' ? audienceName(v) : typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n')}\n\n${r.body}`), name: 'reference.txt' }] });
             return true;
         }
         const input = Object.fromEntries(['title', 'category', 'source-url', 'authority', 'context', 'confidentiality', 'posted-at', 'attachment-links', 'supersedes'].map(k => [k, i.options.getString(k)]));

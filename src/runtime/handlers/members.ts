@@ -1,3 +1,4 @@
+import { friendlyError } from '../confirmation.js';
 import { PermissionFlagsBits } from 'discord.js';
 import { AdministrationService, desiredMemberRoles, managedRoles, rosterCsv, rosterRows, type AdministrationStore, type MemberState, type OrganizationConfig, type RoleMember } from '../../administration.js';
 import { advancementOptions, satisfies, type PermissionRole } from '../../domain.js';
@@ -66,7 +67,7 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
                         known.set(member.id, seedMember(i.guildId, member, c));
                     }
                     catch (error) {
-                        failures.push(`${member.id}: ${String(error)}`);
+                        failures.push(`${member.id}: ${friendlyError(error)}`);
                     }
         const page=Math.max(0,i.options.getInteger?.('page')??0),batch=[...known.values()].sort((a,b)=>a.memberId.localeCompare(b.memberId)).slice(page*100,(page+1)*100);
         for (const m of batch)
@@ -79,7 +80,7 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
                 completed++;
             }
             catch (error) {
-                failures.push(`${m.memberId}: ${String(error)}`);
+                failures.push(`${m.memberId}: ${friendlyError(error)}`);
             }
         await i.editReply({ content: `Processed ${completed} members. Failures: ${failures.length}. Page ${page}; ${known.size>(page+1)*100?`continue with page ${page+1}`:'no further page'}.`, ...(failures.length ? { files: [{ attachment: Buffer.from(failures.join('\n')), name: 'sync-errors.txt' }] } : {}) });
         return;
@@ -96,7 +97,7 @@ export async function handleMembers(i: any, store: MemberRepositories): Promise<
     }
     if (sub === 'audit' || sub === 'notes') {
         const rows = sub === 'audit' ? await store.memberAudit(i.guildId, memberId) : await store.notes(i.guildId, memberId);
-        await i.editReply({ content: `${rows.length} records. Notes and audit are restricted to LEVEL_3 administrators.`, files: [{ attachment: Buffer.from(JSON.stringify(rows, null, 2)), name: `${sub}.json` }], ephemeral: true });
+        await i.editReply({ content: `${rows.length} records. Audit access requires Advisors; notes retrieval requires Discord Administrator.`, files: [{ attachment: Buffer.from(JSON.stringify(rows, null, 2)), name: `${sub}.json` }], ephemeral: true });
         return;
     }
     if (sub === 'note') {

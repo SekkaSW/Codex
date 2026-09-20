@@ -1,3 +1,4 @@
+import { commandNameQuestion, normalizeSetupCommand } from './userCopy.js';
 import { selectionView, answerSelection, type PendingSelection } from './setupSelections.js';
 import { permissionLabels, permissionTiers, type PermissionTier } from '../domain.js';
 import { configuredResources, desiredResources, type ResourceSpec } from '../resources.js';
@@ -25,7 +26,7 @@ export interface Refinement extends RefinementPoint {
     disable?: 'intelligence' | 'trailmarks';
 }
 export const broadSections = { identity: 'Group & Permissions', 'rank-list': 'Ranks & Progression', 'duty-list': 'Duties & Assignments', features: 'Optional Features', 'command-channel': 'Channels', review: 'Review' };
-export const featureDescriptions = { briefings: 'Briefings — A place to provide briefings for missions, contracts, or optional assignments.', patrols: 'Patrol — A place to assign or propose patrols.', supply: 'Supply — A place to organize supply contracts.', atlas: 'Atlas — A resource used to keep track of important locations through a third-party interactive map. Atlas locations must be added and maintained manually by authorized members.' };
+export const featureDescriptions = { briefings: 'Briefings — A place to provide briefings for missions, contracts, or optional assignments.', patrols: 'Patrol — Suggests routes through eligible Trailmarks. A suggestion does not create an assignment.', supply: 'Supply — A place to organize supply contracts.', atlas: 'Atlas — A resource used to keep track of important locations through a third-party interactive map. Atlas locations must be added and maintained manually by authorized members.' };
 const editAreas: Record<string, Array<[
     string,
     string
@@ -131,7 +132,7 @@ export function refinementView(d: StoredSetupDraft): any {
     else if (s === 'identity')
         text = 'What is the name of the group you are setting up?';
     else if (s === 'namespace')
-        text = 'What do you want your command to be?\nFor example: /ranger for the Ranger Corps. Send order or /order.';
+        text = commandNameQuestion;
     else if (s === 'permissions') {
         text = `${g.index === 0 ? 'Permission levels are not ranks. They are broad categories that determine what members can access and manage in Codex.\n\n' : ''}${permissionLabels[permissionTiers[g.index]!]}\nWhich Discord role(s) belong at this permission level? This is not a rank; it is a category for members.`;
         role(true);
@@ -235,9 +236,9 @@ export function refinementView(d: StoredSetupDraft): any {
         buttons(['disable-confirm', 'Confirm Disable'], ['disable-cancel', 'Keep Enabled']);
     }
     else if (s === 'marker')
-        text = "What should identify a report as something that is for your organization's eyes only?\nExample: [CONFIDENTIAL]. Using brackets like [CONFIDENTIAL] is recommended so the marker is easy to recognize.";
+        text = "What should identify a report as something that is for your organization's eyes only?\nExample: [CONFIDENTIAL]. Brackets make the marker easy to recognize. Matching reports stay local and cannot transfer to other servers; local visibility still follows channel permissions. This does not encrypt or hide a report.";
     else if (s === 'atlas') {
-        text = d.config.modules?.atlas ? 'Atlas enabled. Codex will create the Atlas channel and enable Atlas integration for this group. Locations are maintained manually by authorized members.' + (d.config.modules.trailmarks === false ? ' Trailmarks are disabled, so their Atlas access and polling features are unavailable.' : '') : 'Atlas is disabled.';
+        text = d.config.modules?.atlas ? 'Atlas is enabled in your draft. Final Confirm Setup provisions its channel and applies integration settings. Locations are maintained manually by authorized members.' + (d.config.modules.trailmarks === false ? ' Trailmarks are disabled, so their Atlas access and polling features are unavailable.' : '') : 'Atlas is disabled.';
         buttons(['continue', 'Review']);
     }
     else if (s === 'review') {
@@ -246,7 +247,7 @@ export function refinementView(d: StoredSetupDraft): any {
     }
     if (refinementTextSteps.includes(s))
         buttons(['text', 'Reply with text']);
-    rows.push(row(button('back', 'Back'), button('review', 'Review'), button('sections', 'Edit Section'), { type: 2, custom_id: `setup:${d.revision}:cancel`, label: 'Cancel', style: 4 }));
+    rows.push(row(button('back', 'Back'), ...(s === 'atlas' ? [] : [button('review', 'Review')]), button('sections', 'Edit Section'), { type: 2, custom_id: `setup:${d.revision}:cancel`, label: 'Cancel', style: 4 }));
     return { content: `**${s === 'sections' ? 'Six-section setup' : heading(s)}**\n${g.notice ? g.notice + '\n\n' : ''}${text}`.slice(0, 1900), components: rows, allowedMentions: { parse: [] } };
 }
 export async function answerRefinement(d: StoredSetupDraft, action: string, i: any): Promise<void> {
@@ -305,9 +306,7 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
             next('namespace', `Group name set to **${answer}**.`);
         }
         if (s === 'namespace') {
-            const name = answer.replace(/^\//, '');
-            if (!/^[a-z0-9_-]{1,32}$/.test(name) || (genericCommandNames.includes(name as any) && !(['help','promotion','apprenticeship'].includes(name) && d.config.commandNamespace === name)))
-                throw new Error('Choose a lowercase command of 1–32 letters, digits, hyphens or underscores. This name must not conflict with a core command.');
+            const name = normalizeSetupCommand(answer, genericCommandNames, d.config.commandNamespace);
             d.config.commandNamespace = name;
             g.index = 0;
             next('permissions', `Command set to /${name} in your setup draft.`);
@@ -338,7 +337,7 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
             }
             group.name = answer;
             g.group = group.id;
-            next('group-required', `Assignment Group created as **${answer}**.`);
+            next('group-required', `Assignment Group **${answer}** added to your draft.`);
         }
         if (s === 'channel-name') {
             const key = g.index === 0 ? 'BOT_COMMANDS' : 'BOT_LOGS';
@@ -398,7 +397,7 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
         if (s === 'entry-list') {
             const existing = c.entries.filter(x => x.groupId === g.group);
             c.entries = [...c.entries.filter(x => x.groupId !== g.group), ...names.map(name => ({ ...existing.find(x => x.name.toLowerCase() === name.toLowerCase()), id: existing.find(x => x.name.toLowerCase() === name.toLowerCase())?.id ?? crypto.randomUUID(), groupId: g.group!, name }))];
-            next('group-more', `Assignments saved: **${names.join(', ')}**.`);
+            next('group-more', `Assignments saved in your draft: **${names.join(', ')}**.`);
         }
         if (s === 'category-list') {
             const specs = categorySpecs(d, g.category!);
@@ -585,7 +584,7 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
             await bindChannel(d, i, value, key, 'CHANNEL');
         else if (action !== 'continue' || !c.resources.some(x => x.key === key))
             throw new Error('Choose an existing channel or create a new one.');
-        next(s === 'command-channel' ? 'log-channel' : 'core', 'Channel choice saved.');
+        next(s === 'command-channel' ? 'log-channel' : 'core', 'Channel choice saved in your draft.');
         return;
     }
     if (['core', 'organization', 'intel-channels'].includes(s)) {
@@ -632,5 +631,3 @@ export async function answerRefinement(d: StoredSetupDraft, action: string, i: a
 async function bindChannel(d: StoredSetupDraft, i: any, value: string | undefined, key: ResourceSpec['key'], kind: ResourceSpec['kind']) { const channel = value ? await i.guild.channels.fetch(value) : undefined; if (!channel || channel.type !== (kind === 'CATEGORY' ? 4 : kind === 'FORUM' ? 15 : 0))
     throw new Error('Choose an existing destination of the requested type.'); const c = d.organization!; if (c.resources.some(r => r.discordId === value && r.key !== key))
     throw new Error('Choose a destination not already assigned to another purpose.'); c.resources = c.resources.filter(r => r.key !== key); c.resources.push({ guildId: d.guildId, key, discordId: channel.id, kind }); d.resourceSelections = [...new Set([...(d.resourceSelections ?? []), key])]; }
-export function humanSetupCopy(text: string): string { for (const [key, label] of Object.entries(permissionLabels))
-    text = text.replaceAll(key, label); return text.replace(/Optional Modules/g, 'Optional Features').replace(/modules/gi, 'features').replace(/Managed Resources/g, 'Channels & Categories'); }

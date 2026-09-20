@@ -83,3 +83,8 @@ The pre-commit review scanned 87 tracked/nonignored files and found no credentia
 ## Contact and Funds correction — 2026-09-19
 
 Contact creation (individual and group) is available to Member / LEVEL_1 and higher through native commands and compatibility forms. Other Contact operations retain Advisors / LEVEL_3 authorization. Funds mutations retain Advanced Member / LEVEL_2; read access is unchanged. See [correction report](CONTACT_PERMISSION_CORRECTION.md) for regression coverage and rollout.
+
+
+## Wording correction — 2026-09-20
+
+This dated correction supersedes older helper copy and any dashboard-first instructions above. [The command wording audit](COMMAND_WORDING_AUDIT.md) records the current 25 trees / 202 operations, exact command-name prompt, Member Contact creation, Advanced Member Funds mutations and preserved selection confirmations. The earlier namespace investigation tested parsing but did not resolve the wording complaint; the production question and fallback renderers are now corrected, and Order is normalized before validation. Historical source contracts and earlier checkpoint counts remain historical evidence.

@@ -22,8 +22,8 @@ Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Advanced Member, LE
 
 | Command | Ordered inputs | Access |
 | --- | --- | --- |
-| /ping  |  | ADMIN |
-| /help  |  | ADMIN |
+| /ping  |  | ANY |
+| /help  |  | ANY (actions filtered by current access) |
 | /server setup |  | ADMIN |
 | /advancement setup | `channel!` | ADMIN |
 | /advancement eligible |  | BASELINE |
@@ -101,8 +101,8 @@ Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Advanced Member, LE
 | /strongbox review |  | LEVEL_3 |
 | /strongbox process |  | LEVEL_3 |
 | /strongbox reject |  | LEVEL_3 |
-| /reference add | `title!`, `category!`, `source-url!`, `authority`, `context`, `confidentiality`, `posted-at`, `attachment-links`, `supersedes` | BASELINE |
-| /reference view | `id!` | BASELINE |
+| /reference add | `title!`, `category!`, `source-url!`, `authority`, `context`, `confidentiality`, `posted-at`, `attachment-links`, `supersedes` | LEVEL_3 |
+| /reference view | `id!` | LEVEL_3 |
 | /reference panel |  | BASELINE |
 | /reference get |  | BASELINE |
 | /reference list |  | BASELINE |
@@ -114,7 +114,7 @@ Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Advanced Member, LE
 | /supply redistribute | `assignment!` (autocomplete), `source_id!`, `before!`, `method!`, `reason` | LEVEL_3 |
 | /supply status | `assignment!` (autocomplete) | BASELINE |
 | /supply contributors | `assignment!` (autocomplete) | BASELINE |
-| /supply refresh | `assignment!` (autocomplete) | BASELINE |
+| /supply refresh | `assignment!` (autocomplete) | LEVEL_3 |
 | /supply close | `assignment!` (autocomplete) | LEVEL_3 |
 | /supply reopen | `assignment!` (autocomplete) | LEVEL_3 |
 | /supply cancel | `assignment!` (autocomplete) | LEVEL_3 |
@@ -138,7 +138,7 @@ Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Advanced Member, LE
 | /mentorship assign | `mentor!`, `apprentice!` | LEVEL_3 |
 | /mentorship end | `member`, `reason` | BASELINE |
 | /mentorship info | `member` | BASELINE |
-| /mentorship requests |  | BASELINE |
+| /mentorship requests |  | LEVEL_3 |
 | /mentorship panel |  | BASELINE |
 | /contact setup | `category` | LEVEL_3 |
 | /contact create | `name!`, `race!`, `sex!`, `occupation!`, `assignment!` (autocomplete), `faction`, `usual_locations`, `commentary`, `high_priority` | LEVEL_1 |
@@ -223,6 +223,13 @@ Permissions: BASELINE = Recruit, LEVEL_1 = Member, LEVEL_2 = Advanced Member, LE
 | /apprenticeship assign | `mentor!`, `apprentice!` | LEVEL_3 |
 | /apprenticeship end | `member`, `reason` | BASELINE |
 | /apprenticeship info | `member` | BASELINE |
-| /apprenticeship requests |  | BASELINE |
+| /apprenticeship requests |  | LEVEL_3 |
 
 Reference add/view require Advisors; Leader-labeled references require Leader. Supply management and other-member credits require Advisors. Briefing access remains Member+. Contact individual/group creation requires Member; Contact administration and member administration remain Advisors. Alliance keeps its reciprocal bridge contract. Native historical Intel backfill scans persisted records, not unrecognized legacy Discord messages. Old scalar Supply and shared reference records remain available separately. See DEPLOYMENT.md before migration/registration.
+
+
+## Wording audit — 2026-09-20
+
+Current registration contains 25 trees and 202 operations with a configured organization root, counting aliases separately. [The complete inventory](COMMAND_WORDING_INVENTORY.json) records ordered inputs and current display copy. Permission constants in this technical table map to the human labels above; no authorization policy changed. Panel access depends on available actions, not a blanket root-level permission. Native /reference add and view require Advisors; legacy shared-reference get/list are separate. Supply refresh and mentorship requests require Advisors. /help is discovery, not an Administrator-only command.
+
+/supply log requires each chosen item and its quantity together; omit both fields of optional pairs. /funds refresh-summary updates the existing summary rather than moving it. /intel backfill examines saved reports only, and /intel catchall-clear restores the default destination rather than disabling capture. /patrol suggest returns route ideas without creating a saved assignment. /organization sync-assignment-roles uses existing roles; note only appends. The native command root in examples means your actual configured command.

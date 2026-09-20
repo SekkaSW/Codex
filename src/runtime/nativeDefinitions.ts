@@ -1,3 +1,4 @@
+import { applyCommandCopy } from './commandCopy.js';
 import { referenceCategories, referenceAuthorities, referenceContexts, referenceConfidentialities, contactOccupations, contactGroups } from './nativeConstants.js';
 import { SlashCommandBuilder, type APIApplicationCommandBasicOption, type APIApplicationCommandSubcommandOption } from 'discord.js';
 import { nativeContracts } from './nativeContracts.js';
@@ -90,5 +91,5 @@ export function restoreNativeDefinitions(current: any[], namespace?: string): an
         result.push({ ...advancement, name: 'promotion' });
     if (namespace !== 'apprenticeship')
         result.push(buildNative('apprenticeship').toJSON());
-    return result;
+    return applyCommandCopy(result, namespace);
 }

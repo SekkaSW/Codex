@@ -49,7 +49,7 @@ export async function handleNativeTrailmark(i: any, store: WorkflowRepositories)
             await new DurableDelivery(store, new DiscordDurablePublisher(i.guild)).deliver(i.guildId, `local-report:${report.id}`, t.channel_id, body);
         }
         catch {
-            await i.editReply(replyText(`Report ${report.id} saved; local Discord delivery needs recovery.`));
+            await i.editReply(replyText(`Report ${report.id} saved; local Discord delivery could not be confirmed. Do not submit a second report. Ask Advisors to inspect the saved report and delivery receipt.`));
             return true;
         }
         await i.editReply(replyText(`Report ${report.id} saved locally; ${report.status === 'AT_HQ' ? 'at Headquarters' : 'pending Headquarters delivery'}.`));
@@ -144,8 +144,12 @@ export async function handleNativeTrailmark(i: any, store: WorkflowRepositories)
         const atlas = i.options.getString('atlas_location_id');
         if (atlas || i.options.getBoolean('clear_atlas'))
             t = await store.trailmark(i.guildId, 'atlas', i.user.id, t.id, { revision: t.revision, ...(atlas ? { atlas_id: atlas } : {}) });
-        const ready = await adapter.ensure(t);
-        await i.editReply(replyText(`${ready.name} saved: <#${ready.channel_id}>.`));
+        try {
+            const ready = await adapter.ensure(t);
+            await i.editReply(replyText(`${ready.name} saved: <#${ready.channel_id}>.`));
+        } catch {
+            await i.editReply(replyText(`Trailmark ${t.id} saved, but its Discord channel needs repair. Ask Advisors to use /trailmark repair and select this record. Do not create it again.`));
+        }
         return true;
     }
     if (action === 'set-atlas' && i.options.getString('trailmark')) {

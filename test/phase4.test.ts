@@ -203,7 +203,7 @@ test('wizard reloads durable drafts; owner, expiry and stale-panel checks apply 
     const replacement = new SetupWizard(store, async () => 'done');
     const panel = await replacement.start('g', 'owner');
     assert.match(panel.content, /unfinished setup/);
-    await replacement.handle(interaction('owner',1,'resume'));assert.match(response.content,/permissions/);
+    await replacement.handle(interaction('owner',1,'resume'));assert.match(response.content,/Permissions/);
     saved!.expiresAt = '2000-01-01';
     await assert.rejects(() => replacement.handle(interaction('owner', 1, 'cancel')), /expired/);
     await replacement.start('g', 'owner');

@@ -1,3 +1,4 @@
+import { permissionName } from '../userCopy.js';
 import { promotionBoard } from '../nativePromotion.js';
 import type { WorkflowRepositories } from './workflows.js';
 import { requireFeature } from '../features.js';
@@ -51,7 +52,7 @@ export async function handleField(i:any,store:FieldRepositories):Promise<void>{
   if(record.revision!==Number(revision))throw new Error('This case changed. Refresh the command panel');
   if(action==='ballots'){
    await requireTier(i,store,record.snapshot.settings.voter_tier,record.snapshot.organization.permissions);
-   await i.editReply({content:`Case ${record.id}: ${record.status}. Yes ${record.yes}, no ${record.no}.`,components:record.status==='OPEN'?[{type:1,components:['yes','no'].map(v=>({type:2,style:v==='yes'?3:4,label:v==='yes'?'Approve':'Oppose',custom_id:`field:${i.user.id}:adv:${v}:${record.id}`}))}]:[]});return;
+   await i.editReply({content:`Case ${record.id}: ${record.status}. Yes ${record.yes}, no ${record.no}.`,components:record.status==='OPEN'?[{type:1,components:['yes','no'].map(v=>({type:2,style:v==='yes'?3:4,label:v==='yes'?'Vote Yes':'Vote No',custom_id:`field:${i.user.id}:adv:${v}:${record.id}`}))}]:[]});return;
   }
   if(action==='approve'){
    const member=await i.guild.members.fetch({user:record.candidate_id,force:true}),roles=await i.guild.roles.fetch();
@@ -67,7 +68,7 @@ export async function handleField(i:any,store:FieldRepositories):Promise<void>{
  if(['atlas-form','rules-form','minutes-form','tier'].includes(action)){
   const [id,revision]=context.split('/');const t=await store.trailmark(i.guildId,'get',i.user.id,id);
   if(t.revision!==Number(revision))throw new Error('Trailmark changed; reopen configuration');
-  if(action==='rules-form'){await i.editReply({content:`Access: ${t.access_tier}; duration ${t.session_minutes} minutes.`,components:[{type:1,components:[{type:3,custom_id:`field:${i.user.id}:trail:tier:${context}`,placeholder:'Minimum access tier',options:permissionTiers.map(tier=>({label:tier,value:tier}))}]},{type:1,components:[{type:2,style:1,label:'Change duration',custom_id:`field:${i.user.id}:trail:minutes-form:${context}`}]}]});return;}
+  if(action==='rules-form'){await i.editReply({content:`Access: ${permissionName(t.access_tier)}; duration ${t.session_minutes} minutes.`,components:[{type:1,components:[{type:3,custom_id:`field:${i.user.id}:trail:tier:${context}`,placeholder:'Minimum permission level',options:permissionTiers.map(tier=>({label:permissionName(tier),value:tier}))}]},{type:1,components:[{type:2,style:1,label:'Change duration',custom_id:`field:${i.user.id}:trail:minutes-form:${context}`}]}]});return;}
   if(action==='atlas-form'){const values=['x','y','z'].map(axis=>i.fields.getTextInputValue(axis).trim());const coordinates=values.some(Boolean)?{x:Number(values[0]),y:Number(values[1]),z:Number(values[2])}:null;if(coordinates&&(!values.every(Boolean)||!Object.values(coordinates).every(Number.isFinite)))throw new Error('Provide all three finite coordinates or leave all blank');await store.trailmark(i.guildId,'atlas',i.user.id,id,{revision:t.revision,atlas_id:i.fields.getTextInputValue('atlas_id').trim(),coordinates});}
   else {const minutes=action==='minutes-form'?Number(i.fields.getTextInputValue('minutes')):t.session_minutes;if(!Number.isInteger(minutes)||minutes<1||minutes>10080)throw new Error('Duration must be an integer from 1 to 10080 minutes');if(action==='tier'&&!permissionTiers.includes(selected))throw new Error('Unknown permission tier');await store.trailmark(i.guildId,'edit',i.user.id,id,{revision:t.revision,name:t.name,description:t.description,access_tier:action==='tier'?selected:t.access_tier,session_minutes:minutes});}
   await i.editReply(replyText('Trailmark configuration saved.'));return;
@@ -95,13 +96,13 @@ export async function handleField(i:any,store:FieldRepositories):Promise<void>{
   const next=action==='edit'?'edit-form':'report-form';await i.editReply({content:t.name,components:[{type:1,components:[{type:2,style:1,label:action==='edit'?'Edit details':'Write report',custom_id:`field:${i.user.id}:trail:${next}:${id}/${t.revision}`}]}]});return;
  }
  if(action==='repair')await adapter.ensure(t);
- else if(action==='deactivate'){await store.trailmark(i.guildId,'deactivate',i.user.id,id,{revision:t.revision});const result=await lifecycle.reconcile(i.guildId,i.user.id);if(result.failures.length)throw new Error('Deactivated; session revocation needs retry');}
+ else if(action==='deactivate'){await store.trailmark(i.guildId,'deactivate',i.user.id,id,{revision:t.revision});const result=await lifecycle.reconcile(i.guildId,i.user.id);if(result.failures.length)throw new Error('Saved: Trailmark deactivated. Temporary access cleanup is pending; background recovery will retry. Ask an administrator to inspect /trailmark sessions if access remains.');}
  else if(action==='hq')await store.trailmark(i.guildId,'hq',i.user.id,id,{revision:t.revision});
  else if(action==='clear-atlas')await store.trailmark(i.guildId,'atlas',i.user.id,id,{revision:t.revision});
  else if(action==='set-atlas'||action==='configure'){
   await i.editReply({content:'Use the configuration form to update this Trailmark.',components:[{type:1,components:[{type:2,style:1,label:action==='set-atlas'?'Set Atlas linkage':'Set access rules',custom_id:`field:${i.user.id}:trail:${action==='set-atlas'?'atlas-form':'rules-form'}:${id}/${t.revision}`}]}]});return;
  }
- else if(action==='list'){await i.editReply(replyText(`${t.name}\n${t.description}\nResource: <#${t.channel_id}>\nAccess: ${t.access_tier}; ${t.session_minutes} minutes\nHeadquarters: ${t.is_headquarters}\nAtlas: ${t.atlas_id??'none'}`));return;}
+ else if(action==='list'){await i.editReply(replyText(`${t.name}\n${t.description}\nResource: <#${t.channel_id}>\nAccess: ${permissionName(t.access_tier)}; ${t.session_minutes} minutes\nHeadquarters: ${t.is_headquarters}\nAtlas: ${t.atlas_id??'none'}`));return;}
  else throw new Error('Unknown Trailmark operation');
  await i.editReply(replyText('Trailmark change saved and audited.'));
 }

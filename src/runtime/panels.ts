@@ -11,7 +11,7 @@ const row = (...components: any[]) => ({ type: 1, components });
 const button = (id: string, label: string, style = 2) => ({ type: 2, custom_id: id, label, style });
 const modules: Record<string, keyof ServerConfig['modules']> = { atlas: 'atlas', supply: 'supply', briefing: 'briefings', patrol: 'patrols' };
 const friendly: Record<string, string> = {
-    panel: 'Request Access', eligible: 'Eligibility', status: 'Current Status', info: 'Member Information', 'set-balance': 'Adjust Balance', 'undo-last': 'Undo Last Change',
+    advancement: 'Promotions', promotion: 'Promotions', panel: 'Request Access', eligible: 'Eligibility', status: 'Current Status', info: 'Member Information', 'set-balance': 'Adjust Balance', 'undo-last': 'Undo Last Change',
     'refresh-summary': 'Refresh Public Summary', 'set-member': 'Set Member Assignments', 'clear-member': 'Clear Member Assignments', 'sync-roles': 'Sync Assignment Roles',
     'looking-for': 'Looking for Mentor', 'withdraw-looking': 'Withdraw Mentor Request', 'set-hq': 'HQ Configuration', hq: 'Set HQ', 'set-atlas': 'Configure Atlas', 'clear-atlas': 'Clear Atlas Link',
     'link-report': 'Link Report Contacts', deliver: 'Deliver to HQ', 'topic-list': 'Topics', reports: 'Reports', ballots: 'Ballots', 'group-members': 'Group Contacts',
@@ -37,6 +37,9 @@ export function panelRequirement(system: string, action: string, namespace?: str
     if(system===namespace&&action==='briefing')return 'LEVEL_1';
     if (system === 'roster' || system === namespace) return ['rank', 'notes'].includes(action) ? 'ADMIN' : 'LEVEL_3';
     if(system==='contact')return contactRequirement(action);
+    if (system === 'reference' && ['add', 'view'].includes(action)) return 'LEVEL_3';
+    if (system === 'supply' && action === 'refresh') return 'LEVEL_3';
+    if (system === 'mentorship' && action === 'requests') return 'LEVEL_3';
     if (['duty', 'recruit'].includes(system)) return 'LEVEL_3';
     if (['supply', 'briefing', 'patrol', 'reference'].includes(system)) return ['create', 'setup', 'edit', 'send', 'redistribute', 'close', 'reopen', 'cancel', 'resolve'].includes(action) ? 'LEVEL_3' : system === 'briefing' ? 'LEVEL_1' : 'BASELINE';
     if (['strongbox', 'application', 'mentorship', 'assignment', 'vote'].includes(system)) return ['setup', 'review', 'process', 'reject', 'approve', 'deny', 'assign', 'close', 'cancel', 'audit', 'open', 'set-member', 'clear-member', 'sync-roles', 'create', 'refresh'].includes(action) ? 'LEVEL_3' : 'BASELINE';
@@ -112,17 +115,18 @@ export async function openPanel(i: any, store: RuntimeRepositories, system: stri
     for (let n = p * 10; n < Math.min(actions.length, (p + 1) * 10); n += 5) components.push(row(...actions.slice(n, Math.min(n + 5, (p + 1) * 10)).map(a => button(`${base}:action:${system}:${a.name}`, dashboardLabel(system, a.name)))));
     components.push(row(...(p + offset ? [button(`${base}:page:${system}:${p + offset - 1}`, 'Previous')] : []), ...((p + 1) * 10 < actions.length ? [button(`${base}:page:${system}:${p + offset + 1}`, 'Next')] : []), button(`${base}:page:${system}:${p + offset}`, 'Refresh'), button(`${base}:help`, 'Help')));
     if (system === 'trailmark' && config.modules.atlas && (await availableActions(i, store, config, 'atlas', access)).length) components.push(row(button(`${base}:action:atlas:status`, 'Atlas Status')));
-    await respond(i, { content: `**${system === config.commandNamespace ? config.organizationName : actionLabel(system)}**\nChoose an action.${actions.length > 10 ? ` Page ${p + 1} of ${Math.ceil(actions.length / 10)}.` : ''}${system === config.commandNamespace || system === 'roster' ? '\nMember records and notes retain their staff access rules.' : ''}`, components });
+    await respond(i, { content: `**${system === config.commandNamespace ? config.organizationName : actionLabel(system)}**\n${actions.length ? 'Choose an action.' : 'No actions are available with your current permissions and enabled features.'}${actions.length > 10 ? ` Page ${p + 1} of ${Math.ceil(actions.length / 10)}.` : ''}${system === config.commandNamespace || system === 'roster' ? '\nMember records and notes retain their staff access rules.' : ''}`, components });
 }
 function formView(key: string, s: PanelSession): any {
     const option = s.options[s.index], id = (a: string) => `uxform:${key}:${s.revision}:${a}`;
     if (!option) return { content: `Ready to **${actionLabel(s.action)}**. Continue opens the action with your selected values.`, components: [row(button(id('run'), 'Continue', 1), button(id('back'), 'Back'), button(id('cancel'), 'Cancel'))] };
     const components: any[] = [];
     if ([6, 7, 8].includes(option.type)) components.push(row({ type: option.type === 6 ? 5 : option.type === 7 ? 8 : 6, custom_id: id('answer'), placeholder: option.description.slice(0, 150), min_values: 1, max_values: 1, ...(option.channel_types ? { channel_types: option.channel_types } : {}) }));
+    else if (option.type === 5) components.push(row({ type: 3, custom_id: id('answer'), placeholder: option.description.slice(0, 150), options: [{ label: 'Yes', value: 'true' }, { label: 'No', value: 'false' }] }));
     else if (option.choices?.length) components.push(row({ type: 3, custom_id: id('answer'), placeholder: option.description.slice(0, 150), options: option.choices.map((v: any) => ({ label: v.name, value: String(v.value) })) }));
     else components.push(row(button(id('text'), 'Enter Value', 1)));
     components.push(row(button(id('back'), 'Back'), ...(!option.required ? [button(id('skip'), 'Skip')] : []), button(id('cancel'), 'Cancel')));
-    return { content: `**${actionLabel(s.action)}**\n${option.description}${option.required ? '' : ' (optional)'}`, components };
+    return { content: `**${actionLabel(s.action)}**\n${option.description}${option.required ? '' : ' (optional)'}${option.autocomplete ? `\nThis shortcut needs the saved record ID. Use /${s.system} ${s.action} to search and choose by name instead.` : ''}`, components };
 }
 export async function handlePanel(i: any, store: RuntimeRepositories, dispatch: (i: any) => Promise<void>, setup: () => Promise<void>): Promise<void> {
     const execute = async (next: any) => {
@@ -139,17 +143,18 @@ export async function handlePanel(i: any, store: RuntimeRepositories, dispatch: 
         const config = await store.load(i.guildId);
         if (!config) throw new Error('Ask an administrator to run /server setup.');
         const action = (await availableActions(i, store, config, p[3])).find(a => a.name === p[4]);
-        if (!action) throw new Error('This action is no longer available. Open /help to refresh your permissions and modules.');
+        if (!action) throw new Error('This action is no longer available. Open /help to refresh your permissions and optional features.');
         if (p[4] === 'my-access') {
             const rows = await store.trailmark<any[]>(i.guildId, 'sessions', i.user.id);
             await respond(i, { content: rows.length ? rows.map(s => `Access ${s.state.toLowerCase()} until <t:${Math.floor(Date.parse(s.expires_at) / 1000)}:R>.`).join('\n').slice(0, 1800) : 'You have no active Trailmark access.', components: [row(button(`ux:${i.user.id}:action:trailmark:leave`, 'Leave Trailmark'))] }); return;
         }
         if (!(action.options?.length)) return execute(commandInteraction(i, p[3], p[4], {}));
+        if (action.options.some((o: any) => o.type === 11)) { await respond(i, { content: `Use /${p[3]} ${p[4]} directly so Discord can collect the file attachment and other inputs. No changes have been made.` }); return; }
         const session: PanelSession = { guild: i.guildId, owner: i.user.id, system: p[3], action: p[4], options: action.options, values: {}, index: 0, revision: 0, expires: Date.now() + 15 * 60000 };
         const key = putSession(session); await respond(i, formView(key, session)); return;
     }
     const s = sessions.get(p[1]);
-    if (!s || s.expires <= Date.now() || s.revision !== Number(p[2])) { await respond(i, { content: 'This input panel is outdated or expired. Open a fresh dashboard to continue.', components: [row(button(`ux:${i.user.id}:help`, 'Open New Panel'))] }); return; }
+    if (!s || s.expires <= Date.now() || s.revision !== Number(p[2])) { await respond(i, { content: 'This input panel is outdated or expired. Run the slash command directly or open /help for a new shortcut.', components: [row(button(`ux:${i.user.id}:help`, 'Open Help'))] }); return; }
     if (s.guild !== i.guildId || s.owner !== i.user.id) throw new Error('Open /help to use your own panel.');
     const config = await store.load(i.guildId);
     if (!config || !(await availableActions(i, store, config, s.system)).some(a => a.name === s.action)) throw new Error('This action is no longer available. Open /help to refresh.');
@@ -161,6 +166,7 @@ export async function handlePanel(i: any, store: RuntimeRepositories, dispatch: 
     else if (action === 'skip') { if (!o || o.required) throw new Error('This question needs an answer.'); delete s.values[o.name]; s.index++; }
     else if (action === 'answer') {
         let value: any = i.isModalSubmit() ? i.fields.getTextInputValue('value').trim() : i.values[0];
+        if (o.type === 5) { if (!['true', 'false'].includes(value)) throw new Error('Choose Yes or No.'); value = value === 'true'; }
         if ([4, 10].includes(o.type)) { value = Number(value); if (!Number.isFinite(value) || (o.type === 4 && !Number.isSafeInteger(value)) || (o.min_value != null && value < o.min_value) || (o.max_value != null && value > o.max_value)) throw new Error('Enter a number within the allowed range.'); }
         if (o.choices && !o.choices.some((v: any) => v.value === value)) throw new Error('Choose a listed option.');
         if (o.type === 6) value = await i.client.users.fetch(value);

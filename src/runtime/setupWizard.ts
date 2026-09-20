@@ -1,3 +1,4 @@
+import { commandNameQuestion, normalizeSetupCommand, setupAreaLabels, permissionName } from './userCopy.js';
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import { emptyOrganization, validateOrganization, type AdministrationStore } from '../administration.js';
 import { permissionLabels, permissionTiers, type ServerConfig } from '../domain.js';
@@ -111,7 +112,7 @@ export class SetupWizard {
         if (action === 'advanced') { delete e.refinement; delete e.conversation; e.section = 'identity'; d.revision++; await this.store.saveSetupDraft(d); await i.update(this.render(d)); return; }
         if (action === 'cancel') {
             await this.store.deleteSetupDraft(d.guildId, d.ownerId);
-            await i.update({ content: 'Setup draft cancelled.', components: [] });
+            await i.update({ content: 'Setup draft cancelled. Saved server configuration is unchanged.', components: [] });
             return;
         }
         if (action === 'view') {
@@ -136,7 +137,7 @@ export class SetupWizard {
                 else if (await checker.permissionsMatch(channel, spec)) present++;
                 else mismatched++;
             }
-            await i.editReply({ content: `Codex found ${present} healthy managed resources, ${missing} missing or unresolved resources, and ${mismatched} permission mismatches. Repair checks functional permissions and creates missing resources. Healthy names and positions are retained. Uncertain creation may require an existing-resource binding.`, components: [row(button(`setup:${d.revision}:repair-confirm`, 'Repair Missing/Incorrect Items', 3), button(`setup:${d.revision}:view`, 'View Details'), button(`setup:${d.revision}:resume`, 'Cancel'))] });
+            await i.editReply({ content: `Codex found ${present} healthy channels/categories, ${missing} missing or unresolved destinations, and ${mismatched} permission mismatches. Repair checks functional permissions and creates missing channels/categories. Healthy names and positions are retained. Uncertain creation may require an existing-resource binding.`, components: [row(button(`setup:${d.revision}:repair-confirm`, 'Repair Missing/Incorrect Items', 3), button(`setup:${d.revision}:view`, 'View Details'), button(`setup:${d.revision}:resume`, 'Cancel'))] });
             return;
         }
         if (action === 'repair-confirm') {
@@ -171,7 +172,7 @@ export class SetupWizard {
         }
         if (action === 'text' || action === 'new') {
             const value = section === 'identity' ? d.config.organizationName : section === 'namespace' ? d.config.commandNamespace : section === 'integration' ? d.config.confidentialityMarker : this.entities(d).find(x => x.id === selected)?.name;
-            await i.showModal({ custom_id: `setup:${d.revision}:${action === 'new' ? 'create' : 'save-text'}`, title: `Configure ${section}`, components: [row({ type: 4, custom_id: 'name', label: section === 'integration' ? 'Confidentiality marker' : 'Name', style: 1, required: true, max_length: section === 'namespace' ? 32 : 100, ...(action !== 'new' && value ? { value } : {}) })] });
+            await i.showModal({ custom_id: `setup:${d.revision}:${action === 'new' ? 'create' : 'save-text'}`, title: `Configure ${setupAreaLabels[section] ?? section}`, components: [row({ type: 4, custom_id: 'name', label: section === 'integration' ? 'Confidentiality marker' : 'Name', style: 1, required: true, max_length: 100, ...(action !== 'new' && value ? { value } : {}) })] });
             return;
         }
         if (i.isModalSubmit())
@@ -206,11 +207,7 @@ export class SetupWizard {
             if (section === 'identity')
                 d.config.organizationName = name;
             else if (section === 'namespace') {
-                if (!/^[a-z0-9_-]{1,32}$/.test(name))
-                    throw new Error('Use 1–32 lowercase letters, digits, underscores or hyphens');
-                if ((await import('./commands.js')).genericCommandNames.includes(name as any) && !(['help','promotion','apprenticeship'].includes(name) && d.config.commandNamespace === name))
-                    throw new Error('Choose a namespace that does not replace a core command');
-                d.config.commandNamespace = name;
+                d.config.commandNamespace = normalizeSetupCommand(name, (await import('./commands.js')).genericCommandNames, d.config.commandNamespace);
             }
             else if (section === 'integration')
                 d.config.confidentialityMarker = name;
@@ -360,7 +357,7 @@ export class SetupWizard {
     private summary(d: StoredSetupDraft): string {
         if (d.refinedSetup) return refinementSummary(d).slice(0,1900);
         const c = d.organization!;
-        return (preview(d) + '\n' + permissionTiers.map(t => `${t}: ${c.permissions.filter(p => p.tier === t).map(p => `<@&${p.roleId}>`).join(', ') || 'none'}`).join('\n') + `\nRanks: ${c.ranks.map(x => x.name).join(', ') || 'none'}\nBranches: ${c.branches.map(x => x.name).join(', ') || 'none'}\nProgression edges: ${c.edges.length}\nDuties: ${c.duties.map(x => x.displayName).join(', ') || 'none'}\nAssignment groups: ${c.groups.map(x => `${x.name} (${x.multiple ? 'multiple' : 'single'}, ${x.required ? 'required' : 'optional'})`).join(', ') || 'none'}\nAssignment entries: ${c.entries.length}\nStored destinations: ${c.resources.length}`).slice(0, 1900);
+        return (preview(d) + '\n' + permissionTiers.map(t => `${permissionName(t)}: ${c.permissions.filter(p => p.tier === t).map(p => `<@&${p.roleId}>`).join(', ') || 'none'}`).join('\n') + `\nRanks: ${c.ranks.map(x => x.name).join(', ') || 'none'}\nBranches: ${c.branches.map(x => x.name).join(', ') || 'none'}\nProgression edges: ${c.edges.length}\nDuties: ${c.duties.map(x => x.displayName).join(', ') || 'none'}\nAssignment groups: ${c.groups.map(x => `${x.name} (${x.multiple ? 'multiple' : 'single'}, ${x.required ? 'required' : 'optional'})`).join(', ') || 'none'}\nAssignment entries: ${c.entries.length}\nStored destinations: ${c.resources.length}`).slice(0, 1900);
     }
     render(d: StoredSetupDraft): any {
         if (d.editor?.refinement) return refinementView(d);
@@ -371,22 +368,24 @@ export class SetupWizard {
             return payload;
         }
         if (e.conversation && s === 'preview') return { content: this.summary(d).slice(0,1700) + '\nConfirm Setup applies these changes and provisions resources. Review removals carefully: affected members may need synchronization. Full details are attached.', components: [row(button(id('guide-back'), 'Back'), button(id('guide-sections'), 'Edit Section'), button(id('confirm'), 'Confirm Setup', 3), button(id('cancel'), 'Cancel', 4))], files: [{ attachment: Buffer.from(this.fullSummary(d)), name: 'configuration-preview.txt' }], allowedMentions: { parse: [] } };
-        const components: any[] = [row(select(id('section'), 'Configuration area', sections.map(x => option(x, x))))];
-        let content = `**Setup / Edit: ${s}** — changes are a durable draft until preview and confirmation.`;
-        if (['identity', 'namespace', 'integration'].includes(s))
+        const components: any[] = [row(select(id('section'), 'Configuration area', sections.map(x => option(setupAreaLabels[x] ?? x, x))))];
+        let content = `**Setup / Edit: ${setupAreaLabels[s] ?? s}** — changes are a durable draft until preview and confirmation.`;
+        if (['identity', 'namespace', 'integration'].includes(s)) {
+            if(s === 'namespace') content = commandNameQuestion + (d.config.commandNamespace ? `\nCurrent draft command: /${d.config.commandNamespace}` : '');
             components.push(row(button(id('text'), 'Edit text', 1)));
+        }
         else if (s === 'preview') {
             content = this.summary(d) + '\nConfirm saves configuration and provisions resources.';
             components.push(row(button(id('confirm'), 'Confirm and provision', 3)));
         }
         else if (s === 'modules')
-            components.push(row(select(id('modules'), 'Enabled optional modules', ['briefings', 'patrols', 'supply', 'atlas'].map(x => ({ ...option(x, x), default: d.config.modules?.[x as keyof ServerConfig['modules']] ?? false })), 4, 0)));
+            components.push(row(select(id('modules'), 'Enabled Optional Features', ['briefings', 'patrols', 'supply', 'atlas'].map(x => ({ ...option(x, x), default: d.config.modules?.[x as keyof ServerConfig['modules']] ?? false })), 4, 0)));
         else {
             let choices = this.entities(d).map(x => option(x.name, x.id));
             if (s === 'entries')
                 choices = c.entries.map(x => option(`${c.groups.find(g => g.id === x.groupId)?.name}: ${x.name}`, x.id));
             if (s === 'permissions')
-                choices = permissionTiers.map(x => option(d.refinedSetup ? permissionLabels[x] : x, x));
+                choices = permissionTiers.map(x => option(permissionLabels[x], x));
             if (s === 'progression')
                 choices = c.branches.flatMap(b => c.ranks.map(r => option(`${b.name}: ${r.name}`, `${b.id}/${r.id}`)));
             if (s === 'resources' || s === 'destinations')
@@ -406,7 +405,7 @@ export class SetupWizard {
                 content += `\nSelected: ${choices.find(x => x.value === e.selected)?.label ?? e.selected}`;
                 if (s === 'permissions') {
                     const mapped = c.permissions.filter(p => p.tier === e.selected).map(p => p.roleId);
-                    content += `\n${e.selected}: ${mapped.map(x => `<@&${x}>`).join(', ') || 'none'}`;
+                    content += `\n${permissionName(e.selected as any)}: ${mapped.map(x => `<@&${x}>`).join(', ') || 'none'}`;
                     components.push(row({ type: 6, custom_id: id('permission'), placeholder: 'Add roles to this tier', max_values: 25 }), row({ type: 6, custom_id: id('permission-remove'), placeholder: 'Remove roles from this tier', max_values: 25 }));
                 }
                 if (s === 'ranks' || s === 'entries') {
@@ -414,7 +413,7 @@ export class SetupWizard {
                     content += `\nMapped role: ${entity?.roleId ? `<@&${entity.roleId}>` : 'none'}`;
                     components.push(row({ type: 6, custom_id: id('role'), placeholder: 'Discord role (clear for no sync)', min_values: 0, max_values: 1 }));
                     if (s === 'ranks')
-                        components.push(row(select(id('tier'), 'Rank tier (does not grant permissions)', permissionTiers.map(x => ({ ...option(d.refinedSetup ? permissionLabels[x] : x, x), default: c.ranks.find(r => r.id === e.selected)?.tier === x })))));
+                        components.push(row(select(id('tier'), 'Rank tier (does not grant permissions)', permissionTiers.map(x => ({ ...option(permissionLabels[x], x), default: c.ranks.find(r => r.id === e.selected)?.tier === x })))));
                     if (s === 'entries' && c.groups.length) {
                         components.push(row(select(id('group'), 'Assignment group', c.groups.slice(e.page * 25, e.page * 25 + 25).map(x => ({ ...option(x.name, x.id), default: c.entries.find(entry => entry.id === e.selected)?.groupId === x.id })))));
                         this.targetPages(components, id, e.page, c.groups.length);
@@ -449,7 +448,7 @@ export class SetupWizard {
         choices.push(option('Previous', '-1')); if ((page + 1) * 25 < total)
         choices.push(option('Next', '1')); if (choices.length)
         components.push(row(select(id('target-page'), `Page ${page + 1}`, choices))); }
-    private fullSummary(d: StoredSetupDraft): string { if(d.refinedSetup) return refinementSummary(d); const c = d.organization!; return [preview(d), ...c.permissions.map(p => `Permission ${p.tier}: role ${p.roleId}`), ...c.ranks.map(r => `Rank ${r.name}: ${r.tier}, role ${r.roleId ?? 'none'}`), ...c.edges.map(e => `Progression [${c.branches.find(b => b.id === e.branchId)?.name}]: ${c.ranks.find(r => r.id === e.fromRankId)?.name} -> ${c.ranks.find(r => r.id === e.toRankId)?.name}`), ...c.duties.map(x => `Duty ${x.displayName}: role ${x.roleId}`), ...c.groups.flatMap(g => [`Group ${g.name}: ${g.multiple ? 'multiple' : 'single'}, ${g.required ? 'required' : 'optional'}`, ...c.entries.filter(e => e.groupId === g.id).map(e => `  ${e.name}: role ${e.roleId ?? 'none'}`)]), ...this.specs(d).map(r => `${r.name} (${r.kind}): ${c.resources.find(x => x.key === r.key)?.discordId ?? 'create when enabled'}`)].join('\n'); }
+    private fullSummary(d: StoredSetupDraft): string { if(d.refinedSetup) return refinementSummary(d); const c = d.organization!; return [preview(d), ...c.permissions.map(p => `Permission ${permissionName(p.tier)}: role ${p.roleId}`), ...c.ranks.map(r => `Rank ${r.name}: ${permissionName(r.tier)}, role ${r.roleId ?? 'none'}`), ...c.edges.map(e => `Progression [${c.branches.find(b => b.id === e.branchId)?.name}]: ${c.ranks.find(r => r.id === e.fromRankId)?.name} -> ${c.ranks.find(r => r.id === e.toRankId)?.name}`), ...c.duties.map(x => `Duty ${x.displayName}: role ${x.roleId}`), ...c.groups.flatMap(g => [`Group ${g.name}: ${g.multiple ? 'multiple' : 'single'}, ${g.required ? 'required' : 'optional'}`, ...c.entries.filter(e => e.groupId === g.id).map(e => `  ${e.name}: role ${e.roleId ?? 'none'}`)]), ...this.specs(d).map(r => `${r.name} (${r.kind}): ${c.resources.find(x => x.key === r.key)?.discordId ?? 'create when enabled'}`)].join('\n'); }
     private async validateDiscord(guild: any, c: NonNullable<StoredSetupDraft['organization']>, selectedKeys: Set<string>): Promise<void> {
         const roles = await guild.roles.fetch();
         await guild.members.fetchMe();

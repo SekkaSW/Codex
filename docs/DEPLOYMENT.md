@@ -192,3 +192,40 @@ Remove-Variable commandHeaders
 ```
 
 Review overlapping names and each command's options against current generated definitions; preserve configured organization roots and unrelated registrations. Removal, if needed, is a separate explicitly scoped operator action. None of these live commands was executed during this correction. Older open compatibility creation forms must be reopened because new forms bind their guild explicitly. See [the correction report](CONTACT_PERMISSION_CORRECTION.md) for local evidence and limits.
+
+## Wording and UX rollout — 2026-09-20
+
+Source corrections include setup messages, runtime responses and registration descriptions. Building compiles those changes; it does not change messages in a running process or in Discord history. This pass adds no migration: latest remains 014, and existing canonical/mirror files are unchanged. A database at 012 still needs the existing 013 and 014 pairs listed above, through the established reviewed migration process. No hosted migration command is required specifically for this wording pass.
+
+With dependencies already installed and the required secrets supplied securely in the process environment:
+
+```powershell
+Set-Location 'C:\Users\elija\OneDrive\Desktop\SekkaSWCodex'
+npm.cmd run build
+```
+
+Restart only this bot using its existing supervisor. The repository has no restart script or configured service-manager command. For a foreground instance only, press Ctrl+C in that instance's own terminal, then start the new build:
+
+```powershell
+npm.cmd start
+```
+
+Do not stop unrelated Node processes or start a second writer for the same servers. `start` requires `DISCORD_TOKEN`, `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; it does not load `.env` automatically. These commands were verified from package.json/main.ts, not executed against Discord.
+
+Register revised descriptions when rolling out this change; runtime/setup text does not require registration, but slash descriptions do. Registration requires `DISCORD_TOKEN` and `DISCORD_APPLICATION_ID` and has no CLI scope flags:
+
+```powershell
+# Global core definitions
+Remove-Item Env:DISCORD_GUILD_ID -ErrorAction SilentlyContinue
+Remove-Item Env:ORGANIZATION_NAMESPACE -ErrorAction SilentlyContinue
+npm.cmd run deploy:commands
+
+# Configured organization root: repeat for each affected server
+$env:DISCORD_GUILD_ID = '<public-server-id>'
+$env:ORGANIZATION_NAMESPACE = '<configured-command-without-slash>'
+npm.cmd run deploy:commands
+```
+
+These are separate POST-upsert scopes. Inspect guild-local definitions that may shadow globals using the read-only GET examples in the preceding rollout section. Do not bulk-delete registrations. The organization-root description remains the existing ownership marker used by controlled setup synchronization.
+
+Already-posted setup messages remain unchanged. Run `/server setup`, choose Resume, and use the newly rendered question in the same established conversation. Do not reset drafts, move private setup to a public channel, or edit historical conversations merely to refresh copy. Test the fresh/resumed question, one permission review, paired rank selection in both orders, a native Supply contribution, Member Contact creation, Advanced Member Funds mutation, disabled-feature response and private briefing delivery in operator-controlled staging. No staging or live deployment was performed by the audit.

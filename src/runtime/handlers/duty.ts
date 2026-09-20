@@ -1,3 +1,4 @@
+import { replyText } from '../interactions.js';
 import { AdministrationService, desiredMemberRoles, type MemberState } from '../../administration.js';
 import { authorize, seedMember, type MemberRepositories } from './members.js';
 export interface DutyRepositories extends MemberRepositories {
@@ -10,7 +11,7 @@ export async function handleDuty(i: any, store: DutyRepositories): Promise<void>
     const before = await store.member(i.guildId, targetId), c = await store.organization(i.guildId), sub = i.options.getSubcommand();
     const requested = i.options.getString?.('duty');
     if(sub==='setup'){await i.editReply({content:'Configure duties in /server setup → Duties & Assignments. Managed duty roles are created only at final setup confirmation.',ephemeral:true});return;}
-    if(sub==='list' && requested){const duty=c.duties.find(d=>d.roleId===requested||d.displayName.toLowerCase()===requested.toLowerCase());if(!duty)throw new Error('Choose a configured duty');const members=(await store.members(i.guildId)).filter(m=>m.dutyIds.includes(duty.roleId));await i.editReply({content:`${duty.displayName}: ${members.map(m=>m.displayName).join(', ')||'No assigned members'}`,allowedMentions:{parse:[]}});return;}
+    if(sub==='list' && requested){const duty=c.duties.find(d=>d.roleId===requested||d.displayName.toLowerCase()===requested.toLowerCase());if(!duty)throw new Error('Choose a configured duty');const members=(await store.members(i.guildId)).filter(m=>m.dutyIds.includes(duty.roleId));await i.editReply(replyText(`${duty.displayName}: ${members.map(m=>m.displayName).join(', ')||'No assigned members'}`));return;}
     if (sub === 'list') {
         const members=await store.members(i.guildId);const text=c.duties.map(d=>d.displayName+': '+(members.filter(m=>m.dutyIds.includes(d.roleId)).map(m=>m.displayName).join(', ')||'No assigned members')).join('\n')||'No configured duties';await i.editReply(text.length>1900?{content:'Duty holders attached.',files:[{attachment:Buffer.from(text),name:'duties.txt'}],allowedMentions:{parse:[]}}:{content:text,allowedMentions:{parse:[]}});
         return;

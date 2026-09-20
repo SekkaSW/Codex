@@ -21,13 +21,13 @@ export function selectionView(d:StoredSetupDraft):any|undefined {
  const select=(action:string,options:any[],multiple=false)=>row({type:3,custom_id:id(action),placeholder:action==='tier'?'Choose permission level':'Choose next ranks',min_values:1,max_values:multiple?options.length:1,options});
  let text='';
  if(p.review){
-  if(g.step==='permissions')text=`${permissionLabels[permissionTiers[g.index]!]} permissions\nYou selected: ${p.roles!.map(roleName).join(', ')||'No roles'}\nAre these all the roles you want at this permission level?`;
-  if(g.step==='rank-config')text=`Confirm rank: ${c.ranks[g.index]!.name}\nDiscord role: ${roleName(p.role!)}\nPermission level: ${permissionLabels[p.tier!]}\nUse these settings for ${c.ranks[g.index]!.name}?`;
+  if(g.step==='permissions')text=`${permissionLabels[permissionTiers[g.index]!]} permissions\nYou selected: ${p.roles!.map(roleName).join(', ')||'No roles'}\nConfirm these roles for this permission level in your draft?`;
+  if(g.step==='rank-config')text=`Confirm rank: ${c.ranks[g.index]!.name}\nDiscord role: ${roleName(p.role!)}\nPermission level: ${permissionLabels[p.tier!]}\nUse these settings for ${c.ranks[g.index]!.name} in your draft?`;
   if(g.step==='progress-next')text=`Confirm progression — ${c.branches.find(b=>b.id===g.branch)?.name}\n${c.ranks.find(r=>r.id===g.source)?.name} can advance to:\n${p.targets!.map(id=>'- '+c.ranks.find(r=>r.id===id)?.name).join('\n')||'No further ranks'}\nIs this correct?`;
   if(g.step==='features')text=`Confirm optional features\nEnabled: ${featureKeys.filter(k=>p.features!.includes(k)).map(k=>featureLabels[featureKeys.indexOf(k)]).join(', ')||'None'}\nNot enabled: ${featureKeys.filter(k=>!p.features!.includes(k)).map(k=>featureLabels[featureKeys.indexOf(k)]).join(', ')||'None'}\nAre these the features you want?`;
   row(button('accept','Confirm & Next'),button('change','Change Selection'));
  }else if(g.step==='permissions'){
-  text=`${permissionLabels[permissionTiers[g.index]!]} permissions\nWhich Discord role(s) belong at this permission level?`;
+  text=`${g.index===0?'Permission levels control access; they are separate from ranks. Higher levels include lower levels.\n\n':''}${permissionLabels[permissionTiers[g.index]!]} permissions\nWhich Discord role(s) belong at this permission level?`;
   row({type:6,custom_id:id('role'),placeholder:'Choose permission roles',min_values:1,max_values:25,default_values:p.roles!.map(id=>({id,type:'role'}))});row(button('none','No Roles'));
  }else if(g.step==='rank-config'){
   const r=c.ranks[g.index]!; text=`Rank ${g.index+1} of ${c.ranks.length}: ${r.name}\nChoose its Discord role and permission level.\nDiscord role: ${p.role?roleName(p.role):'Unanswered'}\nPermission level: ${p.tier?permissionLabels[p.tier]:'Unanswered'}`;
@@ -36,7 +36,7 @@ export function selectionView(d:StoredSetupDraft):any|undefined {
   if(p.role&&p.tier)row(button('review-answer','Review These Settings'));
  }else if(g.step==='progress-next'){
   const all=c.ranks.filter(r=>r.id!==g.source),page=all.slice(g.page*25,g.page*25+25);
-  text=`${c.branches.find(b=>b.id===g.branch)?.name} progression: ${c.ranks.find(r=>r.id===g.source)?.name}\nWhat rank(s) can this rank advance to?`;
+  text=`Progression — ${c.branches.find(b=>b.id===g.branch)?.name}: ${c.ranks.find(r=>r.id===g.source)?.name}\nWhat rank(s) can this rank advance to?`;
   if(page.length)select('answer',page.map(r=>({value:r.id,label:r.name.slice(0,100),default:p.targets?.includes(r.id)})),true);
   row(button('end','This Is the Final Rank'));
   if(all.length>25)row(...(g.page?[button('previous','Previous')]:[]),...(all.length>(g.page+1)*25?[button('next','Next')]:[]));

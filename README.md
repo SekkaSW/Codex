@@ -16,15 +16,15 @@ Intelligence and Trailmarks are independently optional. Existing guilds retain b
 
 Every answer saves an owner-scoped, revision-checked, seven-day draft. Back retains values; optional duties offer Skip; Cancel discards only the draft. Resume continues after restart. Edit Section offers targeted settings within the six sections, plus View Saved, Repair and Detailed Editor. Only **Confirm Setup** applies configuration, creates duty roles and provisions channels. Repair uses stored IDs and respects disabled features without renaming, moving or deleting healthy resources. See the [refinement report](docs/SERVER_SETUP_REFINEMENT.md).
 
-## Start with a dashboard
+## Use native commands
 
-Use `/help` to discover your available features, or `/trailmark panel`, `/application panel`, `/funds panel`, and the other feature dashboards. Buttons open selectors and forms backed by the existing production handlers. The configured organization command, such as `/example panel`, opens a member navigation hub; staff record tools remain permission-gated. Reference includes search and the assignment board includes My Claimed Assignments. All previous subcommands remain available; `/trailmark panel` now opens its dashboard, whose Request Access button opens the original access selector. Discord command trees that have subcommands use `panel` rather than an unsupported bare root invocation.
+Use slash commands directly: Discord shows the supported arguments, required fields and autocomplete. For example, use /supply log to record item contributions, /contact create to create a Contact, and /application apply to open its application form. /help and feature panels are optional shortcuts. /trailmark panel posts the temporary-access selector. Meaningful forms, ballots and reports remain available.
 
-Destructive actions ask for confirmation. Expired input forms can be reopened from `/help`; setup progress remains durable across bot restarts. Register dashboard commands when installing the earlier UX overhaul, as described in [deployment](docs/DEPLOYMENT.md). The setup refinement requires migration 012 and a bot restart, but no slash-command redeployment. See the [setup correction report](docs/SETUP_MESSAGE_CORRECTION.md) and [UX completion report](docs/UX_COMPLETION.md) for coverage and limitations.
+Setup asks: “What do you want your command to be? For example: enter Order for /order. Send your answer here.” Order, order and /order store the same command, order; spaces inside a name remain invalid. Accepted answers change only the setup draft until Confirm Setup. See [the wording audit](docs/COMMAND_WORDING_AUDIT.md) for current behavior, tests and rollout.
 
 ## Member administration
 
-`/roster` and the configured organization namespace expose `info`, `export`, `assignments`, `audit`, `inactive-review`, `sync-member`, `sync-all`, `sync-join-history`, `status`, `retire-left`, `note`, `notes`, `rank`, and `promote`. Administration requires LEVEL_3 or Discord Administrator; arbitrary initial/corrective rank changes require Discord Administrator. Promotion uses configured graph edges and a target selector, never tier arithmetic.
+`/roster` and the configured organization namespace expose `info`, `export`, `assignments`, `audit`, `inactive-review`, `sync-member`, `sync-all`, `sync-join-history`, `status`, `retire-left`, `note`, `notes`, `rank`, and `promote`. Administration requires Advisors (LEVEL_3) or Discord Administrator; arbitrary initial/corrective rank changes require Discord Administrator. Promotion uses configured graph edges and a target selector, never tier arithmetic.
 
 Use `/assignment set-member`, `clear-member`, and `sync-roles` for member assignments. `/duty assign`, `remove`, and `list` use independently configured duty roles. Changes persist member state, rank history where applicable, and audit together. Discord role changes are scoped to configured roles, with compensation on confirmed persistence failure.
 
@@ -36,7 +36,7 @@ Discord cannot expose a different global command tree to each guild from one sta
 
 Neutral permissions are hierarchical from `BASELINE` through `LEVEL_4`; any number of Discord roles can map to a tier. `ADMIN` uses Discord administrator authorization. Ranks and advancement are explicit graph edges grouped by branch. Duties are existing Discord roles and never implicit ranks. Assignment groups contain arbitrary administrator-defined entries and independently choose single/multiple and optional/required membership.
 
-## Resources and modules
+## Channels and optional features
 
 Every managed category/channel is recorded by guild and logical key. Dynamic Trailmark and report-topic records use owned keys. Briefings, patrols, supply, and Atlas are per-server switches: only Briefings adds `dispatch-desk`; only Atlas adds `atlas`; patrols need no channel; supply shares assignments.
 
@@ -52,7 +52,7 @@ Run `npm test`, `npm run typecheck`, and `npm run lint`. Build with `npm run bui
 
 ## Production implementation
 
-The runtime uses Discord.js interactions, a Supabase service-role repository, ID-based resource repair, and multi-guild background-job boundaries. Apply all eleven migrations in order through `011_production_audit.sql` before running this version. Run one active writer for each guild; see [deployment and recovery](docs/DEPLOYMENT.md). The test suite exercises the production handlers with Discord fakes and applies the real migrations to a local PostgreSQL engine. Retained service behavior and known implementation limits are tracked in [the feature matrix](docs/FEATURE_MATRIX.md); Atlas and the unchanged Skyrim bridge boundary are documented separately in [Atlas compatibility](docs/ATLAS_COMPATIBILITY.md).
+The runtime uses Discord.js interactions, a Supabase service-role repository, ID-based resource repair, and multi-guild background-job boundaries. Apply pending migrations in order through `014_native_workflow_contracts.sql` before running this version. Run one active writer for each guild; see [deployment and recovery](docs/DEPLOYMENT.md). The test suite exercises the production handlers with Discord fakes and applies the real migrations to a local PostgreSQL engine. Retained service behavior and known implementation limits are tracked in [the feature matrix](docs/FEATURE_MATRIX.md); Atlas and the unchanged Skyrim bridge boundary are documented separately in [Atlas compatibility](docs/ATLAS_COMPATIBILITY.md).
 
 ## Advancement and field access
 

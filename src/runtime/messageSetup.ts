@@ -1,6 +1,7 @@
+import { commandNameQuestion } from './userCopy.js';
 import { ApplicationFlagsBitField, ChannelType, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';
 import type { StoredSetupDraft } from '../setup.js';
-import { refinementText, setupTextLimit, humanSetupCopy } from './setupRefinement.js';
+import { refinementText, setupTextLimit } from './setupRefinement.js';
 import { SetupWizard } from './setupWizard.js';
 import { conversationResources } from './setupConversation.js';
 import { friendlyError } from './confirmation.js';
@@ -153,6 +154,7 @@ export class MessageSetupWizard extends SetupWizard {
     private question(d: StoredSetupDraft): string { return JSON.stringify([d.editor?.refinement && [d.editor.refinement.step,d.editor.refinement.index,d.editor.refinement.group,d.editor.refinement.branch,d.editor.refinement.source,d.editor.refinement.page], d.editor?.section, d.editor?.conversation?.step, d.editor?.selected, d.editor?.conversation?.index, d.editor?.conversation?.group, d.editor?.conversation?.branch]); }
 
     private textPrompt(d: StoredSetupDraft, content: string): any {
+        if(d.editor?.section === 'namespace' || d.editor?.conversation?.step === 'namespace') content = commandNameQuestion;
         return { content, components: [{ type: 1, components: [
             { type: 2, custom_id: `setup:${d.revision}:text-back`, label: 'Back', style: 2 },
             { type: 2, custom_id: `setup:${d.revision}:cancel`, label: 'Cancel', style: 4 },
@@ -169,7 +171,7 @@ export class MessageSetupWizard extends SetupWizard {
                 const raw = modal.toJSON?.() ?? modal;
                 answerAction = raw.custom_id.split(':')[2];
                 const input = raw.components[0].components[0];
-                payload = this.textPrompt(before, `**${raw.title}: ${input.label}**`);
+                payload = this.textPrompt(before, before.editor?.section === 'namespace' || before.editor?.conversation?.step === 'namespace' ? commandNameQuestion : `**${raw.title}: ${input.label}**`);
             };
             const value = Reflect.get(target, key); return typeof value === 'function' ? value.bind(target) : value;
         } });
@@ -179,7 +181,7 @@ export class MessageSetupWizard extends SetupWizard {
             else await super.handle(adapter);
             if (action === 'resume' && before.messageConversation?.textPrompt) {
                 answerAction = before.messageConversation.textPrompt.action;
-                payload = this.textPrompt(before, before.messageConversation.textPrompt.content);
+                payload = this.textPrompt(before, before.editor?.section === 'namespace' ? commandNameQuestion : before.messageConversation.textPrompt.content);
             }
         }
         catch (error) {
@@ -197,7 +199,7 @@ export class MessageSetupWizard extends SetupWizard {
         }
         const latest = await this.store.loadSetupDraft(before.guildId);
         if (latest && !latest.messageConversation) { latest.messageConversation = { channelId: before.messageConversation!.channelId, privateThread: before.messageConversation!.privateThread, threadAttempted: true }; await this.save(latest); }
-        if (message && latest && latest.revision > before.revision && !before.editor?.conversation && !before.editor?.refinement && payload) payload.content = `Value set to **${i.fields.getTextInputValue('name').trim()}** in the draft.\n\n${payload.content}`;
+        if (message && latest && latest.revision > before.revision && !before.editor?.conversation && !before.editor?.refinement && payload) payload.content = `${before.editor?.section === 'namespace' ? `Command set to /${latest.config.commandNamespace} in your setup draft.` : `Value set to **${i.fields.getTextInputValue('name').trim()}** in the draft.`}\n\n${payload.content}`;
         const sameRank = before.editor?.refinement?.step === 'rank-config' && latest?.editor?.refinement?.step === 'rank-config' && !latest.editor.refinement.pending?.review && before.editor.refinement.index === latest.editor.refinement.index && ['refine-role','refine-tier'].includes(action);
         if (payload) await this.publish(before.guildId, i.channel, payload, answerAction, !['progress', 'restart', 'view', 'repair', 'repair-confirm'].includes(action), sameRank ? i.message : undefined);
         if (!latest && before.messageConversation?.privateThread) await i.channel.setArchived(true).catch(() => undefined);
@@ -206,7 +208,6 @@ export class MessageSetupWizard extends SetupWizard {
     private async publish(guildId: string, channel: any, source: any, explicitAction?: string, clearText = false, inPlace?: any): Promise<void> {
         const d = await this.store.loadSetupDraft(guildId);
         const payload = { ...source, allowedMentions: safe }; delete payload.ephemeral;
-        if (d?.refinedSetup && payload.content) payload.content = humanSetupCopy(payload.content);
         if (!d?.messageConversation) { await channel.send(payload); return; }
         this.active.delete(guildId);
         const b = d.messageConversation;
@@ -224,10 +225,10 @@ export class MessageSetupWizard extends SetupWizard {
             if (c.custom_id?.endsWith(':refine-text')) { answerAction = 'refine-answer'; return false; }
             if (c.custom_id?.endsWith(':guide-text')) { answerAction = 'guide-answer'; return false; }
             return true;
-        }).map((c: any) => ({ ...c, ...(d.refinedSetup && c.label ? {label: humanSetupCopy(c.label)} : {}), ...(d.refinedSetup && c.options ? {options: c.options.map((o:any) => ({...o,label:humanSetupCopy(o.label)}))} : {}), custom_id: c.custom_id?.replace(/^setup:\d+:/, `setup:${revision}:`) })) })).filter((r: any) => r.components.length);
+        }).map((c: any) => ({ ...c, custom_id: c.custom_id?.replace(/^setup:\d+:/, `setup:${revision}:`) })) })).filter((r: any) => r.components.length);
         if (answerAction) {
             const value = answerAction !== 'create' ? currentSetupText(d) : undefined;
-            payload.content += `${value ? `\nCurrent value: **${value.length > 600 ? value.slice(0,600) + "…" : value}**` : ''}\n${b.privateThread ? 'Send your answer here.' : 'Use Discord Reply on this question to answer.'}`;
+            payload.content += `${value ? `\nCurrent value: **${value.length > 600 ? value.slice(0,600) + "…" : value}**` : ''}${payload.content.includes('Send your answer here.') ? '' : '\nSend your answer here.'}${b.privateThread ? '' : '\nUse Discord Reply on this question so Codex can match your answer.'}`;
             if (value && payload.components.length < 5) payload.components.unshift({ type: 1, components: [{ type: 2, custom_id: `setup:${revision}:keep`, label: 'Keep Current', style: 2 }] });
         }
         payload.content = payload.content?.slice(0, 2000);

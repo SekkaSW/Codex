@@ -39,3 +39,8 @@ After (synthetic fixture roles):
 - Optional Features: Briefings and Atlas → review enabled Briefings, Atlas / not enabled Patrol, Supply → Confirm & Next → Channels.
 
 No question confirmation creates duty roles or applies production configuration. Tests also exercise replacement, conflicts, explicit empty answers, fast paired selectors, three distinct rank pairs, stale confirmation/selector rejection and partial-pair resume. Local tests do not certify live Discord behavior; staging must repeat this transcript after bot restart.
+
+
+## Wording correction — 2026-09-20
+
+This dated correction supersedes older helper copy and any dashboard-first instructions above. [The command wording audit](COMMAND_WORDING_AUDIT.md) records the current 25 trees / 202 operations, exact command-name prompt, Member Contact creation, Advanced Member Funds mutations and preserved selection confirmations. The earlier namespace investigation tested parsing but did not resolve the wording complaint; the production question and fallback renderers are now corrected, and Order is normalized before validation. Historical source contracts and earlier checkpoint counts remain historical evidence.

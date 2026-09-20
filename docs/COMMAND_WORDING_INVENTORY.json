@@ -1,0 +1,2349 @@
+{
+  "scope": "Local generated definitions with synthetic organization namespace; aliases counted separately.",
+  "trees": 25,
+  "operationCount": 202,
+  "operations": [
+    {
+      "command": "/ping",
+      "description": "Check whether the Codex bot is awake.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/bot.ts",
+      "evidence": "test/audit.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/help",
+      "description": "Open your Codex feature guide",
+      "orderedInputs": [],
+      "implementation": "src/runtime/panels.ts",
+      "evidence": "test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/server setup",
+      "description": "Start or resume the setup wizard",
+      "orderedInputs": [],
+      "implementation": "src/runtime/messageSetup.ts",
+      "evidence": "test/setupRefinement.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement setup",
+      "description": "Discord Administrator: configure the promotion channel.",
+      "orderedInputs": [
+        "channel!: Channel where promotion votes and discussion threads are posted."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement eligible",
+      "description": "Show promotion readiness, field-trial, and hold statuses.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement status",
+      "description": "Save a candidate’s promotion progress.",
+      "orderedInputs": [
+        "candidate!: Recruit.",
+        "progress!: Current promotion progress."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement open",
+      "description": "Open a promotion vote.",
+      "orderedInputs": [
+        "candidate!: Candidate.",
+        "target_rank: Target rank.",
+        "reason: Optional reason or context.",
+        "mentions: Optional role to mention on the vote post.",
+        "mentions_2: Optional additional role to mention.",
+        "mentions_3: Optional additional role to mention.",
+        "mentions_4: Optional additional role to mention.",
+        "mentions_5: Optional additional role to mention."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement close",
+      "description": "Close voting and show results; this does not approve a promotion.",
+      "orderedInputs": [
+        "vote!: Open vote ID."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement approve",
+      "description": "Approve an eligible case and apply the candidate’s promotion.",
+      "orderedInputs": [
+        "vote!: Open or closed vote ID."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement deny",
+      "description": "Deny a promotion vote.",
+      "orderedInputs": [
+        "vote!: Open or closed vote ID."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement ballots",
+      "description": "Show who voted Yes, No, or Abstain on a promotion vote.",
+      "orderedInputs": [
+        "vote!: Vote ID."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/advancement refresh",
+      "description": "Recover the persisted promotion board",
+      "orderedInputs": [
+        "vote!: Promotion case"
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark panel",
+      "description": "Post a Trailmark access panel.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark leave",
+      "description": "Leave your current Trailmark.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark list",
+      "description": "List active Trailmarks.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark sessions",
+      "description": "Show active Trailmark access sessions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark report",
+      "description": "Open a standardized report form for the Trailmark you are visiting.",
+      "orderedInputs": [
+        "type!: Report format.",
+        "contact: Optional person or group involved.",
+        "contact_2: Optional additional person or group.",
+        "contact_3: Optional additional person or group.",
+        "participant: Another Member who participated.",
+        "participant_2: Another participating Member.",
+        "participant_3: Another participating Member."
+      ],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark create",
+      "description": "Create a private Trailmark channel.",
+      "orderedInputs": [
+        "name!: Trailmark name.",
+        "assignment!: Configured assignment associated with this Trailmark.",
+        "location_description!: In-character location description.",
+        "screenshot: Optional location screenshot.",
+        "atlas_location_id: Identifier of an existing Atlas location; does not create a map location."
+      ],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark edit",
+      "description": "Edit an existing Trailmark.",
+      "orderedInputs": [
+        "trailmark!: Trailmark to edit.",
+        "name: New Trailmark name.",
+        "assignment: Configured assignment associated with this Trailmark.",
+        "location_description: New in-character location description.",
+        "screenshot: Replace the location screenshot.",
+        "clear_screenshot: Remove the current screenshot.",
+        "atlas_location_id: Identifier of an existing Atlas location; does not create a map location.",
+        "clear_atlas: Remove the Atlas location UUID.",
+        "pinned: Pin or unpin this Trailmark at the top of the panel.",
+        "patrol_primary: Primary Trailmark this one shares patrol activity with.",
+        "clear_patrol_primary: Stop sharing patrol activity with another Trailmark."
+      ],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark deactivate",
+      "description": "Deactivate a Trailmark without deleting channel history.",
+      "orderedInputs": [
+        "trailmark!: Trailmark to deactivate."
+      ],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark set-atlas",
+      "description": "Set or replace a Trailmark Atlas location UUID.",
+      "orderedInputs": [
+        "trailmark!: Trailmark to update.",
+        "atlas_location_id!: Identifier of an existing Atlas location; does not create a map location."
+      ],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark clear-atlas",
+      "description": "Remove a Trailmark Atlas location UUID.",
+      "orderedInputs": [
+        "trailmark!: Trailmark to update."
+      ],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark hq",
+      "description": "Select the Trailmark used as Headquarters.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark repair",
+      "description": "Select a Trailmark whose Discord channel needs repair.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/trailmark configure",
+      "description": "Select a Trailmark to edit its access level or session duration.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeField.ts; src/runtime/handlers/field.ts; src/runtime/trailmarkAccess.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/atlas link",
+      "description": "Create a ten-minute code to link your trusted Atlas account.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/atlas.ts",
+      "evidence": "test/phase9.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/atlas panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/atlas.ts",
+      "evidence": "test/phase9.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/atlas unlink",
+      "description": "Unlink your Atlas identity and cancel pending requests.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/atlas.ts",
+      "evidence": "test/phase9.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/atlas status",
+      "description": "View your Atlas link status and Trailmark dependencies.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/atlas.ts",
+      "evidence": "test/phase9.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster export",
+      "description": "Export the roster as CSV.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster info",
+      "description": "View a member’s roster record.",
+      "orderedInputs": [
+        "member: Member"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster assignments",
+      "description": "View a member’s configured assignments.",
+      "orderedInputs": [
+        "member!: Member"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster audit",
+      "description": "Export a member’s administration audit.",
+      "orderedInputs": [
+        "member!: Member"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster inactive-review",
+      "description": "List roster members whose status is not Active.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster sync-member",
+      "description": "Save a member’s current Discord name and membership state.",
+      "orderedInputs": [
+        "member!: Member",
+        "reason: Audit reason"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster sync-all",
+      "description": "Synchronize a page of known and newly discovered members.",
+      "orderedInputs": [
+        "page: Page of up to 100 members, starting at zero"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster sync-join-history",
+      "description": "Save a member’s current Discord join date.",
+      "orderedInputs": [
+        "member!: Member",
+        "reason: Audit reason"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster status",
+      "description": "Change a member’s saved status and synchronize configured roles.",
+      "orderedInputs": [
+        "member!: Member",
+        "value!: Membership status",
+        "reason: Audit reason"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster retire-left",
+      "description": "Retire a page of roster members already marked Left.",
+      "orderedInputs": [
+        "page: Page of up to 100 members, starting at zero"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster note",
+      "description": "Append an authored note to a member’s record.",
+      "orderedInputs": [
+        "member!: Member",
+        "body!: Authored note",
+        "visibility: Intended audience; retrieval remains administrator-only"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster notes",
+      "description": "Export authored notes; Discord Administrator required.",
+      "orderedInputs": [
+        "member!: Member"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster promote",
+      "description": "Choose an eligible next rank from the configured progression.",
+      "orderedInputs": [
+        "member!: Member"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/roster rank",
+      "description": "Initialize or correct a rank; Discord Administrator required.",
+      "orderedInputs": [
+        "member!: Member"
+      ],
+      "implementation": "src/runtime/handlers/members.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/recruit invite",
+      "description": "Create an onboarding invite.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/recruit welcome",
+      "description": "Send a recruit onboarding checklist.",
+      "orderedInputs": [
+        "user!: Recruit to welcome."
+      ],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/recruit panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds deposit",
+      "description": "Advanced Member+: record an organization fund donation.",
+      "orderedInputs": [
+        "member!: Member who donated.",
+        "amount!: Positive whole-number amount in your organization’s currency.",
+        "note: Optional note."
+      ],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds spend",
+      "description": "Advanced Member+: record organization spending.",
+      "orderedInputs": [
+        "amount!: Positive whole-number amount in your organization’s currency.",
+        "note!: What the funds were spent on.",
+        "paid_to: Optional member who received the funds."
+      ],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds set-balance",
+      "description": "Advanced Member+: record an adjustment to the target balance.",
+      "orderedInputs": [
+        "amount!: Target balance in your organization’s currency.",
+        "note: Adjustment note."
+      ],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds refresh-summary",
+      "description": "Advanced Member+: refresh the existing summary from the saved ledger.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds balance",
+      "description": "Show the current organization fund balance.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds history",
+      "description": "Show recent organization fund transactions.",
+      "orderedInputs": [
+        "member: Filter to one member."
+      ],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds undo-last",
+      "description": "Advanced Member+: reverse the latest unreversed ledger entry.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds monthly",
+      "description": "Summarize a UTC calendar month.",
+      "orderedInputs": [
+        "year!: Year.",
+        "month!: UTC calendar month, 1–12."
+      ],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/funds panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/funds.ts",
+      "evidence": "test/contactPermissions.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel set-hq",
+      "description": "Set the Trailmark used as the HQ delivery point.",
+      "orderedInputs": [
+        "trailmark!: HQ Trailmark."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel topic-add",
+      "description": "Create an intel topic and report bulletin.",
+      "orderedInputs": [
+        "name!: Topic name.",
+        "keywords!: Comma-separated keywords, such as vampire,vampires.",
+        "channel: Existing report channel. If omitted, Codex creates one in Intel."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel topic-edit",
+      "description": "Add or replace keywords for an existing intel topic.",
+      "orderedInputs": [
+        "topic!: Intel topic to update.",
+        "keywords!: Comma-separated keywords to add or use as the replacement list.",
+        "append: Append to existing keywords. Defaults to yes."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel topic-list",
+      "description": "List configured topics in classification order.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel catchall-set",
+      "description": "Set or create the fallback topic for uncategorized delivered reports.",
+      "orderedInputs": [
+        "topic: Existing intel topic to use as the catchall.",
+        "name: Name for a new catchall topic if topic is omitted.",
+        "channel: Existing report channel for a new catchall topic. If omitted, Codex creates one."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel catchall-clear",
+      "description": "Restore the managed catch-all destination for uncategorized reports.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel refresh",
+      "description": "Rebuild a topic bulletin from saved reports delivered to HQ.",
+      "orderedInputs": [
+        "topic!: Intel topic to rebuild."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel repair-reporters",
+      "description": "Repair recognized bot report embeds in place; missing deliveries are reported.",
+      "orderedInputs": [
+        "topic: Topic to repair. Omit to repair all topics."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel backfill",
+      "description": "Retry saved reports awaiting delivery; does not import old Discord messages.",
+      "orderedInputs": [
+        "topic: Filter saved report retries to a topic; omit for all topics.",
+        "mode: Saved-report retry mode; historical Discord import is unavailable.",
+        "after: Only saved reports captured on or after YYYY-MM-DD.",
+        "limit_per_trailmark: Maximum saved reports to examine per Trailmark (1–5,000)."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel reports",
+      "description": "Browse saved reports available to you.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel deliver",
+      "description": "Select a report for HQ delivery while you have active HQ access.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel link-report",
+      "description": "Select a saved report and change its Contact links.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/intel recover-delivery",
+      "description": "Bind an uncertain delivery to its original bot message after verification.",
+      "orderedInputs": [
+        "key!: Delivery key from recovery error",
+        "message!: Original bot message ID"
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/phase6.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/strongbox drop",
+      "description": "Leave a private message in the HQ Strongbox.",
+      "orderedInputs": [
+        "message!: Message for Advisors or higher.",
+        "attachment: Optional supporting image or file."
+      ],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/strongbox setup",
+      "description": "Verify the configured private review and public receipt destinations.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/strongbox panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/strongbox submit",
+      "description": "Open a private Strongbox submission form.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/strongbox history",
+      "description": "Browse your submissions and recover their delivery.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/strongbox review",
+      "description": "Advisors+: browse private submissions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/strongbox process",
+      "description": "Advisors+: mark a selected submission processed.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/strongbox reject",
+      "description": "Advisors+: mark a selected submission rejected.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/reference add",
+      "description": "Open a private form to preserve verbatim source material.",
+      "orderedInputs": [
+        "title!: Short reference title.",
+        "category!: Type of source.",
+        "source-url!: Original message, ticket, document or image link.",
+        "authority: Your classification, not automatic verification. Default: unverified.",
+        "context: IC/OOC context, if known.",
+        "confidentiality: Handling label; archive access remains restricted. Default: Advisors+.",
+        "posted-at: Original timestamp with timezone, e.g. 2026-09-07T18:30:00Z. Omit if unknown.",
+        "attachment-links: Supporting http(s) links, separated by whitespace.",
+        "supersedes: ID of an earlier reference this replaces (the original is preserved)."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/optional.ts; src/runtime/browse.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/reference view",
+      "description": "Retrieve a private reference by ID.",
+      "orderedInputs": [
+        "id!: Full archived reference ID."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/optional.ts; src/runtime/browse.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/reference panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/optional.ts; src/runtime/browse.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/reference get",
+      "description": "Select a shared reference entry to read.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/optional.ts; src/runtime/browse.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/reference list",
+      "description": "Browse shared reference entries.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/optional.ts; src/runtime/browse.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/reference edit",
+      "description": "Advisors+: create or update a shared reference by lookup key.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/optional.ts; src/runtime/browse.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/ux.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply create",
+      "description": "Create an auto-updating supply assignment board",
+      "orderedInputs": [
+        "name!: Assignment name",
+        "client!: Client receiving supplies",
+        "sale_price!: Client price per item",
+        "member_rate!: Member payout per item",
+        "item_1!: Item 1; supply its matching quota.",
+        "quota_1!: Quota for item 1; whole number 1–1,000,000,000. Supply both together.",
+        "item_2: Item 2; supply its matching quota.",
+        "quota_2: Quota for item 2; whole number 1–1,000,000,000. Supply both together.",
+        "item_3: Item 3; supply its matching quota.",
+        "quota_3: Quota for item 3; whole number 1–1,000,000,000. Supply both together.",
+        "item_4: Item 4; supply its matching quota.",
+        "quota_4: Quota for item 4; whole number 1–1,000,000,000. Supply both together.",
+        "organizer: Organizing member; defaults to you",
+        "notes: Instructions or storage location"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply log",
+      "description": "Log items contributed to an active assignment.",
+      "orderedInputs": [
+        "assignment!: Supply assignment code",
+        "item!: Item 1; supply its matching quantity.",
+        "quantity!: Quantity for item 1; whole number 1–1,000,000,000. Supply both together.",
+        "item_2: Item 2; supply its matching quantity.",
+        "quantity_2: Quantity for item 2; whole number 1–1,000,000,000. Supply both together.",
+        "item_3: Item 3; supply its matching quantity.",
+        "quantity_3: Quantity for item 3; whole number 1–1,000,000,000. Supply both together.",
+        "item_4: Item 4; supply its matching quantity.",
+        "quantity_4: Quantity for item 4; whole number 1–1,000,000,000. Supply both together.",
+        "member: Advisors: credit another member; defaults to you",
+        "note: Contribution note"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply undo-last",
+      "description": "Undo the latest contribution",
+      "orderedInputs": [
+        "assignment!: Supply assignment code",
+        "member: Advisors: undo another member’s contribution"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply redistribute",
+      "description": "Redistribute contributor credit before a cutoff",
+      "orderedInputs": [
+        "assignment!: Supply assignment code",
+        "source_id!: Former contributor Discord ID or mention",
+        "before!: ISO cutoff time",
+        "method!: Credit allocation method",
+        "reason: Audit reason"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply status",
+      "description": "status supply assignment",
+      "orderedInputs": [
+        "assignment!: Supply assignment code"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply contributors",
+      "description": "contributors supply assignment",
+      "orderedInputs": [
+        "assignment!: Supply assignment code"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply refresh",
+      "description": "refresh supply assignment",
+      "orderedInputs": [
+        "assignment!: Supply assignment code"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply close",
+      "description": "close supply assignment",
+      "orderedInputs": [
+        "assignment!: Supply assignment code"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply reopen",
+      "description": "reopen supply assignment",
+      "orderedInputs": [
+        "assignment!: Supply assignment code"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/supply cancel",
+      "description": "cancel supply assignment",
+      "orderedInputs": [
+        "assignment!: Supply assignment code"
+      ],
+      "implementation": "src/runtime/supply.ts",
+      "evidence": "test/nativeSupply.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/duty assign",
+      "description": "Advisors+: assign a configured duty to a member.",
+      "orderedInputs": [
+        "member!: Member receiving the duty.",
+        "duty!: Duty to assign."
+      ],
+      "implementation": "src/runtime/handlers/duty.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/duty remove",
+      "description": "Advisors+: remove a configured duty from a member.",
+      "orderedInputs": [
+        "member!: Member losing the duty.",
+        "duty!: Duty to remove.",
+        "reason: Optional removal reason."
+      ],
+      "implementation": "src/runtime/handlers/duty.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/duty list",
+      "description": "List current organization duty holders.",
+      "orderedInputs": [
+        "duty: Limit the list to one duty."
+      ],
+      "implementation": "src/runtime/handlers/duty.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/duty setup",
+      "description": "Show where to configure duties; new roles require final setup confirmation.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/duty.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/duty panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/duty.ts",
+      "evidence": "test/phase4.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/application apply",
+      "description": "Open an application for a configured duty.",
+      "orderedInputs": [
+        "position!: Position you are applying for."
+      ],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/application withdraw",
+      "description": "Withdraw one of your pending applications.",
+      "orderedInputs": [
+        "application!: Your pending application."
+      ],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/application list",
+      "description": "Browse your applications.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/application setup",
+      "description": "Advisors+: configure the private application review channel.",
+      "orderedInputs": [
+        "channel!: Private application review channel (Advisors)"
+      ],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/application panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/application review",
+      "description": "Advisors+: browse applications for review.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/application approve",
+      "description": "Advisors+: approve a selected application.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/application deny",
+      "description": "Advisors+: deny a selected application.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship looking-for",
+      "description": "Post a notice that you are looking for a mentor or Recruit.",
+      "orderedInputs": [
+        "type!: What you are looking for.",
+        "note: Optional preferences or introduction."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship withdraw-looking",
+      "description": "Remove your apprenticeship matching request.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship propose",
+      "description": "Propose yourself as mentor to the selected member.",
+      "orderedInputs": [
+        "member!: Member you propose to mentor."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship sponsor",
+      "description": "Save a mentorship sponsorship for private Advisors review.",
+      "orderedInputs": [
+        "recruit!: The new recruit already in the Discord.",
+        "reason!: Why they would make a good Member."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship assign",
+      "description": "Advisors+: pair a mentor and apprentice directly.",
+      "orderedInputs": [
+        "mentor!: Member or higher who will mentor.",
+        "apprentice!: Existing Recruit."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship end",
+      "description": "End your apprenticeship, or Advisors+: end another pairing.",
+      "orderedInputs": [
+        "member: A participant in the pairing. Leave blank for your own.",
+        "reason: Optional reason."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship info",
+      "description": "Show a current apprenticeship.",
+      "orderedInputs": [
+        "member: Participant to inspect. Leave blank for yourself."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship requests",
+      "description": "Advisors+: list matching requests and current pairings.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/mentorship panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts; test/phase8.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact setup",
+      "description": "Advisors+: create or repair the Contacts Forum.",
+      "orderedInputs": [
+        "category: Optional category for the Contacts Forum."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact create",
+      "description": "Member+: create a record for an individual contact.",
+      "orderedInputs": [
+        "name!: The contact's name.",
+        "race!: The contact's race.",
+        "sex!: The contact's sex.",
+        "occupation!: Occupation, such as Alchemist or Merchant.",
+        "assignment!: Configured assignment associated with this Contact.",
+        "faction: Faction or organization.",
+        "usual_locations: Places where this person is usually found.",
+        "commentary: Additional notes about the contact.",
+        "high_priority: Mark important contacts such as leaders or high-ranking officials."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact create-group",
+      "description": "Member+: create a record for a known group.",
+      "orderedInputs": [
+        "name!: The group's known name.",
+        "category!: What kind of group this is.",
+        "assignment!: Configured assignment associated with this Contact.",
+        "estimated_size: Estimated numbers or strength.",
+        "identifying_features: Clothing, symbols, appearance, or other identifying signs.",
+        "weapons_capabilities: Known weapons, magic, creatures, or other capabilities.",
+        "tactics: Known tactics, behavior, or patterns.",
+        "usual_locations: Territory, camps, routes, or usual locations.",
+        "faction: Larger faction or known affiliation.",
+        "commentary: Additional intelligence or notes.",
+        "high_priority: Mark a particularly important or dangerous group."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact edit",
+      "description": "Advisors+: edit an individual or group Contact.",
+      "orderedInputs": [
+        "contact!: Person or group to edit.",
+        "name: Replace the record's name.",
+        "race: Replace the contact's race.",
+        "sex: Replace the contact's sex.",
+        "occupation: Replace the occupation.",
+        "assignment: Configured assignment associated with this Contact.",
+        "faction: Replace the faction or organization.",
+        "usual_locations: Replace usual locations.",
+        "commentary: Replace the commentary.",
+        "group_category: Group records only: replace the category.",
+        "estimated_size: Group records only: replace estimated size.",
+        "identifying_features: Group records only: replace identifying signs.",
+        "weapons_capabilities: Group records only: replace arms or capabilities.",
+        "tactics: Group records only: replace tactics or behavior.",
+        "high_priority: Set whether this is a high-priority contact."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact list",
+      "description": "Advisors+: list people and groups, including archived records.",
+      "orderedInputs": [
+        "type: Only people or groups.",
+        "assignment: Filter by a configured member assignment.",
+        "occupation: Only contacts with this occupation.",
+        "group_category: Only groups in this category.",
+        "high_priority: Only show high-priority contacts."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact link-member",
+      "description": "Advisors+: add a person Contact to an existing group.",
+      "orderedInputs": [
+        "group!: Group contact record.",
+        "person!: Person contact record to add as a member."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact unlink-member",
+      "description": "Advisors+: remove a person Contact from an existing group.",
+      "orderedInputs": [
+        "group!: Group contact record.",
+        "person!: Person contact record to unlink."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact archive",
+      "description": "Advisors+: archive a contact without deleting its history.",
+      "orderedInputs": [
+        "contact!: Contact to archive.",
+        "reason: Why the contact is being archived."
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact repair",
+      "description": "Advisors+: repair Contacts resources and a page of individual Contact threads.",
+      "orderedInputs": [
+        "page: Batch page, starting at zero"
+      ],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/contact group-members",
+      "description": "Advisors+: select an existing group and change its Contact links.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeIntelligence.ts; src/runtime/handlers/intelligence.ts",
+      "evidence": "test/contactPermissions.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/vote open",
+      "description": "Open an auditable binary or multiple-choice vote in this channel.",
+      "orderedInputs": [
+        "format: Use a standard vote or open a form for multiple choices.",
+        "question: The issue being decided. Multiple-choice votes can enter this in the form.",
+        "context: Optional background or terms for the vote."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/vote close",
+      "description": "Close a vote in this channel and preserve its final tally.",
+      "orderedInputs": [
+        "vote!: Vote ID."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/vote audit",
+      "description": "Privately export every ballot cast in a channel vote.",
+      "orderedInputs": [
+        "vote!: Vote ID."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/vote panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/vote cast",
+      "description": "Select an open poll and cast your ballot.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/vote list",
+      "description": "Browse saved polls and results.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/briefing setup",
+      "description": "Advisors+: place the Dispatch Desk in a channel.",
+      "orderedInputs": [
+        "channel!: The channel where members collect their briefings."
+      ],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/briefing send",
+      "description": "Advisors+: send a dispatch or short OOC note.",
+      "orderedInputs": [
+        "audience!: Who receives this in their next briefing.",
+        "recipient: Choose a member when the audience is One organization Member.",
+        "kind: Send an in-character dispatch or a short OOC note."
+      ],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/briefing settings",
+      "description": "Choose whether Codex sends your briefing by DM.",
+      "orderedInputs": [
+        "dm_enabled!: Turn this off to read briefings in the private reply instead."
+      ],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/briefing panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/briefing history",
+      "description": "Browse saved briefings available to your audience.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment setup",
+      "description": "Advisors+: connect Codex to the Assignments Forum.",
+      "orderedInputs": [
+        "forum!: The existing Assignments Forum channel."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment create",
+      "description": "Advisors+: open a form to create a board task.",
+      "orderedInputs": [
+        "minimum_rank: Choose who may join. The default is Recruit+.",
+        "assignment: Optional configured member assignment associated with this board task."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment open",
+      "description": "Advisors+: open the compatibility form for a board task.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment claim",
+      "description": "Select a board task to join.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment close",
+      "description": "Advisors+: mark a board task complete.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment cancel",
+      "description": "Advisors+: cancel a board task.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment set-member",
+      "description": "Advisors+: choose a configured assignment for a roster member.",
+      "orderedInputs": [
+        "member!: Server member"
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment clear-member",
+      "description": "Advisors+: remove a configured assignment from a roster member.",
+      "orderedInputs": [
+        "member!: Server member"
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment sync-roles",
+      "description": "Advisors+: synchronize a member’s configured Discord roles.",
+      "orderedInputs": [
+        "member!: Server member"
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment unclaim",
+      "description": "Select a board task to leave.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/assignment list",
+      "description": "Browse saved board tasks.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts; src/runtime/handlers/workflows.ts; src/runtime/handlers/members.ts",
+      "evidence": "test/phase8.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/patrol suggest",
+      "description": "Suggest a route through eligible Trailmarks; no assignment is created.",
+      "orderedInputs": [
+        "assignment: Configured assignment; defaults to your first saved assignment."
+      ],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/phase9.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/patrol panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/phase9.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/patrol list",
+      "description": "Browse saved compatibility patrol suggestions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/phase9.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/patrol resolve",
+      "description": "Advisors+: resolve a saved compatibility patrol suggestion.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeOptional.ts; src/runtime/handlers/optional.ts",
+      "evidence": "test/phase9.test.ts; test/commandWording.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance setup",
+      "description": "Configure an authorized cross-server bridge or trusted legacy intake.",
+      "orderedInputs": [
+        "name!: Remote organization name",
+        "remote!: Remote Discord server ID",
+        "protocol!: Bridge protocol",
+        "intake: Legacy intake text channel",
+        "sender: Trusted legacy bot sender"
+      ],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance sync",
+      "description": "Retry queued transfers that are allowed by both servers.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance status",
+      "description": "Inspect bridges, topic mappings and delivery counts.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance group-add",
+      "description": "Add or update a group of bridge topic mappings.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance group-topics",
+      "description": "Edit a bridge’s local-to-remote topic mappings.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance group-remove",
+      "description": "Remove a topic mapping group; keep the bridge and report history.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance headquarters-remove",
+      "description": "Disable a bridge; keep its private channel and report history.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/alliance archive-category",
+      "description": "Retain a legacy category and restrict it to staff.",
+      "orderedInputs": [
+        "category!: Legacy category to retain with staff-only access"
+      ],
+      "implementation": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/phase7.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization info",
+      "description": "Show a Member roster entry.",
+      "orderedInputs": [
+        "user: Member to inspect."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization briefing",
+      "description": "Collect dispatches waiting for you at Headquarters.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization assignments",
+      "description": "Refresh the board of configured ranks, duties and member assignments.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization audit",
+      "description": "Check roster and Discord role drift.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization inactive-review",
+      "description": "Show members with old or missing tracked activity.",
+      "orderedInputs": [
+        "days: Activity age threshold."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization sync-member",
+      "description": "Save a member’s current Discord name and membership state.",
+      "orderedInputs": [
+        "user: Member to sync."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization sync-all",
+      "description": "Synchronize known members and import members with configured roles.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization sync-join-history",
+      "description": "Inspect up to 5,000 welcome messages for known members’ join dates.",
+      "orderedInputs": [
+        "channel!: Channel containing Discord member-join messages."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization status",
+      "description": "Set a Member status.",
+      "orderedInputs": [
+        "user!: Member to update.",
+        "status!: New status."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization retire-left",
+      "description": "Mark a roster entry Retired after the Discord user has left.",
+      "orderedInputs": [
+        "discord_user_id!: Discord user ID from the roster."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization clear-assignment",
+      "description": "Advisors+: remove a configured member assignment.",
+      "orderedInputs": [
+        "discord_user_id!: Discord user ID from the roster.",
+        "assignment!: Configured member assignment."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization set-assignment",
+      "description": "Advisors+: assign a configured entry to a member.",
+      "orderedInputs": [
+        "user!: Member to appoint.",
+        "assignment!: Configured member assignment."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization sync-assignment-roles",
+      "description": "Synchronize existing configured roles for the current roster.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization note",
+      "description": "Append an authored roster note; existing notes are preserved.",
+      "orderedInputs": [
+        "user!: Member to update.",
+        "note!: Note text.",
+        "append: Omit or choose true. Replacing authored notes is not supported."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization promote",
+      "description": "Promote an active member along a configured progression edge.",
+      "orderedInputs": [
+        "user!: Member to promote.",
+        "rank!: Eligible next rank from configured progression.",
+        "reason: Reason for rank history."
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization export",
+      "description": "export member records",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization notes",
+      "description": "notes member records",
+      "orderedInputs": [
+        "member!: Member"
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/organization rank",
+      "description": "rank member records",
+      "orderedInputs": [
+        "member!: Member"
+      ],
+      "implementation": "src/runtime/nativeMembers.ts; src/runtime/handlers/members.ts; src/runtime/nativeOptional.ts",
+      "evidence": "test/phase4.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion setup",
+      "description": "Discord Administrator: configure the promotion channel.",
+      "orderedInputs": [
+        "channel!: Channel where promotion votes and discussion threads are posted."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion eligible",
+      "description": "Show promotion readiness, field-trial, and hold statuses.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion status",
+      "description": "Save a candidate’s promotion progress.",
+      "orderedInputs": [
+        "candidate!: Recruit.",
+        "progress!: Current promotion progress."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion open",
+      "description": "Open a promotion vote.",
+      "orderedInputs": [
+        "candidate!: Candidate.",
+        "target_rank: Target rank.",
+        "reason: Optional reason or context.",
+        "mentions: Optional role to mention on the vote post.",
+        "mentions_2: Optional additional role to mention.",
+        "mentions_3: Optional additional role to mention.",
+        "mentions_4: Optional additional role to mention.",
+        "mentions_5: Optional additional role to mention."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion close",
+      "description": "Close voting and show results; this does not approve a promotion.",
+      "orderedInputs": [
+        "vote!: Open vote ID."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion approve",
+      "description": "Approve an eligible case and apply the candidate’s promotion.",
+      "orderedInputs": [
+        "vote!: Open or closed vote ID."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion deny",
+      "description": "Deny a promotion vote.",
+      "orderedInputs": [
+        "vote!: Open or closed vote ID."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion ballots",
+      "description": "Show who voted Yes, No, or Abstain on a promotion vote.",
+      "orderedInputs": [
+        "vote!: Vote ID."
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion panel",
+      "description": "Open optional shortcuts for your available actions.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/promotion refresh",
+      "description": "Recover the persisted promotion board",
+      "orderedInputs": [
+        "vote!: Promotion case"
+      ],
+      "implementation": "src/runtime/nativePromotion.ts; src/runtime/handlers/field.ts",
+      "evidence": "test/phase5.test.ts; test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/apprenticeship looking-for",
+      "description": "Post a notice that you are looking for a mentor or Recruit.",
+      "orderedInputs": [
+        "type!: What you are looking for.",
+        "note: Optional preferences or introduction."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/apprenticeship withdraw-looking",
+      "description": "Remove your apprenticeship matching request.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/apprenticeship propose",
+      "description": "Propose yourself as mentor to the selected member.",
+      "orderedInputs": [
+        "member!: Member you propose to mentor."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/apprenticeship sponsor",
+      "description": "Save a mentorship sponsorship for private Advisors review.",
+      "orderedInputs": [
+        "recruit!: The new recruit already in the Discord.",
+        "reason!: Why they would make a good Member."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/apprenticeship assign",
+      "description": "Advisors+: pair a mentor and apprentice directly.",
+      "orderedInputs": [
+        "mentor!: Member or higher who will mentor.",
+        "apprentice!: Existing Recruit."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/apprenticeship end",
+      "description": "End your apprenticeship, or Advisors+: end another pairing.",
+      "orderedInputs": [
+        "member: A participant in the pairing. Leave blank for your own.",
+        "reason: Optional reason."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/apprenticeship info",
+      "description": "Show a current apprenticeship.",
+      "orderedInputs": [
+        "member: Participant to inspect. Leave blank for yourself."
+      ],
+      "implementation": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    },
+    {
+      "command": "/apprenticeship requests",
+      "description": "Advisors+: list matching requests and current pairings.",
+      "orderedInputs": [],
+      "implementation": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/nativeWorkflows.test.ts",
+      "routingEvidence": "test/audit.test.ts: every registered command routes to its production handler",
+      "review": "Source and assembled copy reviewed; see family findings in COMMAND_WORDING_AUDIT.md. Live Discord not tested."
+    }
+  ],
+  "components": [
+    {
+      "family": "setup",
+      "source": "src/runtime/messageSetup.ts + setupWizard.ts + setupSelections.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "ux",
+      "source": "src/runtime/panels.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "uxform",
+      "source": "src/runtime/panels.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "uxbrowse",
+      "source": "src/runtime/browse.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "uxconfirm",
+      "source": "src/runtime/confirmation.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "member",
+      "source": "src/runtime/handlers/members.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "field",
+      "source": "src/runtime/handlers/field.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "intel",
+      "source": "src/runtime/handlers/intelligence.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "bridge",
+      "source": "src/runtime/handlers/bridge.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "flow",
+      "source": "src/runtime/handlers/workflows.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "optional",
+      "source": "src/runtime/handlers/optional.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:contact-assessment",
+      "source": "src/runtime/nativeIntelligence.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:promotion",
+      "source": "src/runtime/nativePromotion.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:briefing-collect",
+      "source": "src/runtime/nativeOptional.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:briefing-form",
+      "source": "src/runtime/nativeOptional.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:access",
+      "source": "src/runtime/nativeField.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:access-page",
+      "source": "src/runtime/nativeField.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:trail-report",
+      "source": "src/runtime/nativeField.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:form",
+      "source": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:ballot",
+      "source": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:assignment",
+      "source": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    },
+    {
+      "family": "native:mentorship",
+      "source": "src/runtime/nativeWorkflows.ts",
+      "evidence": "test/commandWording.test.ts: all 22 inventoried interaction families",
+      "surfaces": "Controls, owner/context checks, submission response and failure/expiry; see family audit."
+    }
+  ]
+}

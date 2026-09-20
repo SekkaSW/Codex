@@ -1,3 +1,4 @@
+import { commandNameQuestion, normalizeSetupCommand, permissionName } from './userCopy.js';
 import { permissionTiers } from '../domain.js';
 import { configuredResources, type ResourceSpec } from '../resources.js';
 import type { StoredSetupDraft } from '../setup.js';
@@ -7,7 +8,7 @@ import { textModal } from './interactions.js';
 type Draft = StoredSetupDraft;
 export const setupSections = {
     identity: 'Organization', permissions: 'Permissions', ranks: 'Ranks', branches: 'Branches & progression',
-    duties: 'Duties', groups: 'Assignments', modules: 'Modules', resources: 'Channels', integration: 'Confidentiality', atlas: 'Atlas',
+    duties: 'Duties', groups: 'Assignments', modules: 'Optional Features', resources: 'Channels & Categories', integration: 'Confidentiality', atlas: 'Atlas',
 };
 const row = (...components: any[]) => ({ type: 1, components });
 const option = (name: string, value: string) => ({ label: name.slice(0, 100), value });
@@ -50,7 +51,7 @@ export function conversationView(d: Draft): any {
     };
     const role = (multi = false) => rows.push(row({ type: 6, custom_id: id('answer'), placeholder: 'Choose a role', min_values: 1, max_values: multi ? 25 : 1 }));
     const text: Record<string, string> = {
-        identity: 'Organization Name', namespace: 'What should the organization command namespace be?',
+        identity: 'Organization Name', namespace: commandNameQuestion,
         ranks: 'Would you like to configure a rank?', 'rank-name': 'What is this rank called?', 'rank-role': 'Which Discord role belongs to this rank?',
         'rank-tier': 'Which permission tier describes this rank? This is metadata; access is controlled by your permission-role mappings.',
         'rank-branch': 'Should this rank be part of progression? Choose a branch, or Skip for a standalone rank. Explicit advancement edges are configured next.',
@@ -61,21 +62,21 @@ export function conversationView(d: Draft): any {
         groups: 'Would you like to configure an assignment group?', 'group-name': 'Assignment Group Name', 'group-required': 'Must active members have an assignment in this group?',
         'group-multiple': 'Can a member belong to more than one entry in this group?', 'group-sync': 'Should entries in this group synchronize Discord roles?',
         'entry-name': 'What is this assignment entry called?', 'entry-role': 'Choose the Discord role for this entry.', 'entry-more': 'Would you like to add another entry?', 'group-more': 'Would you like to add another assignment group?',
-        modules: 'Which optional modules should be enabled? Briefings publishes dispatches; Patrol suggests Trailmarks; Supply tracks contributions; Atlas links map access.',
+        modules: 'Which optional features should be enabled? Briefings publishes dispatches; Patrol suggests Trailmarks; Supply tracks contributions; Atlas links map access.',
         integration: 'What marker should keep reports local and prevent cross-server transfer?',
         'resource-name': 'What name should this resource use when it is first created? Existing resources keep their current name.',
-        atlas: d.config.modules?.atlas ? 'Atlas is enabled. Members can link their account using /atlas panel. Map access follows Trailmark eligibility. This wizard needs no browser credentials.' : 'Atlas is disabled. Enable it in Modules whenever you need map integration.',
+        atlas: d.config.modules?.atlas ? 'Atlas is enabled. Members can link their account using /atlas panel. Map access follows Trailmark eligibility. This wizard needs no browser credentials.' : 'Atlas is disabled. Enable it in Optional Features whenever you need map integration.',
         sections: 'Edit Server Configuration — choose a section. Changes stay in your draft until Confirm Setup.',
     };
     let question = text[s] ?? 'Continue setup';
     if (['identity', 'namespace', 'rank-name', 'branch-name', 'duty-name', 'group-name', 'entry-name', 'resource-name', 'integration'].includes(s)) {
-        buttons(['text', s === 'identity' ? 'Enter Organization Name' : s === 'namespace' ? 'Enter Namespace' : 'Enter value']);
+        buttons(['text', s === 'identity' ? 'Enter Organization Name' : s === 'namespace' ? 'Enter Command' : 'Enter value']);
         if (s === 'integration') buttons(['default', 'Use [CONFIDENTIAL]']);
     } else if (s === 'permissions') {
-        question = `Select the role or roles that should have **${permissionTiers[g.index]}** permissions. Permission tiers control authorization and are separate from rank progression. Higher tiers include lower tiers.`;
+        question = `Select the role or roles that should have **${permissionName(permissionTiers[g.index]!)}** permissions. Permission tiers control authorization and are separate from rank progression. Higher tiers include lower tiers.`;
         role(true); buttons(['continue', 'Done'], ['clear', 'Clear this tier']);
     } else if (['rank-role', 'duty-role', 'entry-role'].includes(s)) role();
-    else if (s === 'rank-tier') select(permissionTiers.map(t => ({ id: t, name: t })), 'Choose a tier');
+    else if (s === 'rank-tier') select(permissionTiers.map(t => ({ id: t, name: permissionName(t) })), 'Choose a tier');
     else if (s === 'rank-branch' || s === 'branches') {
         select(c.branches, 'Choose a branch'); buttons(['new-branch', 'Add Branch']);
     } else if (s === 'edge-from') select(c.ranks, 'Choose the source rank');
@@ -84,7 +85,7 @@ export function conversationView(d: Draft): any {
     else if (s === 'duties') { select(c.duties.map(x => ({ id: x.roleId, name: x.displayName })), 'Edit a duty'); buttons(['add', 'Add Duty'], ['continue', 'Done']); }
     else if (s === 'groups') { select(c.groups, 'Edit an assignment group'); buttons(['add', 'Add Group'], ['continue', 'Done']); }
     else if (['group-required', 'group-multiple', 'group-sync'].includes(s)) buttons(['yes', 'Yes'], ['no', 'No']);
-    else if (s === 'modules') rows.push(row({ type: 3, custom_id: id('answer'), placeholder: 'Enabled modules', min_values: 0, max_values: 4, options: Object.entries({ briefings: 'Briefings', patrols: 'Patrol', supply: 'Supply', atlas: 'Atlas' }).map(([k, v]) => ({ ...option(v, k), default: !!d.config.modules?.[k as keyof typeof d.config.modules] })) }));
+    else if (s === 'modules') rows.push(row({ type: 3, custom_id: id('answer'), placeholder: 'Enabled optional features', min_values: 0, max_values: 4, options: Object.entries({ briefings: 'Briefings', patrols: 'Patrol', supply: 'Supply', atlas: 'Atlas' }).map(([k, v]) => ({ ...option(v, k), default: !!d.config.modules?.[k as keyof typeof d.config.modules] })) }));
     else if (s === 'resources') {
         const spec = conversationResources(d)[g.index];
         question = spec ? `Where should **${spec.name}** be? ${c.resources.some(r => r.key === spec.key) ? 'A saved destination is already bound. Continue keeps its identity and layout.' : 'Choose an existing resource or create it with the suggested name at final confirmation.'}` : 'Resource choices are complete.';
@@ -110,7 +111,7 @@ export async function answerConversation(d: Draft, action: string, i: any): Prom
     const next = (step: string, notice?: string) => { move(d, step); if (notice) g.notice = notice; else delete g.notice; };
     if (action === 'text') {
         const existing = s === 'identity' ? d.config.organizationName : s === 'namespace' ? d.config.commandNamespace : s === 'integration' ? d.config.confidentialityMarker : s === 'duty-name' ? c.duties.find(x => x.roleId === e.selected)?.displayName : undefined;
-        await i.showModal(textModal(`setup:${d.revision}:guide-answer`, s === 'identity' ? 'Organization Name' : s === 'namespace' ? 'Command Namespace' : 'Setup', [{ id: 'name', label: s === 'integration' ? 'Confidentiality marker' : 'Name', max: s === 'namespace' ? 32 : 100, ...(existing ? { value: existing } : {}) }]));
+        await i.showModal(textModal(`setup:${d.revision}:guide-answer`, s === 'identity' ? 'Organization Name' : s === 'namespace' ? 'Command' : 'Setup', [{ id: 'name', label: s === 'integration' ? 'Confidentiality marker' : 'Name', max: 100, ...(existing ? { value: existing } : {}) }]));
         return 'modal';
     }
     if (action === 'back') {
@@ -131,8 +132,8 @@ export async function answerConversation(d: Draft, action: string, i: any): Prom
         if (typeof name !== 'string' || !name.trim() || name.length > 100) throw new Error('Enter a name between 1 and 100 characters.');
         if (s === 'identity') { d.config.organizationName = name; next('namespace', `Organization Name set to **${name}**.`); }
         else if (s === 'namespace') {
-            if (!/^[a-z0-9_-]{1,32}$/.test(name) || ((await import('./commands.js')).genericCommandNames.includes(name as any) && !(['help','promotion','apprenticeship'].includes(name) && d.config.commandNamespace === name))) throw new Error('Choose 1–32 lowercase letters, digits, hyphens or underscores, without using a core command name.');
-            d.config.commandNamespace = name; g.index = 0; next('permissions', `Command namespace set to **/${name}**.`);
+            const command = normalizeSetupCommand(name, (await import('./commands.js')).genericCommandNames, d.config.commandNamespace);
+            d.config.commandNamespace = command; g.index = 0; next('permissions', `Command set to /${command} in your setup draft.`);
         } else if (s === 'integration') { d.config.confidentialityMarker = name; next('atlas', `Confidentiality marker set to **${name}**.`); }
         else if (s === 'resource-name') {
             const spec = conversationResources(d)[g.index]!;
@@ -161,14 +162,14 @@ export async function answerConversation(d: Draft, action: string, i: any): Prom
         }
     } else if (s === 'permissions') {
         const tier = permissionTiers[g.index]!;
-        if (action === 'clear') { c.permissions = c.permissions.filter(p => p.tier !== tier); g.notice = `${tier} role mappings cleared in this draft.`; }
+        if (action === 'clear') { c.permissions = c.permissions.filter(p => p.tier !== tier); g.notice = `${permissionName(tier)} role mappings cleared in this draft.`; }
         else if (action === 'continue') { if (g.index < 4) { move(d, 'permissions'); g.index++; } else next('ranks'); }
         else {
             const roles = await i.guild.roles.fetch();
             if (i.values.some((id: string) => id === d.guildId || !roles.has(id))) throw new Error('That role no longer exists or is @everyone. Choose another role.');
             c.permissions = c.permissions.filter(p => !i.values.includes(p.roleId));
             c.permissions.push(...i.values.map((roleId: string) => ({ guildId: d.guildId, roleId, tier })));
-            g.notice = `${tier} roles set to **${c.permissions.filter(p => p.tier === tier).map(p => roles.get(p.roleId)?.name ?? 'Missing role').join(', ')}**. Choose more roles, or Done.`;
+            g.notice = `${permissionName(tier)} roles set to **${c.permissions.filter(p => p.tier === tier).map(p => roles.get(p.roleId)?.name ?? 'Missing role').join(', ')}**. Choose more roles, or Done.`;
         }
     } else if (['rank-role', 'duty-role', 'entry-role'].includes(s)) {
         const role = await i.guild.roles.fetch(value);
@@ -176,7 +177,7 @@ export async function answerConversation(d: Draft, action: string, i: any): Prom
         if (s === 'rank-role') { c.ranks.find(r => r.id === e.selected)!.roleId = value; next('rank-tier', `Rank role set to **${role.name}**.`); }
         else if (s === 'duty-role') { if (!c.duties.some(x => x.roleId === value)) c.duties.push({ guildId: d.guildId, roleId: value, displayName: role.name }); e.selected = value; next('duty-name', `Duty role set to **${role.name}**.`); }
         else { c.entries.find(x => x.id === e.selected)!.roleId = value; next('entry-more', `Entry role set to **${role.name}**.`); }
-    } else if (s === 'rank-tier') { if (!permissionTiers.includes(value)) throw new Error('Choose a listed permission tier.'); c.ranks.find(r => r.id === e.selected)!.tier = value; next('rank-branch', `Rank tier set to **${value}**.`); }
+    } else if (s === 'rank-tier') { if (!permissionTiers.includes(value)) throw new Error('Choose a listed permission tier.'); c.ranks.find(r => r.id === e.selected)!.tier = value; next('rank-branch', `Rank permission level set to **${permissionName(value)}** in your draft.`); }
     else if (s === 'rank-branch' || s === 'branches') { if (!c.branches.some(b => b.id === value)) throw new Error('Choose an existing branch.'); g.branch = value; next(s === 'rank-branch' ? 'rank-more' : 'edge-from', `Branch **${c.branches.find(b => b.id === value)!.name}** selected. Progression is defined by edges.`); }
     else if (s === 'edge-from') { if (!c.ranks.some(r => r.id === value)) throw new Error('Choose an existing rank.'); e.selected = value; next('edge-to'); }
     else if (s === 'edge-to') {
@@ -191,7 +192,7 @@ export async function answerConversation(d: Draft, action: string, i: any): Prom
         else { g.sync = action === 'yes'; if (!g.sync) for (const entry of c.entries.filter(x => x.groupId === g.group)) delete entry.roleId; delete e.selected; next('entry-name', `Role synchronization ${g.sync ? 'enabled' : 'disabled'} in this draft.`); }
     } else if (s === 'modules') {
         d.config.modules = { briefings: i.values.includes('briefings'), patrols: i.values.includes('patrols'), supply: i.values.includes('supply'), atlas: i.values.includes('atlas') };
-        g.index = 0; next('resources', `Enabled modules: **${i.values.join(', ') || 'none'}**.`);
+        g.index = 0; next('resources', `Enabled optional features: **${i.values.join(', ') || 'none'}**.`);
     } else if (s === 'resources') {
         const spec = conversationResources(d)[g.index];
         if (spec && ['BOT_COMMANDS', 'BOT_LOGS'].includes(spec.key) && !c.additionalResources.some(r => r.key === spec.key)) c.additionalResources.push({ ...spec, name: spec.key === 'BOT_COMMANDS' ? 'bot-commands' : 'bot-logs' });
