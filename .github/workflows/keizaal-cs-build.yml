@@ -1,0 +1,118 @@
+name: Keizaal CS 1.6.1 experimental source build
+
+on:
+  push:
+    branches: [keizaal-cs-build]
+    paths:
+      - .github/workflows/keizaal-cs-build.yml
+      - scripts/keizaal-cs-build/**
+      - docs/keizaal-cs-build.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keizaal-cs-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    if: github.ref == 'refs/heads/keizaal-cs-build'
+    runs-on: windows-2025
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout immutable upstream CS 1.6.1 source
+        uses: actions/checkout@v6
+        with:
+          repository: community-shaders/skyrim-community-shaders
+          ref: 9850f24b0292daa462d7cdb92916a66ded350878
+          submodules: recursive
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout only the isolated build harness
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.sha }}
+          path: build-harness
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/workflows/keizaal-cs-build.yml
+            /scripts/keizaal-cs-build/
+            /docs/keizaal-cs-build.md
+
+      - name: Verify source revision and apply the single source change
+        run: |
+          New-Item -ItemType Directory -Force _keizaal_diagnostics | Out-Null
+          python build-harness/scripts/keizaal-cs-build/patch_source.py --source . --output _keizaal_provenance
+          if ($LASTEXITCODE -ne 0) { throw 'Source verification or patch failed' }
+
+      - name: Install upstream Windows compiler and pinned dependency toolchain
+        uses: ./.github/actions/setup-build-environment
+        with:
+          cache-key-suffix: keizaal-cs-1.6.1-experiment-r1
+          cmake-preset: ALL
+          build-dir: build/ALL
+
+      - name: Configure Release DLL without automatic game deployment
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          cmake --preset ALL -DBUILD_SHADER_TESTS=OFF -DAUTO_PLUGIN_DEPLOYMENT=OFF -DAIO_ZIP_TO_DIST=OFF -DZIP_TO_DIST=OFF 2>&1 | Tee-Object _keizaal_diagnostics/configure.log
+          if ($LASTEXITCODE -ne 0) { throw 'CMake configuration failed; inspect configure.log' }
+
+      - name: Compile CommunityShaders and matching debug symbols
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          cmake --build build/ALL --config Release --target CommunityShaders --parallel 2 2>&1 | Tee-Object _keizaal_diagnostics/build.log
+          if ($LASTEXITCODE -ne 0) { throw 'C++ compilation failed; inspect build.log' }
+
+      - name: Validate DLL architecture and exports and prepare artifacts
+        run: |
+          python build-harness/scripts/keizaal-cs-build/package_build.py --source . --harness build-harness --provenance _keizaal_provenance --output _keizaal_artifacts
+          if ($LASTEXITCODE -ne 0) { throw 'Compiled DLL validation or packaging failed' }
+          @'
+          ## Experimental Community Shaders DLL compiled
+          Built from pinned upstream version 1.6.1 with only the non-VR Engine Fixes startup requirement removed.
+          Windows x64 DLL structure, SKSE exports, source marker and matching PDB were checked.
+          **Not tested in Skyrim or Keizaal; not an upstream-supported compatibility release.**
+          Download both DLL-PDB and Source-Provenance artifacts. Keep the original DLL backed up outside the game.
+          '@ | Add-Content $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload compiled DLL and matching PDB
+        uses: actions/upload-artifact@v4
+        with:
+          name: CS-1.6.1-Keizaal-EXPERIMENT-DLL-PDB
+          path: _keizaal_artifacts/DLL-PDB/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 6
+
+      - name: Upload source patch and build provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CS-1.6.1-Keizaal-EXPERIMENT-Source-Provenance
+          path: |
+            _keizaal_artifacts/Source-Provenance/
+            _keizaal_provenance/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CS-1.6.1-Keizaal-Build-Diagnostics
+          path: |
+            _keizaal_diagnostics/
+            build/ALL/CMakeCache.txt
+            build/ALL/CMakeFiles/CMakeConfigureLog.yaml
+            build/ALL/vcpkg-manifest-install.log
+          if-no-files-found: warn
+          retention-days: 14
